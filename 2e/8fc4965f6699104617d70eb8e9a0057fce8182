@@ -1,0 +1,41 @@
+docs/test_configs/e01-everything.json
+  s_12466afeae8c90::t_a4ea8ed324be6a 1-1665
+docs/test_configs/e02-maxworker-bindings.json
+  s_12466afeae8c90::t_21bae4cf8c9496 1-344
+docs/test_configs/e05-worker-service-binding-chain.json
+  s_12466afeae8c90::t_34de7f1c28b16f 1-212
+docs/test_configs/e07-plan-downgrade.json
+  s_12466afeae8c90::t_76a8687c34562a 1-268
+docs/test_configs/e09-storage-roundtrip.json
+  s_12466afeae8c90::t_d311faf18df772 1-305
+docs/test_configs/e11-cert-pack-dedupe.json
+  s_12466afeae8c90::t_fe345f85b87c8f 1-41
+package-lock.json
+  s_408c1f96bf46b5::t_9ecbf060618820 1-3993
+package.json
+  s_408c1f96bf46b5::t_35ffe3abc3b772 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2e8fc4965f6699104617d70eb8e9a0057fce8182",
+  "prompts": {},
+  "sessions": {
+    "s_12466afeae8c90": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0926d34a9ffeigv3uQPhLV4QaP",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <ross@ross.gg>"
+    },
+    "s_408c1f96bf46b5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0f3162e30ffe48ugC00PfAri8g",
+        "model": "gpt-5.5"
+      },
+      "human_author": "pocc <ross@ross.gg>"
+    }
+  }
+}
