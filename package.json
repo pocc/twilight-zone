@@ -1,0 +1,66 @@
+{
+  "name": "twilight-zone",
+  "version": "2.0.0",
+  "description": "Cloudflare Zone Migration Tool",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pocc/twilight-zone.git"
+  },
+  "homepage": "https://github.com/pocc/twilight-zone#readme",
+  "bugs": {
+    "url": "https://github.com/pocc/twilight-zone/issues"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "deploy": "vite build && wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:tv-cabinet": "node scripts/check-tv-cabinet-layout.mjs",
+    "test:e2e": "node scripts/run-playwright-migrations.mjs",
+    "test:e2e:parallel": "node scripts/run-e2e-parallel.mjs",
+    "delete:maxconfig-zone": "node scripts/delete-maxconfig-zone.mjs",
+    "triage:endpoints": "node scripts/triage-new-endpoints.mjs",
+    "scaffold:endpoint": "node scripts/scaffold-endpoint.mjs",
+    "verify:gates": "node scripts/verify-coverage-gates.mjs",
+    "generate:openapi-manifest": "node scripts/generate-openapi-manifest.mjs",
+    "generate:sdk-index": "node scripts/extract-sdk-index.mjs",
+    "generate:tz-coverage": "node scripts/extract-tz-coverage.mjs",
+    "generate:coverage-snapshot": "node scripts/generate-coverage-snapshot.mjs",
+    "generate:coverage-inputs": "npm run generate:openapi-manifest && npm run generate:sdk-index && npm run generate:tz-coverage",
+    "coverage": "node scripts/coverage-report.mjs",
+    "coverage:write": "node scripts/coverage-report.mjs --write-md",
+    "coverage:check": "npm run generate:sdk-index && npm run generate:tz-coverage && node scripts/coverage-report.mjs --check",
+    "coverage:uncategorized": "node scripts/coverage-report.mjs --uncategorized",
+    "coverage:overrides:seed": "node scripts/seed-coverage-overrides.mjs --write",
+    "coverage:all": "npm run generate:coverage-inputs && npm run coverage:write && npm run generate:coverage-snapshot"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "aws4fetch": "^1.0.20",
+    "hono": "^4.12.21",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.25.0",
+    "@cloudflare/vitest-pool-workers": "^0.18.5",
+    "@cloudflare/workers-types": "^5.20260716.1",
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.24",
+    "cloudflare": "^6.3.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.3.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.111.0"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "company": "AnalyticsArchive",
+    "rank": 13,
+    "domain": "analytics-archive.example.com",
+    "profile": "analytics-archive",
+    "industry": "Test - Archive source analytics add-on (capture → Results → download)",
+    "generatedAt": "2026-06-06T00:00:00.000Z",
+    "notes": "Exercises the Step 2 'Archive source analytics' opt-out add-on end-to-end. Unlike every other test (which UNCHECKS the add-on to avoid a parallel GraphQL capture), this one keeps it CHECKED via metadata.keepAnalyticsArchive. The capture fires in the Account phase, runs in parallel with the migration, and must surface on Results as the 'Analytics data exported' card with a working 'Download Source Analytics (.json)' button. The harness clicks that button, saves the bundle, and assertAnalyticsArchiveDownloaded validates it (non-trivial size, meta+graphql shape, >=1 dataset queried). Regression for the 2026-06-06 bug where handleExecute reset/aborted the Account-phase analytics capture at the START of the Zone phase, so the download NEVER appeared on Results in the normal two-phase flow. The migration payload itself is intentionally minimal (a few DNS records + basic settings) — analytics is read from the source zone's existing history, not from seeded resources, so the test only needs the migration to complete so Results renders.",
+    "products": [
+      "dns",
+      "analytics"
+    ],
+    "keepAnalyticsArchive": true,
+    "postRun": "assertAnalyticsArchiveDownloaded,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "testFile": "e13-analytics-archive.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "analytics-archive.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "e13 - apex"
+    },
+    {
+      "type": "A",
+      "name": "www.analytics-archive.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "e13 - www"
+    },
+    {
+      "type": "TXT",
+      "name": "analytics-archive.example.com",
+      "content": "v=spf1 -all",
+      "proxied": false,
+      "ttl": 3600,
+      "comment": "e13 - SPF"
+    }
+  ],
+  "zone_settings": {
+    "ssl": "strict",
+    "always_use_https": "on",
+    "min_tls_version": "1.2"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "company": "AccessMultiDomain",
+    "rank": 12,
+    "domain": "access-multidomain.example.com",
+    "profile": "access-multidomain",
+    "industry": "Test - Access app self_hosted_domains[] + destinations[] migration",
+    "generatedAt": "2026-05-31T00:00:00.000Z",
+    "notes": "Provisions a modern self-hosted Access app that routes via self_hosted_domains[] and destinations[] rather than only the legacy single `domain`. Verifies (1) both arrays survive migration onto the destination account, and (2) every hostname/URI is source->dest zone-rewritten so no source-zone hostname leaks through (which would not resolve on the dest zone). Regression for the 2026-05-31 fix where Access app domains were sent un-rewritten and modern apps relying on the arrays migrated with empty/stale routing.",
+    "products": [
+      "dns",
+      "access_apps",
+      "access_policies"
+    ],
+    "postRun": "assertAccessMultiDomainMigrated,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e12-access-multidomain.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "app.test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "admin.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "access_apps": [
+    {
+      "name": "Multi-Domain Self-Hosted App",
+      "domain": "app.test.example.com",
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "allowed_idps": [],
+      "auto_redirect_to_identity": false,
+      "self_hosted_domains": [
+        "app.test.example.com",
+        "admin.test.example.com"
+      ],
+      "destinations": [
+        { "type": "public", "uri": "app.test.example.com" },
+        { "type": "public", "uri": "admin.test.example.com/secure" }
+      ]
+    }
+  ],
+  "access_policies": [
+    {
+      "app_name": "Multi-Domain Self-Hosted App",
+      "name": "Allow domain",
+      "decision": "allow",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "example.com"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 1
+    }
+  ]
+}

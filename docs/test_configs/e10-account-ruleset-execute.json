@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "company": "AccountRulesetExecute",
+    "rank": 10,
+    "domain": "account-ruleset.example.com",
+    "profile": "account-ruleset-execute",
+    "industry": "Test - Account-level custom ruleset referenced by zone via execute action (T1.1)",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Provisions an account-level custom ruleset with two rules and a zone-level rule that invokes it via action=execute, action_parameters.id=<account_ruleset_id>. Verifies that the migration: (1) re-creates the account ruleset on the destination account, (2) rewrites the zone rule's execute target to point at the NEW dest ID, not the source-account ID, and (3) shows the operation as Verified on the Results page (no Failed rows).",
+    "products": [
+      "dns",
+      "rulesets",
+      "account_rulesets"
+    ],
+    "postRun": "assertAccountRulesetReferenceRemapped,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "testFile": "e10-account-ruleset-execute.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "account_rulesets": {
+    "bot_block_overrides": {
+      "name": "Twilight Zone Test \u2014 Custom Bot Block Overrides",
+      "description": "Test account-level ruleset that the zone invokes via execute.",
+      "kind": "custom",
+      "phase": "http_request_firewall_custom",
+      "rules": [
+        {
+          "action": "block",
+          "expression": "(http.user_agent contains \"BadBot/1.0\")",
+          "description": "Block BadBot/1.0 user agent",
+          "enabled": true
+        },
+        {
+          "action": "managed_challenge",
+          "expression": "(ip.geoip.country in {\"XX\"})",
+          "description": "Challenge requests from placeholder country XX",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  "rulesets": {
+    "http_request_firewall_custom": [
+      {
+        "action": "execute",
+        "action_parameters": {
+          "id": "ACCOUNT_RULESET_bot_block_overrides"
+        },
+        "expression": "(http.host eq \"test.example.com\")",
+        "description": "Execute account-level bot block overrides for this zone",
+        "enabled": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,2819 @@
+{
+  "_comment": "Per-endpoint coverage overrides. Each entry corresponds to an in-SDK in-scope endpoint that Twilight Zone does NOT implement. Reasons counted as covered exclusions: data_plane (runtime data ops — queue messages, vectorize insert/query, R2 object writes, email send, AI inference); imperative_action (one-shot admin actions — purge, force_axfr, validate, preview, rollback, rotate, refresh, enable/disable); redundant_with_put (PATCH X covered by PUT X with full-record semantics); redundant_with_post_dns (deprecated alias covered by POST /email/routing/dns); redundant_with_bundle_put (per-aspect Workers script endpoint covered by the multipart bundle PUT); redundant_with_record_post (DNS bulk endpoint covered by per-record POST); redundant_with_ruleset_put (per-rule ruleset CRUD covered by full-record ruleset PUT); dual_scope_covered (endpoint at one scope (zone or account) covered by the other); updated_via_post (PUT/PATCH on a resource TZ POSTs fresh on the destination); admin_only (account-wide admin sub-resource not part of per-zone migration). reason:newer_subfeature is triaged but unsupported and still counts as a gap. reason:null means an untriaged real gap. Re-seed via `node scripts/seed-coverage-overrides.mjs --write`.",
+  "_stats": {
+    "total": 390,
+    "by_reason": {
+      "admin_only": 53,
+      "imperative_action": 84,
+      "updated_via_post": 88,
+      "data_plane": 55,
+      "out_of_scope_subfeature": 43,
+      "impossible_cryptographic": 2,
+      "dual_scope_covered": 6,
+      "redundant_with_ruleset_put": 4,
+      "redundant_with_bundle_put": 17,
+      "redundant_with_put": 12,
+      "redundant_with_post": 11,
+      "redundant_with_record_post": 2,
+      "redundant_with_post_dns": 2,
+      "impossible_account_tied": 1,
+      "redundant_with_settings_loop": 10
+    },
+    "real_gaps_remaining": 0
+  },
+  "overrides": {
+    "PUT /accounts/{}/access/ai-controls/mcp/portals/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/ai-controls/mcp/portals/{id}"
+    },
+    "POST /accounts/{}/access/ai-controls/mcp/portals": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/ai-controls/mcp/portals"
+    },
+    "POST /accounts/{}/access/ai-controls/mcp/servers/{}/sync": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/ai-controls/mcp/servers/{id}/sync",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/ai-controls/mcp/servers/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/ai-controls/mcp/servers/{id}"
+    },
+    "POST /accounts/{}/access/ai-controls/mcp/servers": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/ai-controls/mcp/servers"
+    },
+    "POST /accounts/{}/access/apps/{}/ca": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/ca",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/apps/{}/policies/{}/make_reusable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/policies/{policy_id}/make_reusable"
+    },
+    "PUT /accounts/{}/access/apps/{}/policies/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/policies/{policy_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/apps/{}/revoke_tokens": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/revoke_tokens",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/access/apps/{}/settings": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/settings",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/apps/{}/settings": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}/settings",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/apps/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/apps/{app_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/bookmarks/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /accounts/{}/access/bookmarks",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/bookmarks/{bookmark_id}"
+    },
+    "PUT /accounts/{}/access/bookmarks/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /accounts/{}/access/bookmarks",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/access/bookmarks/{bookmark_id}"
+    },
+    "PUT /accounts/{}/access/certificates/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/certificates/{certificate_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/certificates/settings": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/access/certificates/settings"
+    },
+    "POST /accounts/{}/access/certificates": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/certificates",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/custom_pages/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/custom_pages/{custom_page_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/gateway_ca": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/gateway_ca",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/groups/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/groups/{group_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/identity_providers/{}/saml_certificate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/identity_providers/{identity_provider_id}/saml_certificate",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/identity_providers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/identity_providers/{identity_provider_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/idp_federation_grants": {
+      "reason": "admin_only",
+      "notes": "Account/org-level Access identity-federation grant (federates a whole Zero Trust org with another). Not a per-zone resource and does not affect how the migrating zone serves traffic; lives under the account, outside per-zone migration scope.",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/access/idp_federation_grants"
+    },
+    "POST /accounts/{}/access/keys/rotate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/keys/rotate",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/keys": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/keys",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/organizations/doh": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/organizations/doh",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/organizations/revoke_user": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/organizations/revoke_user",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/organizations": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/organizations",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/organizations": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/organizations",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/policies/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/policies/{policy_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/policies": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/policies",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/policy-tests": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/policy-tests",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/saml_certificates/{}/rotate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/saml_certificates/{saml_cert_set_id}/rotate",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/access/seats": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/access/seats"
+    },
+    "POST /accounts/{}/access/service_tokens/{}/refresh": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/service_tokens/{service_token_id}/refresh",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/service_tokens/{}/rotate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/service_tokens/{service_token_id}/rotate",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/service_tokens/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/service_tokens/{service_token_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/service_tokens": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/service_tokens",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/tags/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/tags/{tag_name}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/access/users/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/users/{user_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/access/users": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/access/users",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/ai-gateway/billing/spending-limit": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/billing/spending-limit",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/ai-gateway/billing/topup/config": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/billing/topup/config",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/ai-gateway/billing/topup/status": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/billing/topup/status",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/ai-gateway/billing/topup": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/billing/topup",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/ai-gateway/custom-providers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/ai-gateway/custom-providers/{id}"
+    },
+    "PATCH /accounts/{}/ai-gateway/custom-providers/costs/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/ai-gateway/custom-providers/costs/{id}"
+    },
+    "PUT /accounts/{}/ai-gateway/gateways/{}/datasets/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/datasets/{id}"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/datasets": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/datasets"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/evaluations": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/evaluations"
+    },
+    "PATCH /accounts/{}/ai-gateway/gateways/{}/logs/{}": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/logs/{id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/ai-gateway/gateways/{}/provider_configs/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/provider_configs/{id}"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/provider_configs": {
+      "reason": "impossible_cryptographic",
+      "notes": "BYOK provider config references a write-only `secret` (unreadable from source) plus a source-account `secret_id`, so the migrate engine acknowledges it rather than recreating (see src/migrate/zone-extras.ts; AiGatewayProviderConfig in src/api.ts). createAiGatewayProviderConfig is kept correct for the api-v1 surface but is intentionally never called by migrate.",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/provider_configs"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/routes/{}/deployments": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/routes/{id}/deployments"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/routes/{}/versions": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/routes/{id}/versions"
+    },
+    "PATCH /accounts/{}/ai-gateway/gateways/{}/routes/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/routes/{id}"
+    },
+    "POST /accounts/{}/ai-gateway/gateways/{}/routes": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "ai_gateway",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{gateway_id}/routes"
+    },
+    "PUT /accounts/{}/ai-gateway/gateways/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "ai_gateway",
+      "example_path": "/accounts/{account_id}/ai-gateway/gateways/{id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/d1/database/{}/export": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "d1",
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}/export",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/d1/database/{}/import": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "d1",
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}/import",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/d1/database/{}/query": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "d1",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}/query"
+    },
+    "POST /accounts/{}/d1/database/{}/raw": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "d1",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}/raw"
+    },
+    "POST /accounts/{}/d1/database/{}/time_travel/restore": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "d1",
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}/time_travel/restore",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/d1/database/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "d1",
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/d1/database/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "d1",
+      "example_path": "/accounts/{account_id}/d1/database/{database_id}",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/email/routing/addresses/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/routing/addresses/{destination_address_identifier}"
+    },
+    "POST /accounts/{}/email/routing/suppression": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/routing/suppression"
+    },
+    "POST /accounts/{}/email/sending/send_raw": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "example_path": "/accounts/{account_id}/email/sending/send_raw",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/email/sending/send": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "example_path": "/accounts/{account_id}/email/sending/send",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/email/sending/suppression": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/sending/suppression"
+    },
+    "PATCH /accounts/{}/firewall/access_rules/rules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/accounts/{account_id}/firewall/access_rules/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/firewall/access_rules/rules": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /zones/{}/firewall/access_rules/rules",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/accounts/{account_id}/firewall/access_rules/rules",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/hyperdrive/configs/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "hyperdrive",
+      "example_path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/hyperdrive/configs/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "hyperdrive",
+      "example_path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/load_balancers/monitor_groups/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/monitor_groups/{monitor_group_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/load_balancers/monitor_groups/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/monitor_groups/{monitor_group_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/load_balancers/monitors/{}/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/monitors/{monitor_id}/preview",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/load_balancers/monitors/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/monitors/{monitor_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/load_balancers/monitors/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/monitors/{monitor_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/load_balancers/pools/{}/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/pools/{pool_id}/preview",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/load_balancers/pools/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/pools/{pool_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/load_balancers/pools/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/accounts/{account_id}/load_balancers/pools/{pool_id}",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/load_balancers/pools": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/load_balancers/pools"
+    },
+    "PUT /accounts/{}/logpush/jobs/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/logpush/jobs/{job_id}"
+    },
+    "POST /accounts/{}/logpush/ownership/validate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logpush/ownership/validate",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/logpush/ownership": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logpush/ownership",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/logpush/validate/destination/exists": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logpush/validate/destination/exists",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/logpush/validate/destination": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logpush/validate/destination",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/logpush/validate/origin": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logpush/validate/origin",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/logs/control/cmb/config": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/accounts/{account_id}/logs/control/cmb/config",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/logs/explorer/datasets/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/logs/explorer/datasets/{dataset_id}"
+    },
+    "POST /accounts/{}/logs/explorer/datasets": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/logs/explorer/datasets"
+    },
+    "POST /accounts/{}/logs/explorer/query/sql": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/logs/explorer/query/sql"
+    },
+    "PUT /accounts/{}/pipelines/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/{pipeline_name}"
+    },
+    "POST /accounts/{}/pipelines/v1/pipelines": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/v1/pipelines"
+    },
+    "POST /accounts/{}/pipelines/v1/sinks": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/v1/sinks"
+    },
+    "PATCH /accounts/{}/pipelines/v1/streams/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/v1/streams/{stream_id}"
+    },
+    "POST /accounts/{}/pipelines/v1/streams": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/v1/streams"
+    },
+    "POST /accounts/{}/pipelines/v1/validate_sql": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines/v1/validate_sql"
+    },
+    "POST /accounts/{}/pipelines": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "pipelines",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/pipelines"
+    },
+    "PUT /accounts/{}/queues/{}/consumers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/consumers/{consumer_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/queues/{}/messages/ack": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages/ack",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/queues/{}/messages/batch": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages/batch",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/queues/{}/messages/preview/ack": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages/preview/ack"
+    },
+    "POST /accounts/{}/queues/{}/messages/preview": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages/preview"
+    },
+    "POST /accounts/{}/queues/{}/messages/pull": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages/pull",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/queues/{}/messages": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/messages",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/queues/{}/purge": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}/purge",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/queues/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/queues/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "queues",
+      "example_path": "/accounts/{account_id}/queues/{queue_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2-catalog/{}/credential": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2-catalog/{bucket_name}/credential",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2-catalog/{}/disable": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2-catalog/{bucket_name}/disable",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2-catalog/{}/enable": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2-catalog/{bucket_name}/enable",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2-catalog/{}/maintenance-configs": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2-catalog/{bucket_name}/maintenance-configs",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2-catalog/{}/namespaces/{}/tables/{}/maintenance-configs": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2-catalog/{bucket_name}/namespaces/{namespace}/tables/{table_name}/maintenance-configs",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/r2/buckets/{}/local-uploads": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/r2/buckets/{bucket_name}/local-uploads"
+    },
+    "PUT /accounts/{}/r2/buckets/{}/objects/{}": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2/buckets/{bucket_name}/objects/{object_key}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/r2/buckets/{}/sippy": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "r2",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/r2/buckets/{bucket_name}/sippy"
+    },
+    "PATCH /accounts/{}/r2/buckets/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2/buckets/{bucket_name}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/r2/temp-access-credentials": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "r2",
+      "example_path": "/accounts/{account_id}/r2/temp-access-credentials",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/rulesets/{}/rules/{}": {
+      "reason": "redundant_with_ruleset_put",
+      "covers": "PUT /accounts/{}/rulesets/{}",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/accounts/{account_id}/rulesets/{ruleset_id}/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/rulesets/{}/rules": {
+      "reason": "redundant_with_ruleset_put",
+      "covers": "PUT /accounts/{}/rulesets/{}",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/accounts/{account_id}/rulesets/{ruleset_id}/rules",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/rulesets/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/accounts/{account_id}/rulesets/{ruleset_id}",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/scim/v2/Groups/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/scim/v2/Groups/{group_id}"
+    },
+    "POST /accounts/{}/scim/v2/Groups": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/scim/v2/Groups"
+    },
+    "PATCH /accounts/{}/scim/v2/Users/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/scim/v2/Users/{user_id}"
+    },
+    "PUT /accounts/{}/scim/v2/Users/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/scim/v2/Users/{user_id}"
+    },
+    "POST /accounts/{}/scim/v2/Users": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/scim/v2/Users"
+    },
+    "PUT /accounts/{}/secondary_dns/acls/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /accounts/{}/secondary_dns/acls",
+      "notes": "",
+      "feature": "secondary_dns",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/secondary_dns/acls/{acl_id}"
+    },
+    "PUT /accounts/{}/secondary_dns/peers/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /accounts/{}/secondary_dns/peers",
+      "notes": "",
+      "feature": "secondary_dns",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/secondary_dns/peers/{peer_id}"
+    },
+    "PUT /accounts/{}/secondary_dns/tsigs/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /accounts/{}/secondary_dns/tsigs",
+      "notes": "",
+      "feature": "secondary_dns",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/secondary_dns/tsigs/{tsig_id}"
+    },
+    "POST /accounts/{}/secrets_store/stores/{}/secrets/{}/duplicate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secrets_store",
+      "example_path": "/accounts/{account_id}/secrets_store/stores/{store_id}/secrets/{secret_id}/duplicate",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/secrets_store/stores/{}/secrets/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secrets_store",
+      "example_path": "/accounts/{account_id}/secrets_store/stores/{store_id}/secrets/{secret_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/sso_connectors/{}/begin_verification": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/sso_connectors/{sso_connector_id}/begin_verification",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/sso_connectors/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/sso_connectors/{sso_connector_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/sso_connectors": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/accounts/{account_id}/sso_connectors",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/storage/kv/namespaces/{}/bulk/delete": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "kv",
+      "example_path": "/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/bulk/delete",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/storage/kv/namespaces/{}/bulk/get": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "kv",
+      "example_path": "/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/bulk/get",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/storage/kv/namespaces/{}/bulk": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "kv",
+      "example_path": "/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/bulk",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/storage/kv/namespaces/{}/values/{}": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "kv",
+      "example_path": "/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/{key_name}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/storage/kv/namespaces/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "kv",
+      "example_path": "/accounts/{account_id}/storage/kv/namespaces/{namespace_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/indexes/{}/delete-by-ids": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}/delete-by-ids"
+    },
+    "POST /accounts/{}/vectorize/indexes/{}/get-by-ids": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}/get-by-ids"
+    },
+    "POST /accounts/{}/vectorize/indexes/{}/insert": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}/insert"
+    },
+    "POST /accounts/{}/vectorize/indexes/{}/query": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}/query"
+    },
+    "POST /accounts/{}/vectorize/indexes/{}/upsert": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}/upsert"
+    },
+    "PUT /accounts/{}/vectorize/indexes/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes/{index_name}"
+    },
+    "POST /accounts/{}/vectorize/indexes": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "vectorize",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/vectorize/indexes"
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/delete_by_ids": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/delete_by_ids",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/get_by_ids": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/get_by_ids",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/insert": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/insert",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/metadata_index/create": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/metadata_index/create",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/metadata_index/delete": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/metadata_index/delete",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/query": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/query",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/vectorize/v2/indexes/{}/upsert": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "vectorize",
+      "example_path": "/accounts/{account_id}/vectorize/v2/indexes/{index_name}/upsert",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/account-settings": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/account-settings",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workers/assets/upload": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/assets/upload"
+    },
+    "POST /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/assets-upload-session": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/assets-upload-session"
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/content": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/content"
+    },
+    "PATCH /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/secrets-bulk": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/secrets-bulk",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/secrets": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/secrets"
+    },
+    "PATCH /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/settings": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/settings"
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/tags/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/tags/{tag}"
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}/tags": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}/tags"
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}/scripts/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}/scripts/{script_name}"
+    },
+    "PATCH /accounts/{}/workers/dispatch/namespaces/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}"
+    },
+    "PUT /accounts/{}/workers/dispatch/namespaces/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces/{dispatch_namespace}"
+    },
+    "POST /accounts/{}/workers/dispatch/namespaces": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/dispatch/namespaces"
+    },
+    "PUT /accounts/{}/workers/domains": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/domains",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/observability/destinations/{}": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/observability/destinations/{slug}"
+    },
+    "PATCH /accounts/{}/workers/observability/queries/{}": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/queries/{queryId}"
+    },
+    "POST /accounts/{}/workers/observability/shared/query": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/shared/query"
+    },
+    "POST /accounts/{}/workers/observability/telemetry/keys": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/telemetry/keys"
+    },
+    "POST /accounts/{}/workers/observability/telemetry/live-tail/heartbeat": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/telemetry/live-tail/heartbeat"
+    },
+    "POST /accounts/{}/workers/observability/telemetry/live-tail": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/telemetry/live-tail"
+    },
+    "POST /accounts/{}/workers/observability/telemetry/query": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": true,
+      "example_path": "/accounts/{account_id}/workers/observability/telemetry/query"
+    },
+    "POST /accounts/{}/workers/observability/telemetry/values": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/telemetry/values"
+    },
+    "POST /accounts/{}/workers/scripts/{}/assets-upload-session": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/assets-upload-session",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/scripts/{}/content": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/content",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workers/scripts/{}/deployments": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/deployments",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/scripts/{}/schedules": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/schedules",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/scripts/{}/script-settings": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/script-settings",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/scripts/{}/secrets-bulk": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/secrets-bulk",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/scripts/{}/settings": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/settings",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workers/scripts/{}/subdomain": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/subdomain",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workers/scripts/{}/tails": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/tails",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/scripts/{}/usage-model": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/usage-model"
+    },
+    "POST /accounts/{}/workers/scripts/{}/versions": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}/versions",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/scripts/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/scripts/{script_name}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/services/{}/environments/{}/content": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/services/{service_name}/environments/{environment_name}/content"
+    },
+    "PATCH /accounts/{}/workers/services/{}/environments/{}/settings": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/services/{service_name}/environments/{environment_name}/settings"
+    },
+    "PUT /accounts/{}/workers/subdomain": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/subdomain",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/workers/{}/versions/latest": {
+      "reason": "redundant_with_bundle_put",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/workers/{worker_id}/versions/latest"
+    },
+    "POST /accounts/{}/workers/workers/{}/versions": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/workers/{worker_id}/versions",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workers/workers/{}": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/workers/{worker_id}",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workers/workers/{}": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/workers/{worker_id}",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workers/workers": {
+      "reason": "redundant_with_bundle_put",
+      "covers": "PUT /accounts/{}/workers/scripts/{}",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/accounts/{account_id}/workers/workers",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workflows/{}/instances/{}/events/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workflows",
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}/instances/{instance_id}/events/{event_type}",
+      "in_sdk": true
+    },
+    "PATCH /accounts/{}/workflows/{}/instances/{}/status": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workflows",
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}/instances/{instance_id}/status",
+      "in_sdk": true
+    },
+    "POST /accounts/{}/workflows/{}/instances/batch/terminate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workflows",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}/instances/batch/terminate"
+    },
+    "POST /accounts/{}/workflows/{}/instances/batch": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workflows",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}/instances/batch"
+    },
+    "POST /accounts/{}/workflows/{}/instances": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workflows",
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}/instances",
+      "in_sdk": true
+    },
+    "PUT /accounts/{}/workflows/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "workflows",
+      "example_path": "/accounts/{account_id}/workflows/{workflow_name}",
+      "in_sdk": true
+    },
+    "POST /workers/builds/deploy_hooks/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "workers",
+      "in_sdk": false,
+      "example_path": "/workers/builds/deploy_hooks/{deploy_hook_uuid}"
+    },
+    "POST /zones/{}/access/apps/{}/ca": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/ca",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/apps/{}/policies/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/policies/{policy_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/apps/{}/policies": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /accounts/{}/access/apps/{}/policies",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/policies",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/apps/{}/revoke_tokens": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/revoke_tokens",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/access/apps/{}/settings": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/settings",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/apps/{}/settings": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}/settings",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/apps/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps/{app_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/apps": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /accounts/{}/access/apps",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/apps",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/certificates/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/certificates/{certificate_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/certificates/settings": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/access/certificates/settings"
+    },
+    "POST /zones/{}/access/certificates": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/certificates",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/groups/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/groups/{group_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/groups": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /accounts/{}/access/groups",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/groups",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/identity_providers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/identity_providers/{identity_provider_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/identity_providers": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /accounts/{}/access/identity_providers",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/identity_providers",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/organizations/revoke_user": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/organizations/revoke_user",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/organizations": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/organizations",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/organizations": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/organizations",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/access/service_tokens/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "access",
+      "example_path": "/zones/{zone_id}/access/service_tokens/{service_token_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/access/service_tokens": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "access",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/access/service_tokens"
+    },
+    "POST /zones/{}/acm/custom_trust_store": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/acm/custom_trust_store",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/activation_check": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/activation_check",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/addressing/regional_hostnames/{}": {
+      "reason": "updated_via_post",
+      "notes": "Regional Hostnames are re-created fresh on the destination via POST /zones/{zone_id}/addressing/regional_hostnames (createRegionalHostname, migrated in src/migrate/zone-extras.ts). Migration never patches a regional hostname in place, so this PATCH is covered by the POST.",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/addressing/regional_hostnames/{hostname}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/api_gateway/discovery/operations/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/discovery/operations/{discovery_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/api_gateway/discovery/operations": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/discovery/operations",
+      "in_sdk": true
+    },
+    "POST /zones/{}/api_gateway/expression-template/fallthrough": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/expression-template/fallthrough",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/api_gateway/labels/managed/{}/resources/operation": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/labels/managed/{name}/resources/operation"
+    },
+    "PUT /zones/{}/api_gateway/labels/user/{}/resources/operation": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/api_gateway/labels/user",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/labels/user/{name}/resources/operation"
+    },
+    "PATCH /zones/{}/api_gateway/labels/user/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/labels/user/{name}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/api_gateway/labels/user/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/labels/user/{name}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/api_gateway/operations/{}/labels": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/{operation_id}/labels"
+    },
+    "PUT /zones/{}/api_gateway/operations/{}/labels": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/{operation_id}/labels"
+    },
+    "PUT /zones/{}/api_gateway/operations/{}/schema_validation": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations/schema_validation",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/{operation_id}/schema_validation"
+    },
+    "POST /zones/{}/api_gateway/operations/item": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/item"
+    },
+    "POST /zones/{}/api_gateway/operations/labels": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/labels"
+    },
+    "PUT /zones/{}/api_gateway/operations/labels": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/api_gateway/operations/labels"
+    },
+    "PATCH /zones/{}/api_gateway/settings/schema_validation": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/schema_validation/settings",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/settings/schema_validation"
+    },
+    "PUT /zones/{}/api_gateway/settings/schema_validation": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/schema_validation/settings",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/api_gateway/settings/schema_validation"
+    },
+    "PATCH /zones/{}/api_gateway/user_schemas/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/api_gateway/user_schemas/{schema_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/bot_management/feedback": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "bot_management",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/bot_management/feedback"
+    },
+    "POST /zones/{}/cache/cache_reserve_clear": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "caching",
+      "example_path": "/zones/{zone_id}/cache/cache_reserve_clear",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/cache/origin_cloud_regions": {
+      "reason": "redundant_with_put",
+      "covers": "PATCH /zones/{}/cache/origin_cloud_regions/batch",
+      "notes": "",
+      "feature": "caching",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/cache/origin_cloud_regions"
+    },
+    "POST /zones/{}/cache/origin_cloud_regions": {
+      "reason": "redundant_with_post",
+      "covers": "PATCH /zones/{}/cache/origin_cloud_regions/batch",
+      "notes": "",
+      "feature": "caching",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/cache/origin_cloud_regions"
+    },
+    "PATCH /zones/{}/cache/tiered_cache_smart_topology_enable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "caching",
+      "example_path": "/zones/{zone_id}/cache/tiered_cache_smart_topology_enable",
+      "in_sdk": true
+    },
+    "POST /zones/{}/cache/tiered_cache_smart_topology_enable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "caching",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/cache/tiered_cache_smart_topology_enable"
+    },
+    "PATCH /zones/{}/client_certificates/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/client_certificates/{client_certificate_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/client_certificates": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/client_certificates",
+      "in_sdk": true
+    },
+    "POST /zones/{}/content-upload-scan/disable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "content_upload_scan",
+      "example_path": "/zones/{zone_id}/content-upload-scan/disable",
+      "in_sdk": true
+    },
+    "POST /zones/{}/content-upload-scan/enable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "content_upload_scan",
+      "example_path": "/zones/{zone_id}/content-upload-scan/enable",
+      "in_sdk": true
+    },
+    "POST /zones/{}/content-upload-scan/payloads": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "content_upload_scan",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/content-upload-scan/payloads"
+    },
+    "PATCH /zones/{}/custom_certificates/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/custom_certificates/{custom_certificate_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/custom_csrs": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ssl_tls",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/custom_csrs"
+    },
+    "PUT /zones/{}/custom_hostnames/{}/certificate_pack/{}/certificates/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "custom_hostnames",
+      "example_path": "/zones/{zone_id}/custom_hostnames/{custom_hostname_id}/certificate_pack/{certificate_pack_id}/certificates/{certificate_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/custom_hostnames/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "custom_hostnames",
+      "example_path": "/zones/{zone_id}/custom_hostnames/{custom_hostname_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/devices/policy/certificates": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/devices/policy/certificates",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/dns_records/{}": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/dns_records/{}",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/{dns_record_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/dns_records/batch": {
+      "reason": "redundant_with_record_post",
+      "covers": "POST /zones/{}/dns_records",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/batch",
+      "in_sdk": true
+    },
+    "POST /zones/{}/dns_records/import": {
+      "reason": "redundant_with_record_post",
+      "covers": "POST /zones/{}/dns_records",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/import",
+      "in_sdk": true
+    },
+    "POST /zones/{}/dns_records/scan/review": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/scan/review",
+      "in_sdk": true
+    },
+    "POST /zones/{}/dns_records/scan/trigger": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/scan/trigger",
+      "in_sdk": true
+    },
+    "POST /zones/{}/dns_records/scan": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "dns",
+      "example_path": "/zones/{zone_id}/dns_records/scan",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/dnssec": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "dnssec",
+      "example_path": "/zones/{zone_id}/dnssec",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/email/auth/dmarc-reports": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/auth/dmarc-reports"
+    },
+    "POST /zones/{}/email/routing/disable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "email_routing",
+      "example_path": "/zones/{zone_id}/email/routing/disable",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/email/routing/dns": {
+      "reason": "redundant_with_post_dns",
+      "covers": "POST /zones/{}/email/routing/dns",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/email/routing/dns"
+    },
+    "POST /zones/{}/email/routing/enable": {
+      "reason": "redundant_with_post_dns",
+      "covers": "POST /zones/{}/email/routing/dns",
+      "notes": "",
+      "feature": "email_routing",
+      "example_path": "/zones/{zone_id}/email/routing/enable",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/email/routing/rules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "email_routing",
+      "example_path": "/zones/{zone_id}/email/routing/rules/{rule_identifier}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/email/routing/suppression": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/routing/suppression"
+    },
+    "POST /zones/{}/email/routing/unlock": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/routing/unlock"
+    },
+    "PUT /zones/{}/email/routing": {
+      "reason": "redundant_with_put",
+      "covers": "PATCH /zones/{}/email/routing",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/routing"
+    },
+    "POST /zones/{}/email/sending/subdomains/{}/dns": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/sending/subdomains/{subdomain_id}/dns"
+    },
+    "POST /zones/{}/email/sending/subdomains/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/sending/subdomains/preview"
+    },
+    "POST /zones/{}/email/sending/suppression": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/sending/suppression"
+    },
+    "POST /zones/{}/environments/{}/purge_cache": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/environments/{environment_id}/purge_cache"
+    },
+    "POST /zones/{}/environments/{}/rollback": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/environments/{environment_id}/rollback",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/environments": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/environments"
+    },
+    "POST /zones/{}/environments": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/environments"
+    },
+    "PUT /zones/{}/environments": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/environments"
+    },
+    "PUT /zones/{}/filters/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/filters/{filter_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/filters": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/filters"
+    },
+    "PUT /zones/{}/filters": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/filters"
+    },
+    "PATCH /zones/{}/firewall/access_rules/rules/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/firewall/access_rules/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/firewall/lockdowns/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/firewall/lockdowns/{lock_downs_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/firewall/rules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/firewall/rules/{rule_id}"
+    },
+    "PUT /zones/{}/firewall/rules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/firewall/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/firewall/rules": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/firewall/rules"
+    },
+    "PUT /zones/{}/firewall/rules": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/firewall/rules"
+    },
+    "PUT /zones/{}/firewall/ua_rules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/firewall/ua_rules/{ua_rule_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/firewall/waf/overrides/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_firewall",
+      "example_path": "/zones/{zone_id}/firewall/waf/overrides/{overrides_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/firewall/waf/overrides": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/firewall/waf/overrides"
+    },
+    "PATCH /zones/{}/firewall/waf/packages/{}/groups/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/firewall/waf/packages/{package_id}/groups/{group_id}"
+    },
+    "PATCH /zones/{}/firewall/waf/packages/{}/rules/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/firewall/waf/packages/{package_id}/rules/{rule_id}"
+    },
+    "PATCH /zones/{}/firewall/waf/packages/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "rules_firewall",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/firewall/waf/packages/{package_id}"
+    },
+    "PATCH /zones/{}/healthchecks/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/zones/{zone_id}/healthchecks/{healthcheck_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/healthchecks/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/zones/{zone_id}/healthchecks/{healthcheck_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/healthchecks/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/zones/{zone_id}/healthchecks/preview",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/hold": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/hold",
+      "in_sdk": true
+    },
+    "POST /zones/{}/hold": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/hold",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/hostnames/settings/{}/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "custom_hostnames",
+      "example_path": "/zones/{zone_id}/hostnames/settings/{setting_id}/{hostname}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/intel/sinkholes/{}/ingresses/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "Zone Intel sinkhole ingress rule (threat-intel DNS sinkholing telemetry). Does not affect how the zone serves normal traffic, and the parent sinkhole resource is not migrated; sub-feature out of zone-migration scope.",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/intel/sinkholes/{sinkhole_id}/ingresses/{ingress_id}"
+    },
+    "POST /zones/{}/intel/sinkholes/{}/ingresses": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "Zone Intel sinkhole ingress rule (threat-intel DNS sinkholing telemetry). Does not affect how the zone serves normal traffic, and the parent sinkhole resource is not migrated; sub-feature out of zone-migration scope.",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/intel/sinkholes/{sinkhole_id}/ingresses"
+    },
+    "PUT /zones/{}/leaked-credential-checks/detections/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "leaked_credentials",
+      "example_path": "/zones/{zone_id}/leaked-credential-checks/detections/{detection_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/load_balancers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/zones/{zone_id}/load_balancers/{load_balancer_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/load_balancers/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "load_balancing",
+      "example_path": "/zones/{zone_id}/load_balancers/{load_balancer_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/edge/jobs": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/edge/jobs",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/logpush/jobs/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/jobs/{job_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/ownership/validate": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/ownership/validate",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/ownership": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/ownership",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/validate/destination/exists": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/validate/destination/exists",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/validate/destination": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/validate/destination",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logpush/validate/origin": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logpush/validate/origin",
+      "in_sdk": true
+    },
+    "POST /zones/{}/logs/control/retention/flag": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "logs_logpush",
+      "example_path": "/zones/{zone_id}/logs/control/retention/flag",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/logs/explorer/datasets/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/logs/explorer/datasets/{dataset_id}"
+    },
+    "POST /zones/{}/logs/explorer/datasets": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/logs/explorer/datasets"
+    },
+    "POST /zones/{}/logs/explorer/query/sql": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "logs_logpush",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/logs/explorer/query/sql"
+    },
+    "POST /zones/{}/origin_tls_client_auth/hostnames/certificates": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/origin_tls_client_auth/hostnames/certificates",
+      "in_sdk": true
+    },
+    "POST /zones/{}/origin_tls_client_auth": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/origin_tls_client_auth",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/origin/cloud_regions/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "origin_rules",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/origin/cloud_regions/{origin_ip}"
+    },
+    "PUT /zones/{}/origin/cloud_regions/batch": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "origin_rules",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/origin/cloud_regions/batch"
+    },
+    "PUT /zones/{}/page_shield/policies/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "page_shield",
+      "example_path": "/zones/{zone_id}/page_shield/policies/{policy_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/pagerules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_pagerules",
+      "example_path": "/zones/{zone_id}/pagerules/{pagerule_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/pagerules/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_pagerules",
+      "example_path": "/zones/{zone_id}/pagerules/{pagerule_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/pay-per-crawl/configuration": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/pay-per-crawl/configuration"
+    },
+    "POST /zones/{}/purge_cache": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "caching",
+      "example_path": "/zones/{zone_id}/purge_cache",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/rate_limits/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "rules_rate_limits",
+      "example_path": "/zones/{zone_id}/rate_limits/{rate_limit_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/rulesets/{}/rules/{}": {
+      "reason": "redundant_with_ruleset_put",
+      "covers": "PUT /zones/{}/rulesets/{}",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/zones/{zone_id}/rulesets/{ruleset_id}/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/rulesets/{}/rules": {
+      "reason": "redundant_with_ruleset_put",
+      "covers": "PUT /zones/{}/rulesets/{}",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/zones/{zone_id}/rulesets/{ruleset_id}/rules",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/rulesets/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/zones/{zone_id}/rulesets/{ruleset_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/rulesets": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /accounts/{}/rulesets",
+      "notes": "",
+      "feature": "rules_waf",
+      "example_path": "/zones/{zone_id}/rulesets",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/schema_validation/schemas/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/schema_validation/schemas/{schema_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/schema_validation/settings/operations/{}": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations/schema_validation",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/schema_validation/settings/operations/{operation_id}"
+    },
+    "PATCH /zones/{}/schema_validation/settings/operations": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/api_gateway/operations/schema_validation",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/schema_validation/settings/operations"
+    },
+    "PATCH /zones/{}/schema_validation/settings": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/schema_validation/settings",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/schema_validation/settings",
+      "in_sdk": true
+    },
+    "POST /zones/{}/secondary_dns/force_axfr": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secondary_dns",
+      "example_path": "/zones/{zone_id}/secondary_dns/force_axfr",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/secondary_dns/incoming": {
+      "reason": "updated_via_post",
+      "covers": "POST /zones/{}/secondary_dns/incoming",
+      "notes": "",
+      "feature": "secondary_dns",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/secondary_dns/incoming"
+    },
+    "POST /zones/{}/secondary_dns/outgoing/disable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secondary_dns",
+      "example_path": "/zones/{zone_id}/secondary_dns/outgoing/disable",
+      "in_sdk": true
+    },
+    "POST /zones/{}/secondary_dns/outgoing/enable": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secondary_dns",
+      "example_path": "/zones/{zone_id}/secondary_dns/outgoing/enable",
+      "in_sdk": true
+    },
+    "POST /zones/{}/secondary_dns/outgoing/force_notify": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "secondary_dns",
+      "example_path": "/zones/{zone_id}/secondary_dns/outgoing/force_notify",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/secondary_dns/outgoing": {
+      "reason": "updated_via_post",
+      "covers": "POST /zones/{}/secondary_dns/outgoing",
+      "notes": "",
+      "feature": "secondary_dns",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/secondary_dns/outgoing"
+    },
+    "PATCH /zones/{}/settings/aegis": {
+      "reason": "impossible_account_tied",
+      "notes": "Aegis is an account-tied/paid feature (dedicated egress IPs), acknowledged in IMPOSSIBLE_TO_MIGRATE alongside BYOIP. It is NOT in the curated ZONE_SETTINGS list, so the export-zone dedicated-endpoint backfill deliberately skips it — not covered by the settings loop, excluded as account-tied rather than redundant.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/aegis"
+    },
+    "PATCH /zones/{}/settings/csam_scanner_third_party": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated zone-setting endpoint (absent from the aggregate GET /zones/{id}/settings). Now migrated by TZ's generic settings loop, fed by the curated dedicated-endpoint backfill added to ZONE_SETTINGS in src/fuzz.ts.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/csam_scanner_third_party"
+    },
+    "PATCH /zones/{}/settings/fonts": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET; export-zone now backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/fonts URL, so it is genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/fonts"
+    },
+    "PATCH /zones/{}/settings/origin_h2_max_streams": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET; export-zone now backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/origin_h2_max_streams URL, so it is genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/origin_h2_max_streams"
+    },
+    "PATCH /zones/{}/settings/origin_max_http_version": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET; export-zone now backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/origin_max_http_version URL, so it is genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/origin_max_http_version"
+    },
+    "PATCH /zones/{}/settings/origin_tls_compliance_modes": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/origin_tls_compliance_modes"
+    },
+    "PUT /zones/{}/settings/origin_tls_compliance_modes": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/origin_tls_compliance_modes"
+    },
+    "PATCH /zones/{}/settings/rum": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET. rum's PATCH value shape was verified live (2026-06-02): a plain on/off string. It is now in the curated ZONE_SETTINGS list, so export-zone backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/rum URL — genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/rum"
+    },
+    "PATCH /zones/{}/settings/speed_brain": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET; export-zone now backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/speed_brain URL, so it is genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/speed_brain"
+    },
+    "PATCH /zones/{}/settings/ssl_automatic_mode": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "Dedicated-endpoint setting omitted by the aggregate GET; export-zone now backfills it via getZoneSetting and the settings loop PATCHes it via the same /settings/ssl_automatic_mode URL, so it is genuinely covered.",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings/ssl_automatic_mode"
+    },
+    "PUT /zones/{}/settings/zaraz/history": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/settings/zaraz/history"
+    },
+    "POST /zones/{}/settings/zaraz/publish": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/settings/zaraz/publish"
+    },
+    "PUT /zones/{}/settings/zaraz/workflow": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/settings/zaraz/workflow"
+    },
+    "PATCH /zones/{}/settings": {
+      "reason": "redundant_with_settings_loop",
+      "notes": "",
+      "feature": "zone_settings",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/settings"
+    },
+    "POST /zones/{}/smart_shield/cache_reserve_clear": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "smart_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/smart_shield/cache_reserve_clear"
+    },
+    "PATCH /zones/{}/smart_shield/healthchecks/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /zones/{}/smart_shield/healthchecks",
+      "notes": "",
+      "feature": "smart_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/smart_shield/healthchecks/{healthcheck_id}"
+    },
+    "PUT /zones/{}/smart_shield/healthchecks/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /zones/{}/smart_shield/healthchecks",
+      "notes": "",
+      "feature": "smart_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/smart_shield/healthchecks/{healthcheck_id}"
+    },
+    "PUT /zones/{}/snippets/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "snippets",
+      "example_path": "/zones/{zone_id}/snippets/{snippet_name}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/spectrum/apps/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "spectrum",
+      "example_path": "/zones/{zone_id}/spectrum/apps/{app_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/speed_api/pages/{}/tests": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "speed_api",
+      "example_path": "/zones/{zone_id}/speed_api/pages/{url}/tests",
+      "in_sdk": true
+    },
+    "POST /zones/{}/speed_api/schedule/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "speed_api",
+      "example_path": "/zones/{zone_id}/speed_api/schedule/{url}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/ssl/analyze": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/ssl/analyze",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/ssl/certificate_packs/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/ssl/certificate_packs/{certificate_pack_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/ssl/certificate_packs/order": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/ssl/certificate_packs/order",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/ssl/universal/settings": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/ssl/universal/settings",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/ssl/verification/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "ssl_tls",
+      "example_path": "/zones/{zone_id}/ssl/verification/{certificate_pack_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/subscription": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/subscription",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/tags": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}/tags",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/token_validation/config/{}/credentials": {
+      "reason": "impossible_cryptographic",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/token_validation/config/{config_id}/credentials"
+    },
+    "PATCH /zones/{}/token_validation/config/{}": {
+      "reason": "updated_via_post",
+      "covers": "POST /zones/{}/token_validation/config",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": true,
+      "example_path": "/zones/{zone_id}/token_validation/config/{config_id}"
+    },
+    "PATCH /zones/{}/token_validation/rules/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "api_shield",
+      "example_path": "/zones/{zone_id}/token_validation/rules/{rule_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/token_validation/rules/bulk": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/token_validation/rules",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/token_validation/rules/bulk"
+    },
+    "POST /zones/{}/token_validation/rules/bulk": {
+      "reason": "redundant_with_post",
+      "covers": "POST /zones/{}/token_validation/rules",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/token_validation/rules/bulk"
+    },
+    "POST /zones/{}/token_validation/rules/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/token_validation/rules/preview"
+    },
+    "PATCH /zones/{}/waiting_rooms/{}/events/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}/events/{event_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/waiting_rooms/{}/events/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}/events/{event_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/waiting_rooms/{}/rules/{}": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/waiting_rooms/{}/rules",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}/rules/{rule_id}"
+    },
+    "POST /zones/{}/waiting_rooms/{}/rules": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/waiting_rooms/{}/rules",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}/rules"
+    },
+    "PATCH /zones/{}/waiting_rooms/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/waiting_rooms/{}": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/{waiting_room_id}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/waiting_rooms/preview": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/preview",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/waiting_rooms/settings": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/waiting_rooms/settings",
+      "notes": "",
+      "feature": "waiting_rooms",
+      "example_path": "/zones/{zone_id}/waiting_rooms/settings",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/web3/hostnames/{}/ipfs_universal_path/content_list/entries/{}": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/web3/hostnames/{}/ipfs_universal_path/content_list",
+      "notes": "",
+      "feature": "web3",
+      "example_path": "/zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries/{content_list_entry_identifier}",
+      "in_sdk": true
+    },
+    "POST /zones/{}/web3/hostnames/{}/ipfs_universal_path/content_list/entries": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/web3/hostnames/{}/ipfs_universal_path/content_list",
+      "notes": "",
+      "feature": "web3",
+      "example_path": "/zones/{zone_id}/web3/hostnames/{identifier}/ipfs_universal_path/content_list/entries",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}/web3/hostnames/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "web3",
+      "example_path": "/zones/{zone_id}/web3/hostnames/{identifier}",
+      "in_sdk": true
+    },
+    "PUT /zones/{}/workers/routes/{}": {
+      "reason": "updated_via_post",
+      "notes": "",
+      "feature": "workers",
+      "example_path": "/zones/{zone_id}/workers/routes/{route_id}",
+      "in_sdk": true
+    },
+    "PATCH /zones/{}": {
+      "reason": "admin_only",
+      "notes": "",
+      "feature": "zone_admin",
+      "example_path": "/zones/{zone_id}",
+      "in_sdk": true
+    }
+  }
+}

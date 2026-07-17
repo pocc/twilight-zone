@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "company": "WorkerServiceBindingChain",
+    "rank": 5,
+    "domain": "test.example.com",
+    "profile": "worker-service-binding-chain",
+    "industry": "Test - Worker\u2192Worker service binding \u00d7 DO \u00d7 KV remap \u00d7 Access policy",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Real-world layering \u2014 the entire worker dependency graph in one config. Three workers: (parent) \u2192 (rpc-helper) via service binding; (parent) defines a DO class for state; (parent) reads from KV. Then an Access policy protects the parent's hostname. Grounded in: edge case #5 \u2014 no topological sort for service bindings (Worker A can fail if B uploads later in the parallel batch); edge case #4 \u2014 KV 'already exists' silently broken binding rewrite; edge case #7 \u2014 DO namespace creation timing; and a known Workers-O2O quirk where request.cf.tls* fields may be empty on SaaS-side workers (parent worker reads request.cf to exercise that surface). Stacks four assertions: service binding resolves, DO namespace binding created on dest (assertDoNamespaceCreated \u2014 namespace creation is automatic when a DO class binding is migrated; DO state copy is a separate opt-in assertion that requires Step 3 driver), Access IdP remapped, KV keys copied.",
+    "products": [
+      "dns",
+      "workers",
+      "service_bindings",
+      "durable_objects",
+      "kv_namespaces",
+      "kv_data",
+      "access_apps",
+      "access_policies"
+    ],
+    "postRun": "assertServiceBindingResolves,assertDoNamespaceCreated,assertAccessPolicyIdpRemapped,assertKvKeysCopied,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e05-worker-service-binding-chain.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Apex proxied"
+    },
+    {
+      "type": "A",
+      "name": "secured.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Access-protected hostname"
+    },
+    {
+      "type": "A",
+      "name": "api.test.example.com",
+      "content": "192.0.2.3",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Worker route target"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "title": "svcchain-config-store"
+    },
+    {
+      "title": "svcchain-cache-store"
+    }
+  ],
+  "kv_seed_data": {
+    "svcchain-config-store": [
+      {
+        "key": "config:version",
+        "value": "1.0.0"
+      },
+      {
+        "key": "config:env",
+        "value": "test",
+        "metadata": {
+          "owner": "svcchain-test"
+        }
+      },
+      {
+        "key": "config:feature:rpc",
+        "value": "enabled"
+      },
+      {
+        "key": "config:feature:tls-cf",
+        "value": "enabled",
+        "metadata": {
+          "note": "tests request.cf.tls* exposure"
+        }
+      },
+      {
+        "key": "config:rate-limit:default",
+        "value": "100"
+      },
+      {
+        "key": "config:rate-limit:premium",
+        "value": "10000"
+      },
+      {
+        "key": "config:timeout:ms",
+        "value": "5000"
+      },
+      {
+        "key": "config:debug",
+        "value": "false"
+      }
+    ],
+    "svcchain-cache-store": [
+      {
+        "key": "cache:warm:home",
+        "value": "<html>cached home</html>"
+      },
+      {
+        "key": "cache:warm:api/health",
+        "value": "{\"ok\":true}"
+      },
+      {
+        "key": "cache:warm:api/version",
+        "value": "{\"version\":\"1.0.0\"}"
+      }
+    ]
+  },
+  "workers": [
+    {
+      "name": "svcchain-rpc-helper",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "// RPC helper \u2014 child worker reachable via service binding (both fetch and RPC).\nexport class RpcEntrypoint {\n  async ping() { return 'pong-from-rpc-helper'; }\n  async getMetric(key) { return { key, value: Math.random() }; }\n}\nexport default {\n  async fetch(request) {\n    return Response.json({ from: 'svcchain-rpc-helper', path: new URL(request.url).pathname });\n  },\n};",
+      "bindings": []
+    },
+    {
+      "name": "svcchain-parent",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "// Parent worker \u2014 exercises service binding (fetch + RPC), DO, KV, and request.cf.tls* exposure.\n\nexport class SessionDO {\n  constructor(state) { this.state = state; }\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/incr') {\n      const c = (await this.state.storage.get('count') || 0) + 1;\n      await this.state.storage.put('count', c);\n      return Response.json({ count: c });\n    }\n    if (url.pathname === '/list') {\n      const all = await this.state.storage.list();\n      return Response.json([...all]);\n    }\n    return Response.json({ do: 'SessionDO' });\n  }\n}\n\nexport default {\n  async fetch(request, env) {\n    const url = new URL(request.url);\n    if (url.pathname === '/tls-info') {\n      // O2O quirk: request.cf.tls* may be empty on SaaS-side workers.\n      return Response.json({\n        tlsVersion: request.cf?.tlsVersion ?? null,\n        tlsCipher: request.cf?.tlsCipher ?? null,\n        tlsClientAuth: request.cf?.tlsClientAuth ?? null,\n      });\n    }\n    if (url.pathname === '/rpc-fetch') {\n      const r = await env.RPC_HELPER.fetch(new URL('/health', request.url));\n      return new Response(await r.text(), { headers: { 'X-Via': 'service-fetch' } });\n    }\n    if (url.pathname === '/rpc-call') {\n      const result = await env.RPC_HELPER_RPC.ping();\n      return Response.json({ result, via: 'rpc' });\n    }\n    if (url.pathname.startsWith('/do/')) {\n      const id = env.SESSION.idFromName('default');\n      const stub = env.SESSION.get(id);\n      return stub.fetch(request);\n    }\n    if (url.pathname === '/config') {\n      const v = await env.CONFIG.get('config:version');\n      return Response.json({ version: v });\n    }\n    if (url.pathname === '/cache') {\n      const v = await env.CACHE.get('cache:warm:home');\n      return new Response(v ?? '');\n    }\n    return Response.json({ from: 'svcchain-parent', help: ['/rpc-fetch', '/rpc-call', '/do/incr', '/do/list', '/config', '/cache', '/tls-info'] });\n  }\n};",
+      "bindings": [
+        {
+          "type": "service",
+          "name": "RPC_HELPER",
+          "service": "svcchain-rpc-helper",
+          "environment": "production"
+        },
+        {
+          "type": "service",
+          "name": "RPC_HELPER_RPC",
+          "service": "svcchain-rpc-helper",
+          "environment": "production",
+          "entrypoint": "RpcEntrypoint"
+        },
+        {
+          "type": "durable_object_namespace",
+          "name": "SESSION",
+          "class_name": "SessionDO"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "CONFIG",
+          "namespace_id": "__SVCCHAIN_CONFIG_STORE_ID__"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "CACHE",
+          "namespace_id": "__SVCCHAIN_CACHE_STORE_ID__"
+        }
+      ]
+    }
+  ],
+  "worker_routes": [
+    {
+      "pattern": "test.example.com/api/*",
+      "script": "svcchain-parent"
+    },
+    {
+      "pattern": "test.example.com/do/*",
+      "script": "svcchain-parent"
+    }
+  ],
+  "access_apps": [
+    {
+      "name": "Access Protected Parent",
+      "domain": "secured.test.example.com",
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "allowed_idps": [],
+      "auto_redirect_to_identity": false
+    }
+  ],
+  "access_policies": [
+    {
+      "app_name": "Access Protected Parent",
+      "name": "Allow corporate domain",
+      "decision": "allow",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "example.com"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 1
+    },
+    {
+      "app_name": "Access Protected Parent",
+      "name": "Allow trusted partners",
+      "decision": "allow",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "partner.example.org"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 2
+    }
+  ]
+}

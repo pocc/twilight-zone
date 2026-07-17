@@ -1,0 +1,305 @@
+{
+  "metadata": {
+    "company": "StorageDataRoundtrip",
+    "rank": 9,
+    "domain": "test.example.com",
+    "profile": "storage-data-roundtrip",
+    "industry": "Test - KV bulk seed \u00d7 R2 object copy \u00d7 D1 shell \u00d7 Queue \u00d7 storage-binding worker",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Real-world layering of the storage stack. Four KV namespaces with bulk-seeded data + R2 with seeded objects + D1 with schema + Queue, plus a worker that binds to all of them. Originally designed to test edge case #3 (auto-create deselected dependency) with AUTOCREATED-style binding, but the harness has no path to deselect individual KV items in Step 2 \u2014 instead all four are seeded and migrated normally. Edge case #3 should be retested separately with a Step-2-aware harness. Stacks assertKvKeysCopied + assertR2ObjectsCopied. Verifies our R2 object copy actually works end-to-end across accounts (catches the class of bug where R2's on-demand migration path hangs without surfacing an error).",
+    "products": [
+      "dns",
+      "kv_namespaces",
+      "kv_data",
+      "r2_buckets",
+      "r2_objects",
+      "d1_databases",
+      "d1_schema",
+      "queues",
+      "workers"
+    ],
+    "postRun": "assertKvKeysCopied,assertR2ObjectsCopied,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e09-storage-roundtrip.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "storage.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "title": "storage-rt-config"
+    },
+    {
+      "title": "storage-rt-sessions"
+    },
+    {
+      "title": "storage-rt-features"
+    },
+    {
+      "title": "storage-rt-AUTOCREATED"
+    }
+  ],
+  "kv_seed_data": {
+    "storage-rt-config": [
+      {
+        "key": "config:version",
+        "value": "1.0.0"
+      },
+      {
+        "key": "config:env",
+        "value": "test",
+        "metadata": {
+          "owner": "rt-test"
+        }
+      },
+      {
+        "key": "config:debug",
+        "value": "false"
+      },
+      {
+        "key": "config:feature:rpc",
+        "value": "enabled"
+      },
+      {
+        "key": "config:feature:cache",
+        "value": "enabled"
+      },
+      {
+        "key": "config:rate-limit",
+        "value": "100"
+      },
+      {
+        "key": "config:timeout-ms",
+        "value": "5000"
+      },
+      {
+        "key": "config:max-conn",
+        "value": "10"
+      },
+      {
+        "key": "config:tier:free",
+        "value": "{\"limit\":100}"
+      },
+      {
+        "key": "config:tier:pro",
+        "value": "{\"limit\":1000}"
+      },
+      {
+        "key": "config:tier:business",
+        "value": "{\"limit\":10000}"
+      },
+      {
+        "key": "config:tier:enterprise",
+        "value": "{\"limit\":-1}"
+      },
+      {
+        "key": "config:locale:en",
+        "value": "{\"hello\":\"Hello\"}"
+      },
+      {
+        "key": "config:locale:es",
+        "value": "{\"hello\":\"Hola\"}"
+      },
+      {
+        "key": "config:locale:fr",
+        "value": "{\"hello\":\"Bonjour\"}"
+      }
+    ],
+    "storage-rt-sessions": [
+      {
+        "key": "session:abc:user",
+        "value": "user-1"
+      },
+      {
+        "key": "session:abc:exp",
+        "value": "1735689600"
+      },
+      {
+        "key": "session:def:user",
+        "value": "user-2"
+      },
+      {
+        "key": "session:def:exp",
+        "value": "1735689600"
+      },
+      {
+        "key": "session:ghi:user",
+        "value": "user-3"
+      },
+      {
+        "key": "session:ghi:exp",
+        "value": "1735689600"
+      },
+      {
+        "key": "session:jkl:user",
+        "value": "user-4"
+      },
+      {
+        "key": "session:jkl:exp",
+        "value": "1735689600"
+      },
+      {
+        "key": "session:mno:user",
+        "value": "user-5"
+      },
+      {
+        "key": "session:mno:exp",
+        "value": "1735689600"
+      }
+    ],
+    "storage-rt-features": [
+      {
+        "key": "feature:dark-mode",
+        "value": "on"
+      },
+      {
+        "key": "feature:beta-ui",
+        "value": "off"
+      },
+      {
+        "key": "feature:ai-suggest",
+        "value": "on"
+      },
+      {
+        "key": "feature:autosave",
+        "value": "on"
+      },
+      {
+        "key": "feature:two-factor",
+        "value": "required"
+      }
+    ]
+  },
+  "r2_buckets": [
+    {
+      "name": "storage-rt-assets"
+    },
+    {
+      "name": "storage-rt-uploads"
+    }
+  ],
+  "r2_seed_objects": {
+    "storage-rt-assets": [
+      {
+        "key": "static/index.html",
+        "content": "<!doctype html><html><body>RT-test home</body></html>",
+        "contentType": "text/html"
+      },
+      {
+        "key": "static/about.html",
+        "content": "<!doctype html><html><body>RT-test about</body></html>",
+        "contentType": "text/html"
+      },
+      {
+        "key": "static/config.json",
+        "content": "{\"app\":\"storage-rt\",\"version\":\"1.0.0\"}",
+        "contentType": "application/json"
+      },
+      {
+        "key": "static/robots.txt",
+        "content": "User-agent: *\nDisallow: /",
+        "contentType": "text/plain"
+      },
+      {
+        "key": "static/favicon.svg",
+        "content": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='#f38020'/></svg>",
+        "contentType": "image/svg+xml"
+      }
+    ],
+    "storage-rt-uploads": [
+      {
+        "key": "uploads/2026/05/12/img1.txt",
+        "content": "fake-image-bytes-1",
+        "contentType": "application/octet-stream"
+      },
+      {
+        "key": "uploads/2026/05/12/img2.txt",
+        "content": "fake-image-bytes-2",
+        "contentType": "application/octet-stream"
+      },
+      {
+        "key": "uploads/2026/05/12/doc.txt",
+        "content": "fake-doc-content",
+        "contentType": "application/octet-stream"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "name": "storage-rt-app-db"
+    }
+  ],
+  "d1_seed_schema": {
+    "storage-rt-app-db": "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT, ts INTEGER); INSERT OR REPLACE INTO users (id, email, created_at) VALUES (1, 'alice@example.com', 1700000000), (2, 'bob@example.com', 1700000001), (3, 'carol@example.com', 1700000002);"
+  },
+  "queues": [
+    {
+      "queue_name": "storage-rt-events"
+    }
+  ],
+  "workers": [
+    {
+      "name": "storage-rt-reader",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "// Worker that reads from KV, R2, D1, Queue \u2014 exercises ID remap for KV/D1 and name lookup for R2/Queue.\n// All four KV namespaces are seeded on source by the harness (config, sessions, features, AUTOCREATED)\n// so worker upload succeeds and the migration covers the storage-binding round-trip end-to-end.\nexport default {\n  async fetch(request, env) {\n    const url = new URL(request.url);\n    if (url.pathname === '/kv-config') {\n      return new Response(await env.CONFIG.get('config:version') || '');\n    }\n    if (url.pathname === '/kv-auto') {\n      // This binding's namespace must be auto-created since it's not in kv_namespaces.\n      const v = await env.AUTOCREATED.get('initialized');\n      return new Response(v ?? 'auto-empty');\n    }\n    if (url.pathname === '/r2') {\n      const o = await env.ASSETS.get('static/index.html');\n      return new Response(o ? await o.text() : 'r2-missing');\n    }\n    if (url.pathname === '/d1') {\n      const r = await env.DB.prepare('SELECT * FROM users LIMIT 5').all();\n      return Response.json(r.results);\n    }\n    if (url.pathname === '/queue') {\n      await env.EVENTS.send({ ts: Date.now() });\n      return new Response('queued');\n    }\n    return Response.json({ help: ['/kv-config', '/kv-auto', '/r2', '/d1', '/queue'] });\n  }\n};",
+      "bindings": [
+        {
+          "type": "kv_namespace",
+          "name": "CONFIG",
+          "namespace_id": "__STORAGE_RT_CONFIG_ID__"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "SESSIONS",
+          "namespace_id": "__STORAGE_RT_SESSIONS_ID__"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "FEATURES",
+          "namespace_id": "__STORAGE_RT_FEATURES_ID__"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "AUTOCREATED",
+          "namespace_id": "__STORAGE_RT_AUTOCREATED_ID__"
+        },
+        {
+          "type": "r2_bucket",
+          "name": "ASSETS",
+          "bucket_name": "storage-rt-assets"
+        },
+        {
+          "type": "d1",
+          "name": "DB",
+          "database_id": "__STORAGE_RT_APP_DB_ID__"
+        },
+        {
+          "type": "queue",
+          "name": "EVENTS",
+          "queue_name": "storage-rt-events"
+        }
+      ]
+    }
+  ],
+  "worker_routes": [
+    {
+      "pattern": "test.example.com/rt/*",
+      "script": "storage-rt-reader"
+    }
+  ]
+}

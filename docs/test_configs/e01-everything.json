@@ -1,0 +1,1665 @@
+{
+  "metadata": {
+    "company": "MaxConfigOmnibus",
+    "rank": 1,
+    "domain": "maxconfig.example.com",
+    "profile": "maxconfig-omnibus",
+    "industry": "Test - Omnibus MaxConfig with stacked postRun assertions",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Consolidated omnibus: every migrate-able resource type. Stacks the DNS proxied-flag check, the LB pool ID remap check, and the ruleset overwrite check on the single MaxConfig run. Replaces tests 101 + adds coverage previously in 106 (LB), 114 (rulesets), 115 (DNS flags) opportunistically.",
+    "products": [
+      "dns",
+      "ssl_tls",
+      "cdn",
+      "cache_rules",
+      "waf",
+      "bot_management",
+      "rate_limiting",
+      "rate_limiting_legacy",
+      "firewall_rules",
+      "page_rules",
+      "rulesets",
+      "workers",
+      "worker_routes",
+      "worker_custom_domains",
+      "worker_secrets",
+      "service_bindings",
+      "durable_objects",
+      "access",
+      "email_routing",
+      "tiered_caching",
+      "argo_smart_routing",
+      "zaraz",
+      "turnstile",
+      "kv_namespaces",
+      "kv_data",
+      "d1_databases",
+      "d1_schema",
+      "r2_buckets",
+      "r2_objects",
+      "queues",
+      "load_balancers",
+      "lb_pools",
+      "lb_monitors",
+      "spectrum",
+      "custom_hostnames",
+      "waiting_rooms",
+      "origin_rules",
+      "config_rules",
+      "transform_rules",
+      "redirect_rules",
+      "compression_rules",
+      "rate_limiting_rules",
+      "managed_headers",
+      "cloud_connector",
+      "url_normalization",
+      "cache_reserve",
+      "snippets",
+      "healthchecks",
+      "account_rulesets",
+      "notification_policies",
+      "notification_webhooks",
+      "account_logpush_jobs",
+      "access_tags",
+      "access_bookmarks",
+      "access_custom_pages",
+      "r2_bucket_configs",
+      "r2_cors",
+      "r2_lifecycle",
+      "pages_projects",
+      "ai_gateways",
+      "ai_gateway_custom_providers",
+      "custom_hostname_fallback_origin",
+      "ai_security",
+      "workers_observability",
+      "vectorize_indexes",
+      "waiting_room_settings",
+      "content_upload_scan",
+      "cache_origin_cloud_regions",
+      "leaked_credential_checks",
+      "email_sending_subdomains",
+      "web3_hostnames",
+      "secondary_dns",
+      "lb_monitor_groups",
+      "hyperdrive_configs",
+      "secrets_store_stores"
+    ],
+    "postRun": "assertProxiedFlagsMatch,assertLbPoolIdsRemapped,assertRulesetOverwrite,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertZoneSingletonSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e01-everything.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "www.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "AAAA",
+      "name": "ipv6.test.example.com",
+      "content": "2001:db8::1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "api-origin.test.example.com",
+      "content": "192.0.2.10",
+      "proxied": false,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "origin1.test.example.com",
+      "content": "192.0.2.20",
+      "proxied": false,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "origin2.test.example.com",
+      "content": "192.0.2.21",
+      "proxied": false,
+      "ttl": 1
+    },
+    {
+      "type": "CNAME",
+      "name": "api.test.example.com",
+      "content": "api-origin.test.example.com",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "CNAME",
+      "name": "cdn.test.example.com",
+      "content": "static.test.example.com",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "CNAME",
+      "name": "app.test.example.com",
+      "content": "platform.test.example.com",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "CNAME",
+      "name": "docs.test.example.com",
+      "content": "documentation.test.example.com",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "TXT",
+      "name": "test.example.com",
+      "content": "v=spf1 include:_spf.test.example.com -all",
+      "ttl": 3600
+    },
+    {
+      "type": "TXT",
+      "name": "_dmarc.test.example.com",
+      "content": "v=DMARC1; p=reject; rua=mailto:dmarc@test.example.com",
+      "ttl": 3600
+    },
+    {
+      "type": "SRV",
+      "name": "_sip._tcp.test.example.com",
+      "content": "10 60 5060 sip.test.example.com",
+      "data": {
+        "priority": 10,
+        "weight": 60,
+        "port": 5060,
+        "target": "sip.test.example.com"
+      },
+      "ttl": 3600
+    },
+    {
+      "type": "MX",
+      "name": "test.example.com",
+      "content": "mail.test.example.com",
+      "priority": 10,
+      "ttl": 3600
+    },
+    {
+      "type": "CAA",
+      "name": "test.example.com",
+      "data": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      },
+      "ttl": 3600
+    }
+  ],
+  "zone_settings": {
+    "ssl": "strict",
+    "min_tls_version": "1.3",
+    "always_use_https": "on",
+    "security_level": "high",
+    "browser_cache_ttl": 7200,
+    "cache_level": "aggressive",
+    "polish": "lossless",
+    "webp": "on",
+    "minify": {
+      "css": "on",
+      "js": "on",
+      "html": "on"
+    },
+    "http3": "on",
+    "0rtt": "on",
+    "automatic_https_rewrites": "on",
+    "brotli": "on",
+    "rocket_loader": "on",
+    "early_hints": "on",
+    "websockets": "on",
+    "opportunistic_encryption": "on",
+    "tls_1_3": "on",
+    "always_online": "on",
+    "browser_check": "on",
+    "development_mode": "on",
+    "email_obfuscation": "on",
+    "hotlink_protection": "on",
+    "http2": "on",
+    "ip_geolocation": "on",
+    "ipv6": "on",
+    "opportunistic_onion": "on",
+    "origin_error_page_pass_thru": "on",
+    "prefetch_preload": "on",
+    "privacy_pass": "on",
+    "response_buffering": "on",
+    "server_side_exclude": "on",
+    "sort_query_string_for_cache": "on",
+    "tls_client_auth": "on",
+    "true_client_ip_header": "on",
+    "ech": "on",
+    "fonts": "on",
+    "h2_prioritization": "on",
+    "replace_insecure_js": "on",
+    "mirage": "on",
+    "speed_brain": "on",
+    "rum": "on",
+    "pseudo_ipv4": "add_header",
+    "image_resizing": "on",
+    "challenge_ttl": 31536000,
+    "max_upload": 100,
+    "edge_cache_ttl": 7200,
+    "origin_max_http_version": "2",
+    "ssl_automatic_mode": "auto",
+    "origin_h2_max_streams": 200,
+    "proxy_read_timeout": 100,
+    "mobile_redirect": {
+      "status": "off",
+      "mobile_subdomain": null,
+      "strip_uri": false
+    },
+    "security_header": {
+      "strict_transport_security": {
+        "enabled": true,
+        "max_age": 31536000,
+        "include_subdomains": true,
+        "preload": true,
+        "nosniff": true
+      }
+    },
+    "csam_scanner_third_party": {
+      "enabled": false
+    },
+    "ciphers": [],
+    "origin_tls_compliance_modes": []
+  },
+  "page_rules": [
+    {
+      "targets": [
+        {
+          "target": "url",
+          "constraint": {
+            "operator": "matches",
+            "value": "*test.example.com/api/*"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "cache_level",
+          "value": "bypass"
+        },
+        {
+          "id": "security_level",
+          "value": "high"
+        }
+      ],
+      "priority": 1,
+      "status": "active"
+    },
+    {
+      "targets": [
+        {
+          "target": "url",
+          "constraint": {
+            "operator": "matches",
+            "value": "*test.example.com/static/*"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "cache_level",
+          "value": "cache_everything"
+        },
+        {
+          "id": "browser_cache_ttl",
+          "value": 86400
+        }
+      ],
+      "priority": 2,
+      "status": "active"
+    },
+    {
+      "targets": [
+        {
+          "target": "url",
+          "constraint": {
+            "operator": "matches",
+            "value": "*test.example.com/login*"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "cache_level",
+          "value": "bypass"
+        },
+        {
+          "id": "security_level",
+          "value": "under_attack"
+        }
+      ],
+      "priority": 3,
+      "status": "active"
+    }
+  ],
+  "firewall_rules": [
+    {
+      "filter": {
+        "expression": "(http.request.uri.path contains \"/admin\")"
+      },
+      "action": "block",
+      "description": "Block admin access - MaxConfig"
+    },
+    {
+      "filter": {
+        "expression": "(cf.threat_score gt 14)"
+      },
+      "action": "js_challenge",
+      "description": "JS challenge threats - MaxConfig"
+    },
+    {
+      "filter": {
+        "expression": "(http.user_agent contains \"BadBot\")"
+      },
+      "action": "challenge",
+      "description": "Challenge bad UA - MaxConfig"
+    },
+    {
+      "filter": {
+        "expression": "(not ip.geoip.country in {\"US\" \"CA\" \"GB\" \"DE\" \"JP\" \"AU\"})"
+      },
+      "action": "challenge",
+      "description": "Geo-challenge - MaxConfig"
+    },
+    {
+      "filter": {
+        "expression": "(http.request.method ne \"GET\" and http.request.method ne \"POST\" and http.request.method ne \"PUT\" and http.request.method ne \"DELETE\" and http.request.method ne \"OPTIONS\")"
+      },
+      "action": "block",
+      "description": "Block exotic methods - MaxConfig"
+    }
+  ],
+  "rate_limits_legacy": [
+    {
+      "match": {
+        "request": {
+          "url": "*test.example.com/legacy-api/*",
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "schemes": [
+            "HTTPS"
+          ]
+        },
+        "response": {
+          "origin_traffic": true
+        }
+      },
+      "threshold": 50,
+      "period": 60,
+      "action": {
+        "mode": "simulate",
+        "timeout": 60
+      },
+      "description": "Legacy rate limit - MaxConfig"
+    }
+  ],
+  "account_rulesets": {
+    "maxconfig_shared_block_list": {
+      "name": "Twilight Zone Test \u2014 MaxConfig Shared Block List",
+      "description": "Account-level custom ruleset that zones can invoke via execute. Exercises T1.1 export/migrate/remap.",
+      "kind": "custom",
+      "phase": "http_request_firewall_custom",
+      "rules": [
+        {
+          "expression": "(http.user_agent contains \"MaxConfigBlockedAgent/1.0\")",
+          "action": "block",
+          "description": "Account-level block for known bad UA - MaxConfig"
+        },
+        {
+          "expression": "(ip.geoip.country in {\"XX\"})",
+          "action": "managed_challenge",
+          "description": "Account-level challenge for placeholder country - MaxConfig"
+        }
+      ]
+    }
+  },
+  "rulesets": {
+    "http_request_firewall_custom": [
+      {
+        "expression": "(http.request.uri.path eq \"/health\")",
+        "action": "skip",
+        "action_parameters": {
+          "products": [
+            "waf"
+          ]
+        },
+        "description": "Skip WAF for health - MaxConfig"
+      },
+      {
+        "expression": "(http.request.method eq \"OPTIONS\")",
+        "action": "skip",
+        "action_parameters": {
+          "products": [
+            "waf"
+          ]
+        },
+        "description": "CORS preflight skip - MaxConfig"
+      },
+      {
+        "expression": "(http.host eq \"test.example.com\")",
+        "action": "execute",
+        "action_parameters": {
+          "id": "ACCOUNT_RULESET_maxconfig_shared_block_list"
+        },
+        "description": "Invoke account-level shared block list - MaxConfig (T1.1)"
+      }
+    ],
+    "http_request_cache_settings": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/static/\")",
+        "action": "set_cache_settings",
+        "action_parameters": {
+          "cache": true,
+          "edge_ttl": {
+            "mode": "override_origin",
+            "default": 604800
+          }
+        },
+        "description": "Cache statics 7d - MaxConfig"
+      },
+      {
+        "expression": "starts_with(http.request.uri.path, \"/assets/\")",
+        "action": "set_cache_settings",
+        "action_parameters": {
+          "cache": true,
+          "edge_ttl": {
+            "mode": "override_origin",
+            "default": 86400
+          }
+        },
+        "description": "Cache assets 24h - MaxConfig"
+      }
+    ],
+    "http_request_origin": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig-api/\")",
+        "action": "route",
+        "action_parameters": {
+          "origin": {
+            "host": "api-origin.test.example.com",
+            "port": 443
+          }
+        },
+        "description": "Route API to origin - MaxConfig"
+      }
+    ],
+    "http_config_settings": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig-optimized/\")",
+        "action": "set_config",
+        "action_parameters": {
+          "bic": true,
+          "rocket_loader": true
+        },
+        "description": "Optimized config - MaxConfig"
+      }
+    ],
+    "http_request_transform": [
+      {
+        "expression": "(http.request.uri.path eq \"/maxconfig-old-path\")",
+        "action": "rewrite",
+        "action_parameters": {
+          "uri": {
+            "path": {
+              "value": "/maxconfig-new-path"
+            }
+          }
+        },
+        "description": "URL rewrite - MaxConfig"
+      }
+    ],
+    "http_request_late_transform": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig/\")",
+        "action": "rewrite",
+        "action_parameters": {
+          "headers": {
+            "X-MaxConfig-Request": {
+              "operation": "set",
+              "value": "enabled"
+            }
+          }
+        },
+        "description": "Add request header - MaxConfig"
+      }
+    ],
+    "http_response_headers_transform": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig/\")",
+        "action": "rewrite",
+        "action_parameters": {
+          "headers": {
+            "X-MaxConfig-Response": {
+              "operation": "set",
+              "value": "enabled"
+            }
+          }
+        },
+        "description": "Add response header - MaxConfig"
+      }
+    ],
+    "http_request_dynamic_redirect": [
+      {
+        "expression": "(http.request.uri.path eq \"/maxconfig-redirect-me\")",
+        "action": "redirect",
+        "action_parameters": {
+          "from_value": {
+            "status_code": 302,
+            "target_url": {
+              "value": "/maxconfig-redirected"
+            },
+            "preserve_query_string": true
+          }
+        },
+        "description": "Test redirect - MaxConfig"
+      }
+    ],
+    "http_response_compression": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig-compress/\")",
+        "action": "compress_response",
+        "action_parameters": {
+          "algorithms": [
+            {
+              "name": "gzip"
+            },
+            {
+              "name": "brotli"
+            }
+          ]
+        },
+        "description": "Enable compression - MaxConfig"
+      }
+    ],
+    "http_ratelimit": [
+      {
+        "expression": "starts_with(http.request.uri.path, \"/maxconfig-api/\")",
+        "action": "block",
+        "ratelimit": {
+          "characteristics": [
+            "cf.colo.id",
+            "ip.src"
+          ],
+          "period": 10,
+          "requests_per_period": 100,
+          "mitigation_timeout": 10
+        },
+        "description": "Rate limit API - MaxConfig"
+      }
+    ]
+  },
+  "argo": {
+    "smart_routing": "on",
+    "tiered_caching": "on"
+  },
+  "bot_management": {
+    "sbfm_definitely_automated": "block",
+    "sbfm_likely_automated": "managed_challenge",
+    "sbfm_verified_bots": "allow",
+    "sbfm_static_resource_protection": false,
+    "enable_js": true,
+    "optimize_wordpress": false,
+    "ai_bots_protection": "block"
+  },
+  "zaraz": {
+    "debugKey": "maxconfig-debug",
+    "dataLayer": true,
+    "historyChange": true,
+    "settings": {
+      "autoInjectScript": true
+    },
+    "tools": {
+      "maxconfig-tool": {
+        "enabled": true,
+        "name": "MaxConfig Test Tool",
+        "type": "custom-mc",
+        "component": "custom-mc",
+        "permissions": [
+          "execute_unsafe_js"
+        ],
+        "settings": {},
+        "defaultFields": {},
+        "actions": {}
+      }
+    },
+    "triggers": {
+      "Pageview": {
+        "name": "Pageview",
+        "description": "All page loads",
+        "system": "pageload",
+        "loadRules": [
+          {
+            "match": "{{ client.__zarazTrack }}",
+            "op": "EQUALS",
+            "value": "Pageview"
+          }
+        ],
+        "excludeRules": [],
+        "clientRules": []
+      },
+      "maxconfig-pageview": {
+        "name": "MaxConfig Pageview",
+        "loadRules": [
+          {
+            "match": "{{ client.__zarazTrack }}",
+            "op": "EQUALS",
+            "value": "maxconfig-pageview"
+          }
+        ],
+        "excludeRules": []
+      }
+    },
+    "variables": {
+      "maxconfig-var": {
+        "name": "MaxConfig Variable",
+        "type": "string",
+        "value": "maxconfig-test-value"
+      }
+    }
+  },
+  "email_routing": {
+    "catch_all": {
+      "enabled": true,
+      "matchers": [
+        {
+          "type": "all"
+        }
+      ],
+      "actions": [
+        {
+          "type": "drop"
+        }
+      ]
+    },
+    "rules": [
+      {
+        "name": "MaxConfig forward support",
+        "priority": 0,
+        "enabled": true,
+        "matchers": [
+          {
+            "type": "literal",
+            "field": "to",
+            "value": "support@test.example.com"
+          }
+        ],
+        "actions": [
+          {
+            "type": "drop"
+          }
+        ]
+      },
+      {
+        "name": "MaxConfig drop noreply",
+        "priority": 1,
+        "enabled": true,
+        "matchers": [
+          {
+            "type": "literal",
+            "field": "to",
+            "value": "noreply@test.example.com"
+          }
+        ],
+        "actions": [
+          {
+            "type": "drop"
+          }
+        ]
+      }
+    ]
+  },
+  "turnstile": [
+    {
+      "name": "maxconfig-turnstile",
+      "mode": "managed",
+      "domains": [
+        "test.example.com"
+      ],
+      "region": "world"
+    }
+  ],
+  "access_apps": [
+    {
+      "name": "MaxConfig Admin Panel",
+      "domain": "admin.test.example.com",
+      "type": "self_hosted",
+      "session_duration": "24h",
+      "allowed_idps": [],
+      "auto_redirect_to_identity": false
+    },
+    {
+      "name": "MaxConfig API Gateway",
+      "domain": "api-access.test.example.com",
+      "type": "self_hosted",
+      "session_duration": "1h",
+      "allowed_idps": [],
+      "auto_redirect_to_identity": false
+    }
+  ],
+  "access_policies": [
+    {
+      "app_name": "MaxConfig Admin Panel",
+      "name": "Allow Email Domain",
+      "decision": "allow",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "example.com"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 1
+    },
+    {
+      "app_name": "MaxConfig Admin Panel",
+      "name": "Block CN",
+      "decision": "deny",
+      "include": [
+        {
+          "geo": {
+            "country_code": "CN"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 2
+    },
+    {
+      "app_name": "MaxConfig API Gateway",
+      "name": "Service Token",
+      "decision": "non_identity",
+      "include": [
+        {
+          "any_valid_service_token": {}
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 1
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "title": "maxconfig-kv-store"
+    }
+  ],
+  "kv_seed_data": {
+    "maxconfig-kv-store": [
+      {
+        "key": "feature-flag-1",
+        "value": "enabled"
+      },
+      {
+        "key": "feature-flag-2",
+        "value": "disabled",
+        "metadata": {
+          "owner": "team-a"
+        }
+      },
+      {
+        "key": "session-template",
+        "value": "{\"version\":1,\"ttl\":3600}",
+        "metadata": {
+          "type": "json"
+        }
+      },
+      {
+        "key": "rate-limit-tier-free",
+        "value": "100"
+      },
+      {
+        "key": "rate-limit-tier-paid",
+        "value": "10000"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "name": "maxconfig-d1-db"
+    }
+  ],
+  "d1_seed_schema": {
+    "maxconfig-d1-db": "CREATE TABLE IF NOT EXISTS feature_flags (id INTEGER PRIMARY KEY, name TEXT NOT NULL, enabled INTEGER NOT NULL); INSERT OR REPLACE INTO feature_flags (id, name, enabled) VALUES (1, 'dark-mode', 1), (2, 'beta-ui', 0);"
+  },
+  "r2_buckets": [
+    {
+      "name": "maxconfig-r2-bucket"
+    }
+  ],
+  "r2_seed_objects": {
+    "maxconfig-r2-bucket": [
+      {
+        "key": "config.json",
+        "content": "{\"version\":1,\"env\":\"test\"}",
+        "contentType": "application/json"
+      },
+      {
+        "key": "hello.txt",
+        "content": "Hello from MaxConfig",
+        "contentType": "text/plain"
+      }
+    ]
+  },
+  "queues": [
+    {
+      "queue_name": "maxconfig-queue"
+    }
+  ],
+  "workers": [
+    {
+      "name": "maxconfig-svc-worker",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "export default { async fetch(request, env) { return new Response(JSON.stringify({ service: 'maxconfig-svc-worker', ts: Date.now() }), { headers: { 'Content-Type': 'application/json' } }); } };",
+      "bindings": []
+    },
+    {
+      "name": "maxconfig-zone-worker",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "export class MaxConfigDO {\n  constructor(state) { this.state = state; }\n  async fetch(request) {\n    const count = (await this.state.storage.get('count') || 0) + 1;\n    await this.state.storage.put('count', count);\n    return new Response(JSON.stringify({ count }), { headers: { 'Content-Type': 'application/json' } });\n  }\n}\n\nexport default {\n  async fetch(request, env) {\n    const url = new URL(request.url);\n    if (url.pathname === '/do') {\n      const id = env.MAXCONFIG_DO.idFromName('default');\n      const stub = env.MAXCONFIG_DO.get(id);\n      return stub.fetch(request);\n    }\n    if (url.pathname === '/kv') {\n      const val = await env.MAXCONFIG_KV.get('feature-flag-1');\n      return new Response(JSON.stringify({ kv: val }), { headers: { 'Content-Type': 'application/json' } });\n    }\n    if (url.pathname === '/queue') {\n      await env.MAXCONFIG_QUEUE.send({ ts: Date.now() });\n      return new Response(JSON.stringify({ queued: true }), { headers: { 'Content-Type': 'application/json' } });\n    }\n    if (url.pathname === '/svc') {\n      return env.MAXCONFIG_SVC.fetch(request);\n    }\n    if (url.pathname === '/r2') {\n      const obj = await env.MAXCONFIG_R2.get('config.json');\n      return new Response(obj ? await obj.text() : 'not-found', { headers: { 'Content-Type': 'application/json' } });\n    }\n    if (url.pathname === '/d1') {\n      const r = await env.MAXCONFIG_D1.prepare('SELECT * FROM feature_flags').all();\n      return Response.json(r);\n    }\n    if (url.pathname === '/secret') {\n      return new Response(env.MAXCONFIG_SECRET || 'unset');\n    }\n    return new Response(JSON.stringify({ worker: 'maxconfig-zone-worker', path: url.pathname, ts: Date.now() }), { headers: { 'Content-Type': 'application/json' } });\n  }\n};",
+      "bindings": [
+        {
+          "type": "durable_object_namespace",
+          "name": "MAXCONFIG_DO",
+          "class_name": "MaxConfigDO"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "MAXCONFIG_KV",
+          "namespace_id": "__MAXCONFIG_KV_STORE_ID__"
+        },
+        {
+          "type": "queue",
+          "name": "MAXCONFIG_QUEUE",
+          "queue_name": "maxconfig-queue"
+        },
+        {
+          "type": "r2_bucket",
+          "name": "MAXCONFIG_R2",
+          "bucket_name": "maxconfig-r2-bucket"
+        },
+        {
+          "type": "d1",
+          "name": "MAXCONFIG_D1",
+          "database_id": "__MAXCONFIG_D1_DB_ID__"
+        },
+        {
+          "type": "service",
+          "name": "MAXCONFIG_SVC",
+          "service": "maxconfig-svc-worker",
+          "environment": "production"
+        },
+        {
+          "type": "secret_text",
+          "name": "MAXCONFIG_SECRET"
+        }
+      ]
+    }
+  ],
+  "worker_secrets": {
+    "maxconfig-zone-worker": {
+      "MAXCONFIG_SECRET": "test-secret-value-101"
+    }
+  },
+  "worker_routes": [
+    {
+      "pattern": "api.test.example.com/worker/*",
+      "script": "maxconfig-zone-worker"
+    }
+  ],
+  "worker_custom_domains": [
+    {
+      "hostname": "worker-do.test.example.com",
+      "service": "maxconfig-zone-worker",
+      "environment": "production"
+    }
+  ],
+  "load_balancers": [
+    {
+      "name": "maxconfig-lb.test.example.com",
+      "fallback_pool_name": "maxconfig-pool-a",
+      "default_pool_names": [
+        "maxconfig-pool-a",
+        "maxconfig-pool-b"
+      ],
+      "proxied": true,
+      "enabled": true,
+      "ttl": 30,
+      "steering_policy": "off",
+      "session_affinity": "none"
+    }
+  ],
+  "lb_pools": [
+    {
+      "name": "maxconfig-pool-a",
+      "description": "MaxConfig primary pool",
+      "enabled": true,
+      "monitor_name": "maxconfig-monitor-https",
+      "origins": [
+        {
+          "name": "origin1",
+          "address": "192.0.2.20",
+          "enabled": true,
+          "weight": 1
+        },
+        {
+          "name": "origin2",
+          "address": "192.0.2.21",
+          "enabled": true,
+          "weight": 1
+        }
+      ],
+      "minimum_origins": 1
+    },
+    {
+      "name": "maxconfig-pool-b",
+      "description": "MaxConfig fallback pool",
+      "enabled": true,
+      "monitor_name": "maxconfig-monitor-tcp",
+      "origins": [
+        {
+          "name": "origin-fallback",
+          "address": "192.0.2.22",
+          "enabled": true,
+          "weight": 1
+        }
+      ],
+      "minimum_origins": 1
+    }
+  ],
+  "lb_monitors": [
+    {
+      "name": "maxconfig-monitor-https",
+      "type": "https",
+      "method": "GET",
+      "path": "/health",
+      "expected_codes": "200",
+      "interval": 60,
+      "timeout": 5,
+      "retries": 2,
+      "description": "MaxConfig HTTPS health monitor"
+    },
+    {
+      "name": "maxconfig-monitor-tcp",
+      "type": "tcp",
+      "port": 443,
+      "interval": 60,
+      "timeout": 5,
+      "retries": 2,
+      "description": "MaxConfig TCP monitor"
+    }
+  ],
+  "spectrum_apps": [
+    {
+      "protocol": "tcp/2222",
+      "dns": {
+        "type": "CNAME",
+        "name": "ssh.test.example.com"
+      },
+      "origin_dns": {
+        "name": "origin1.test.example.com"
+      },
+      "origin_port": 22,
+      "tls": "off",
+      "proxy_protocol": "off",
+      "ip_firewall": true,
+      "edge_ips": {
+        "type": "dynamic",
+        "connectivity": "all"
+      }
+    }
+  ],
+  "custom_hostnames": [
+    {
+      "hostname": "saas-test.test.example.com",
+      "ssl": {
+        "method": "http",
+        "type": "dv",
+        "settings": {
+          "min_tls_version": "1.2"
+        }
+      }
+    }
+  ],
+  "waiting_rooms": [
+    {
+      "name": "maxconfig-checkout",
+      "description": "MaxConfig checkout queue",
+      "host": "test.example.com",
+      "path": "/checkout",
+      "new_users_per_minute": 200,
+      "total_active_users": 500,
+      "session_duration": 5,
+      "queue_all": false,
+      "disable_session_renewal": false,
+      "suspended": false,
+      "json_response_enabled": false
+    }
+  ],
+  "managed_headers": {
+    "managed_request_headers": [
+      {
+        "id": "add_visitor_location_headers",
+        "enabled": true
+      }
+    ],
+    "managed_response_headers": [
+      {
+        "id": "remove_x-powered-by_header",
+        "enabled": true
+      }
+    ]
+  },
+  "cloud_connector_rules": [
+    {
+      "expression": "starts_with(http.request.uri.path, \"/maxconfig-cc/\")",
+      "provider": "aws_s3",
+      "parameters": {
+        "host": "maxconfig-cc-bucket.s3.amazonaws.com"
+      },
+      "description": "Cloud Connector to AWS S3 - MaxConfig",
+      "enabled": true
+    }
+  ],
+  "url_normalization": {
+    "type": "cloudflare",
+    "scope": "incoming"
+  },
+  "cache_reserve": {
+    "value": "off"
+  },
+  "snippets": [
+    {
+      "snippet_name": "maxconfig_test_snippet",
+      "snippet_code": "export default { async fetch(request) { const r = await fetch(request); const h = new Headers(r.headers); h.set('X-MaxConfig-Snippet', 'enabled'); return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h }); } };"
+    }
+  ],
+  "snippet_rules": [
+    {
+      "expression": "starts_with(http.request.uri.path, \"/maxconfig-snippet/\")",
+      "description": "MaxConfig snippet trigger",
+      "enabled": true,
+      "snippet_name": "maxconfig_test_snippet"
+    }
+  ],
+  "healthchecks": [
+    {
+      "name": "maxconfig-standalone-hc",
+      "description": "MaxConfig standalone healthcheck",
+      "address": "origin1.test.example.com",
+      "type": "HTTPS",
+      "interval": 60,
+      "timeout": 5,
+      "retries": 2,
+      "http_config": {
+        "method": "GET",
+        "port": 443,
+        "path": "/health",
+        "expected_codes": [
+          "200"
+        ],
+        "follow_redirects": false,
+        "allow_insecure": false
+      }
+    }
+  ],
+  "dns_settings": {
+    "flatten_all_cnames": false,
+    "foundation_dns": false,
+    "multi_provider": false
+  },
+  "firewall_access_rules": [
+    {
+      "mode": "block",
+      "notes": "MaxConfig block bad IP",
+      "configuration": {
+        "target": "ip",
+        "value": "203.0.113.1"
+      }
+    },
+    {
+      "mode": "whitelist",
+      "notes": "MaxConfig allow office IP",
+      "configuration": {
+        "target": "ip",
+        "value": "203.0.113.2"
+      }
+    },
+    {
+      "mode": "challenge",
+      "notes": "MaxConfig challenge ASN",
+      "configuration": {
+        "target": "asn",
+        "value": "AS64512"
+      }
+    }
+  ],
+  "firewall_lockdowns": [
+    {
+      "description": "MaxConfig admin lockdown",
+      "urls": [
+        "test.example.com/admin/*"
+      ],
+      "configurations": [
+        {
+          "target": "ip",
+          "value": "203.0.113.10"
+        }
+      ]
+    }
+  ],
+  "ua_rules": [
+    {
+      "description": "MaxConfig block curl",
+      "mode": "block",
+      "configuration": {
+        "target": "ua",
+        "value": "curl/7.0"
+      }
+    }
+  ],
+  "page_shield": {
+    "enabled": true,
+    "use_cloudflare_reporting_endpoint": true,
+    "use_connection_url_path": false
+  },
+  "page_shield_policies": [
+    {
+      "description": "MaxConfig allow listed scripts",
+      "enabled": true,
+      "expression": "(http.host eq \"test.example.com\")",
+      "action": "allow",
+      "value": "script-src 'self' https://cdn.example.com"
+    }
+  ],
+  "schema_validation_schemas": [
+    {
+      "name": "maxconfig-openapi-schema",
+      "kind": "openapi_v3",
+      "source": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"MaxConfig API\",\"version\":\"1.0\"},\"paths\":{\"/test\":{\"get\":{\"responses\":{\"200\":{\"description\":\"OK\"}}}}}}",
+      "validation_enabled": true
+    }
+  ],
+  "schema_validation_settings": {
+    "validation_default_mitigation_action": "log",
+    "validation_override_mitigation_action": "none"
+  },
+  "token_validation_configs": [
+    {
+      "name": "maxconfig-jwt-config",
+      "source": {
+        "type": "header"
+      },
+      "validation": {
+        "algorithm": "RS256",
+        "key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAdummypublickey...\n-----END PUBLIC KEY-----"
+      }
+    }
+  ],
+  "logpush_jobs": [
+    {
+      "name": "maxconfig-logpush",
+      "dataset": "http_requests",
+      "destination_conf": "s3://maxconfig-logs?region=us-east-1",
+      "enabled": false,
+      "kind": ""
+    }
+  ],
+  "access_groups": [
+    {
+      "name": "MaxConfig Admin Group",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "example.com"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": []
+    }
+  ],
+  "custom_lists": [
+    {
+      "name": "maxconfig_allowed_ips",
+      "kind": "ip",
+      "description": "MaxConfig allowlist"
+    },
+    {
+      "name": "maxconfig_blocked_asns",
+      "kind": "asn",
+      "description": "MaxConfig blocked ASNs"
+    }
+  ],
+  "custom_list_items": {
+    "maxconfig_allowed_ips": [
+      {
+        "ip": "203.0.113.20",
+        "comment": "office"
+      },
+      {
+        "ip": "203.0.113.21",
+        "comment": "office-backup"
+      }
+    ],
+    "maxconfig_blocked_asns": [
+      {
+        "asn": 64512,
+        "comment": "test ASN"
+      }
+    ]
+  },
+  "queue_consumers": {
+    "maxconfig-queue": [
+      {
+        "script_name": "maxconfig-zone-worker",
+        "settings": {
+          "batch_size": 10,
+          "max_retries": 3,
+          "max_wait_time_ms": 5000
+        }
+      }
+    ]
+  },
+  "regional_tiered_cache": "on",
+  "origin_post_quantum_encryption": "supported",
+  "access_tags": [
+    {
+      "name": "maxconfig-tag-prod"
+    },
+    {
+      "name": "maxconfig-tag-internal"
+    }
+  ],
+  "access_bookmarks": [
+    {
+      "name": "MaxConfig Internal Wiki",
+      "domain": "wiki.test.example.com",
+      "app_launcher_visible": true
+    }
+  ],
+  "access_custom_pages": [
+    {
+      "name": "MaxConfig Forbidden Page",
+      "type": "forbidden",
+      "custom_html": "<!DOCTYPE html><html><head><title>Access Denied</title></head><body><h1>MaxConfig Forbidden</h1><p>This is a Twilight Zone Test custom page used by MaxConfig integration test 101.</p></body></html>"
+    }
+  ],
+  "notification_webhooks": [
+    {
+      "name": "MaxConfig Test Webhook",
+      "type": "generic",
+      "url": "https://your-twilight-zone.example.com/api/webhook-sink"
+    }
+  ],
+  "notification_policies": [
+    {
+      "name": "MaxConfig Test \u2014 Security Events Alert (zone-scoped)",
+      "description": "Twilight Zone Test policy that filters to this zone. Exercises T3.1 export/migrate/remap. Uses clickhouse_alert_fw_anomaly (Security Events Alert, Business+) because it REQUIRES a zones filter — the standard dos_attack_l7 accepts no filters and cannot test zone remap.",
+      "alert_type": "clickhouse_alert_fw_anomaly",
+      "enabled": false,
+      "mechanisms": {
+        "webhooks": [
+          {
+            "_webhook_name": "MaxConfig Test Webhook"
+          }
+        ]
+      }
+    }
+  ],
+  "account_logpush_jobs": [
+    {
+      "name": "maxconfig-account-logpush",
+      "dataset": "http_requests",
+      "destination_conf": "s3://maxconfig-account-logs?region=us-east-1",
+      "enabled": false,
+      "kind": ""
+    }
+  ],
+  "r2_bucket_configs": {
+    "maxconfig-r2-bucket": {
+      "cors": [
+        {
+          "allowed": {
+            "origins": [
+              "https://test.example.com"
+            ],
+            "methods": [
+              "GET",
+              "PUT",
+              "POST"
+            ],
+            "headers": [
+              "Content-Type",
+              "X-Requested-With"
+            ]
+          },
+          "exposeHeaders": [
+            "ETag"
+          ],
+          "maxAgeSeconds": 3600
+        }
+      ],
+      "lifecycle": [
+        {
+          "id": "expire-old-uploads",
+          "enabled": true,
+          "conditions": {
+            "prefix": "uploads/"
+          },
+          "deleteObjectsTransition": {
+            "condition": {
+              "type": "Age",
+              "maxAge": 30
+            }
+          }
+        }
+      ]
+    }
+  },
+  "pages_projects": [
+    {
+      "name": "maxconfig-pages-test",
+      "production_branch": "main",
+      "build_config": {
+        "build_command": "npm run build",
+        "destination_dir": "dist",
+        "root_dir": "/"
+      },
+      "deployment_configs": {
+        "production": {
+          "env_vars": {
+            "PUBLIC_API_URL": {
+              "value": "https://api.test.example.com",
+              "type": "plain_text"
+            },
+            "NODE_VERSION": {
+              "value": "20",
+              "type": "plain_text"
+            }
+          },
+          "compatibility_date": "2024-09-01",
+          "compatibility_flags": [
+            "nodejs_compat"
+          ]
+        },
+        "preview": {
+          "env_vars": {
+            "PUBLIC_API_URL": {
+              "value": "https://preview-api.test.example.com",
+              "type": "plain_text"
+            }
+          },
+          "compatibility_date": "2024-09-01"
+        }
+      }
+    }
+  ],
+  "ai_gateways": [
+    {
+      "id": "maxconfig-aig-test",
+      "cache_ttl": 3600,
+      "cache_invalidate_on_update": true,
+      "collect_logs": true,
+      "rate_limiting_interval": 60,
+      "rate_limiting_limit": 100,
+      "rate_limiting_technique": "fixed",
+      "authentication": false,
+      "log_management": 10000,
+      "log_management_strategy": "DELETE_OLDEST",
+      "logpush": false
+    }
+  ],
+  "ai_gateway_custom_providers": [
+    {
+      "name": "Custom Provider Test",
+      "slug": "maxconfig-aig-custom-provider",
+      "base_url": "https://api.custom-ai-provider.test",
+      "description": "Test custom provider for migration coverage",
+      "enable": true,
+      "beta": false
+    }
+  ],
+
+  "_comment_principle_7_audit": "Below are resources landed during the 2026-05-26 Principle 7 audit (commits 46b72dc through 7527deb). Each may require an entitlement the test account doesn't have; zone-apply.mjs treats entitlement-not-available as a non-fatal warning. The migration tool then either migrates the resource (Step 4 Verified) or acknowledges it cleanly (Step 4 Acknowledged). Both outcomes are pass for the e2e test.",
+
+  "custom_hostname_fallback_origin": {
+    "origin": "fallback.example.com"
+  },
+
+  "ai_security_settings": {
+    "_comment": "App Sec Advanced bundle. zone-apply seeds with a minimal config; if entitlement missing, skipped."
+  },
+
+  "ai_security_custom_topics": {
+    "_comment": "App Sec Advanced bundle. zone-apply seeds with a minimal config; if entitlement missing, skipped."
+  },
+
+  "workers_observability_destinations": [
+    {
+      "slug": "maxconfig-obs-destination",
+      "name": "MaxConfig Observability Destination",
+      "type": "logpush",
+      "enabled": true,
+      "config": { "_comment": "Token is write-only; user re-supplies via worker_observability_destination_tokens acknowledgment." }
+    }
+  ],
+
+  "workers_observability_queries": [
+    {
+      "name": "MaxConfig observability query",
+      "query": "SELECT count(*) FROM logs WHERE level = 'error'",
+      "description": "Sample saved query for the Workers observability dashboard"
+    }
+  ],
+
+  "vectorize_indexes": [
+    {
+      "name": "maxconfig-vectorize-index",
+      "description": "Test Vectorize index for migration coverage",
+      "config": { "dimensions": 768, "metric": "cosine" }
+    }
+  ],
+
+  "waiting_room_settings": {
+    "search_engine_crawler_bypass": true
+  },
+
+  "content_upload_scan_settings": {
+    "enabled": false,
+    "_comment": "Disabled keeps the singleton present without requiring App Sec entitlement to actually scan."
+  },
+
+  "cache_origin_cloud_regions": [
+    { "ip": "192.0.2.1", "region": "us-east-1", "vendor": "aws" },
+    { "ip": "192.0.2.2", "region": "us-west-2", "vendor": "aws" }
+  ],
+
+  "leaked_credential_checks_status": {
+    "enabled": true
+  },
+
+  "leaked_credential_custom_detections": [
+    {
+      "username": "lookup_json_string(http.request.body.raw, \"user\")",
+      "password": "lookup_json_string(http.request.body.raw, \"secret\")"
+    }
+  ],
+
+  "email_sending_subdomains": [
+    { "name": "mail.maxconfig.example.com" }
+  ],
+
+  "web3_hostnames": [
+    {
+      "name": "ipfs.maxconfig.example.com",
+      "target": "ipfs_universal_path",
+      "description": "MaxConfig IPFS gateway",
+      "content_list": {
+        "action": "block",
+        "entries": [
+          { "content": "QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB", "type": "cid", "description": "Test blocked CID" }
+        ]
+      }
+    }
+  ],
+
+  "secondary_dns_acls": [
+    { "name": "maxconfig-acl-corporate", "ip_range": "192.0.2.0/24" }
+  ],
+
+  "secondary_dns_tsigs": [
+    {
+      "name": "maxconfig-tsig-key",
+      "algo": "hmac-sha256.",
+      "_comment": "Secret is write-only - supplied at migrate time via MigrationConfig.tsigSecrets; not seeded by zone-apply."
+    }
+  ],
+
+  "secondary_dns_peers": [
+    {
+      "name": "maxconfig-primary-ns",
+      "ip": "192.0.2.10",
+      "port": 53,
+      "ixfr_enable": false,
+      "_tsig_name_ref": "maxconfig-tsig-key",
+      "_comment": "_tsig_name_ref is resolved at seed time; the real tsig_id is unknown until the TSIG is created."
+    }
+  ],
+
+  "secondary_dns_incoming": {
+    "name": "maxconfig.example.com",
+    "auto_refresh_seconds": 3600,
+    "_peer_names": ["maxconfig-primary-ns"],
+    "_comment": "_peer_names resolved at seed time; real peer IDs are unknown until peers are created."
+  },
+
+  "secondary_dns_outgoing": {
+    "name": "maxconfig.example.com",
+    "_peer_names": ["maxconfig-primary-ns"]
+  },
+
+  "lb_monitor_groups": [
+    {
+      "description": "MaxConfig primary DC monitor group",
+      "_member_names": ["maxconfig-monitor-https"],
+      "_comment": "_member_names resolved at seed time via monitorIdMap (populated by lb_monitors seeding above). Members reference monitors by the same `name` key zone-apply uses for monitorIdMap."
+    }
+  ],
+
+  "hyperdrive_configs": [
+    {
+      "name": "maxconfig-hyperdrive",
+      "origin": {
+        "scheme": "postgres",
+        "host": "db.maxconfig.example.com",
+        "port": 5432,
+        "database": "maxconfig",
+        "user": "maxconfig_user",
+        "password": "REDACTED-at-seed-time"
+      },
+      "caching": { "disabled": false, "max_age": 60, "stale_while_revalidate": 15 },
+      "_comment": "Password is supplied to seed-time, then re-supplied at migrate time via MigrationConfig.hyperdriveOriginCredentials."
+    }
+  ],
+
+  "secrets_store_stores": [
+    { "name": "maxconfig-secrets" }
+  ],
+
+  "_comment_21_gap_closure": "Below are the 8 features landed during the 2026-05-26 21-gap-closure pass. Each may require entitlement; zone-apply.mjs treats entitlement-not-available as a non-fatal warning.",
+
+  "custom_nameservers_metadata": {
+    "enabled": false,
+    "ns_set": 1,
+    "_comment": "Per-zone toggle for account-level custom nameservers. Account-level CNS provisioning is admin_only (out of scope); the per-zone ON/OFF migrates."
+  },
+
+  "pay_per_crawl_configuration": {
+    "enabled": false,
+    "price_usd_microcents": 1000000,
+    "_comment": "Pay-per-Crawl AI crawler toll config. Disabled here so the test doesn't accidentally charge real AI crawlers; the migration test verifies the singleton round-trips."
+  },
+
+  "waiting_room_rules": [
+    {
+      "roomName": "maxconfig-test-waiting-room",
+      "rules": [
+        {
+          "action": "bypass_waiting_room",
+          "expression": "ip.src in {192.0.2.0/24}",
+          "description": "Bypass waiting room for corporate IP range",
+          "enabled": true
+        }
+      ]
+    }
+  ],
+
+  "ai_gateway_custom_provider_costs": [
+    {
+      "name": "MaxConfig custom-model cost",
+      "provider": "maxconfig-aig-custom-provider",
+      "model": "maxconfig-test-model",
+      "per_token_cost": 0.00001,
+      "per_output_token_cost": 0.00003
+    }
+  ],
+
+  "ai_gateway_provider_configs": [
+    {
+      "gatewayId": "maxconfig-aig-test",
+      "configs": [
+        {
+          "provider": "openai",
+          "settings": { "_comment": "Provider-specific override config for the MaxConfig AI Gateway." }
+        }
+      ]
+    }
+  ],
+
+  "_comment_api_shield": "API Shield surface landed in the 2026-05-26 API Shield iteration. Requires API Shield entitlement (Enterprise); zone-apply.mjs treats entitlement-not-available as a non-fatal warning.",
+
+  "api_gateway_configuration": {
+    "auth_id_characteristics": [
+      { "type": "header", "name": "authorization" }
+    ]
+  },
+
+  "api_gateway_user_labels": [
+    { "name": "maxconfig-login-ops", "description": "Login-related API operations" },
+    { "name": "maxconfig-admin-ops", "description": "Admin API operations" }
+  ],
+
+  "api_gateway_operation_schema_validation": [
+    {
+      "method": "POST",
+      "host": "maxconfig.example.com",
+      "endpoint": "/api/v1/login",
+      "mitigation_action": "log",
+      "_comment": "Per-operation schema-validation override; remapped to the dest operation by method|host|endpoint at migrate time."
+    }
+  ]
+}

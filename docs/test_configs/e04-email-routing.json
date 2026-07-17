@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "company": "EmailRoutingMixed",
+    "rank": 4,
+    "domain": "test.example.com",
+    "profile": "email-routing-mixed",
+    "industry": "Test - Email Routing with mixed action types (drop + forward); drop verifies, forward to unverified is acknowledged",
+    "generatedAt": "2026-05-11T00:00:00.000Z",
+    "postRun": "assertEmailRoutingMixedOutcomes,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "emailAddressResolution": "skip-all",
+    "notes": "Validates per-action-type handling in the email routing migrator. Source has FOUR rules: (1) catch-all with action=drop \u2014 should verify, no address needed; (2) per-address rule with action=drop on a literal matcher \u2014 should verify, no address needed; (3) per-address rule with action=forward to UNVERIFIED address \u2014 user skips in Step 2, must surface as acknowledged; (4) per-address rule with action=worker referencing a worker name that's not migrated \u2014 should fail or be acknowledged depending on dest state. Pass criteria: at least one verified rule AND at least one acknowledged rule, NO unexpected failed rows for drop rules. NOTE: the forward rule's destination address MUST be verified on the SOURCE account (Cloudflare rejects creating a forward rule to an unverified address, so the source seed itself fails otherwise) AND unverified on the DEST account (so it surfaces as skip-then-acknowledged in Step 2). The config ships the RFC 2606 placeholder forward-test@example.com; set TEST_FORWARD_EMAIL in .env to a real source-verified / dest-unverified address (the harness substitutes it at runtime). Never commit a real address here.",
+    "products": [
+      "dns",
+      "email_routing"
+    ],
+    "testFile": "e04-email-routing.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Test 105 - apex"
+    }
+  ],
+  "email_routing": {
+    "catch_all": {
+      "name": "catch-all",
+      "enabled": true,
+      "matchers": [
+        {
+          "type": "all"
+        }
+      ],
+      "actions": [
+        {
+          "type": "drop"
+        }
+      ]
+    },
+    "rules": [
+      {
+        "name": "Drop noisy noreply",
+        "priority": 0,
+        "enabled": true,
+        "matchers": [
+          {
+            "type": "literal",
+            "field": "to",
+            "value": "noreply@test.example.com"
+          }
+        ],
+        "actions": [
+          {
+            "type": "drop"
+          }
+        ]
+      },
+      {
+        "name": "Forward billing to address unverified on dest",
+        "priority": 1,
+        "enabled": true,
+        "matchers": [
+          {
+            "type": "literal",
+            "field": "to",
+            "value": "billing@test.example.com"
+          }
+        ],
+        "actions": [
+          {
+            "type": "forward",
+            "value": [
+              "forward-test@example.com"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

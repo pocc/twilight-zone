@@ -1,0 +1,1265 @@
+{
+  "$schema": "./feature-taxonomy.schema.json",
+  "_comment": "Hand-curated feature taxonomy mapping Cloudflare dashboard nav items to OpenAPI path prefixes. Edited by humans; consumed by scripts/coverage-report.mjs to group write endpoints by feature. Each feature declares (a) what it is, (b) the path prefixes that belong to it, (c) whether migration is in scope, and (d) plan/entitlement requirements. The 'in_scope' flag drives whether endpoints under this feature are evaluated for migration coverage at all.",
+  "features": [
+    {
+      "id": "dns",
+      "name": "DNS",
+      "dashboard_path": "DNS > Records",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/dns_records",
+        "/zones/{}/dns_settings",
+        "/zones/{}/custom_ns"
+      ],
+      "notes": "Records, zone-level DNS settings, custom nameservers.",
+      "category": "dns"
+    },
+    {
+      "id": "dnssec",
+      "name": "DNSSEC",
+      "dashboard_path": "DNS > Settings > DNSSEC",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/dnssec"
+      ],
+      "notes": "DNSSEC requires DS record update at registrar — flagged as manual_external in IMPOSSIBLE_TO_MIGRATE.",
+      "category": "dns"
+    },
+    {
+      "id": "secondary_dns",
+      "name": "Secondary DNS",
+      "dashboard_path": "DNS > Settings > Secondary DNS",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": null,
+      "entitlement_required": "secondary_dns",
+      "path_prefixes": [
+        "/zones/{}/secondary_dns",
+        "/accounts/{}/secondary_dns"
+      ],
+      "notes": "Enterprise-only; requires hidden master coordination.",
+      "category": "dns"
+    },
+    {
+      "id": "zone_settings",
+      "name": "Zone Settings",
+      "dashboard_path": "Various (SSL/TLS, Speed, Caching, Network)",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/settings"
+      ],
+      "notes": "Single endpoint covers 100+ settings; read-only ones flagged in IMPOSSIBLE_TO_MIGRATE.",
+      "category": "zone_ops"
+    },
+    {
+      "id": "ssl_tls",
+      "name": "SSL/TLS",
+      "dashboard_path": "SSL/TLS",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/ssl",
+        "/zones/{}/custom_certificates",
+        "/zones/{}/custom_csrs",
+        "/zones/{}/certificate_authorities",
+        "/zones/{}/client_certificates",
+        "/zones/{}/origin_tls_client_auth",
+        "/zones/{}/acm"
+      ],
+      "notes": "Custom cert private keys are write-only — flagged in IMPOSSIBLE_TO_MIGRATE.",
+      "category": "ssl_tls"
+    },
+    {
+      "id": "keyless_ssl",
+      "name": "Keyless SSL",
+      "dashboard_path": "SSL/TLS > Custom Certificates > Keyless SSL",
+      "scope": "zone",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "Keyless SSL",
+      "entitlement_required": "keyless_ssl",
+      "path_prefixes": [
+        "/zones/{}/keyless_certificates"
+      ],
+      "notes": "Cryptographic — private keys live on customer key servers. Acknowledged-only.",
+      "category": "ssl_tls"
+    },
+    {
+      "id": "custom_hostnames",
+      "name": "Custom Hostnames / SSL for SaaS",
+      "dashboard_path": "SSL/TLS > Custom Hostnames",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Business",
+      "addon_required": "SSL for SaaS",
+      "entitlement_required": "custom_hostnames",
+      "path_prefixes": [
+        "/zones/{}/custom_hostnames",
+        "/zones/{}/hostnames"
+      ],
+      "notes": "SaaS hostname certificates require DCV validation at each customer's DNS.",
+      "category": "ssl_tls"
+    },
+    {
+      "id": "rules_waf",
+      "name": "Rules > WAF (Custom Rulesets)",
+      "dashboard_path": "Security > WAF",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Pro",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/rulesets",
+        "/accounts/{}/rulesets"
+      ],
+      "notes": "Custom rulesets (WAF, transform, redirect, origin, cache, snippets, exec). Account-level rulesets referenced by zone rulesets via execute action.",
+      "category": "security"
+    },
+    {
+      "id": "rules_pagerules",
+      "name": "Rules > Page Rules (legacy)",
+      "dashboard_path": "Rules > Page Rules",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/pagerules"
+      ],
+      "notes": "Legacy. Cloudflare is migrating these to phased rulesets.",
+      "category": "rules"
+    },
+    {
+      "id": "rules_firewall",
+      "name": "Rules > Firewall Rules (legacy)",
+      "dashboard_path": "Security > WAF > Firewall Rules (legacy)",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/firewall",
+        "/accounts/{}/firewall",
+        "/zones/{}/filters"
+      ],
+      "notes": "Legacy Firewall Rules + IP/User Agent/Zone Lockdown. Account-level access rules apply to all zones in account.",
+      "category": "security"
+    },
+    {
+      "id": "rules_rate_limits",
+      "name": "Rules > Rate Limiting (legacy)",
+      "dashboard_path": "Security > WAF > Rate limiting rules (legacy)",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": "Advanced Rate Limiting (for >1000 rps)",
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/rate_limits"
+      ],
+      "notes": "Legacy endpoint. New rate limiting is via rulesets/rate_limit phase.",
+      "category": "security"
+    },
+    {
+      "id": "managed_headers",
+      "name": "Rules > Managed Transforms",
+      "dashboard_path": "Rules > Transform Rules > Managed Transforms",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/managed_headers"
+      ],
+      "notes": null,
+      "category": "rules"
+    },
+    {
+      "id": "snippets",
+      "name": "Rules > Snippets",
+      "dashboard_path": "Rules > Snippets",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/snippets"
+      ],
+      "notes": null,
+      "category": "rules"
+    },
+    {
+      "id": "cloud_connector",
+      "name": "Rules > Cloud Connector",
+      "dashboard_path": "Rules > Cloud Connector",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Pro",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/cloud_connector"
+      ],
+      "notes": null,
+      "category": "rules"
+    },
+    {
+      "id": "url_normalization",
+      "name": "Rules > URL Normalization",
+      "dashboard_path": "Rules > Settings > URL Normalization",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/url_normalization"
+      ],
+      "notes": null,
+      "category": "rules"
+    },
+    {
+      "id": "origin_rules",
+      "name": "Rules > Origin Rules",
+      "dashboard_path": "Rules > Origin Rules",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/origin"
+      ],
+      "notes": "Origin host header overrides, SNI overrides.",
+      "category": "rules"
+    },
+    {
+      "id": "bot_management",
+      "name": "Security > Bots",
+      "dashboard_path": "Security > Bots",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": "Bot Management",
+      "entitlement_required": "bot_management",
+      "path_prefixes": [
+        "/zones/{}/bot_management",
+        "/zones/{}/fraud_detection"
+      ],
+      "notes": "Enterprise add-on. Subscription differs by feature tier (Standalone, Pro, Business).",
+      "category": "security"
+    },
+    {
+      "id": "page_shield",
+      "name": "Security > Page Shield",
+      "dashboard_path": "Security > Page Shield",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Business",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/page_shield"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "api_shield",
+      "name": "Security > API Shield",
+      "dashboard_path": "Security > API Shield",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": "API Shield",
+      "entitlement_required": "api_shield",
+      "path_prefixes": [
+        "/zones/{}/api_gateway",
+        "/zones/{}/schema_validation",
+        "/zones/{}/token_validation"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "smart_shield",
+      "name": "Security > Smart Shield",
+      "dashboard_path": "Security > Smart Shield",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/smart_shield"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "leaked_credentials",
+      "name": "Security > Leaked Credentials Check",
+      "dashboard_path": "Security > Settings > Leaked Credentials",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/leaked-credential-checks"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "content_upload_scan",
+      "name": "Security > Content Upload Scan",
+      "dashboard_path": "Security > Settings > Content Upload Scan",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/content-upload-scan"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "ai_security",
+      "name": "Security > AI Crawl Control",
+      "dashboard_path": "Security > AI Crawl Control",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/ai-security"
+      ],
+      "notes": null,
+      "category": "security"
+    },
+    {
+      "id": "caching",
+      "name": "Caching",
+      "dashboard_path": "Caching > Configuration",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/cache",
+        "/zones/{}/purge_cache",
+        "/zones/{}/argo"
+      ],
+      "notes": "Cached content itself is data_ephemeral; only configuration migrates.",
+      "category": "caching"
+    },
+    {
+      "id": "workers",
+      "name": "Workers & Pages > Workers",
+      "dashboard_path": "Workers & Pages",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": "workers_paid",
+      "path_prefixes": [
+        "/accounts/{}/workers",
+        "/zones/{}/workers",
+        "/workers"
+      ],
+      "notes": "Workers Paid required for >100k req/day or any binding usage. Worker secrets are cryptographic — values entered in Step 3.",
+      "category": "workers_pages"
+    },
+    {
+      "id": "r2",
+      "name": "R2 Object Storage",
+      "dashboard_path": "R2",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "r2",
+      "path_prefixes": [
+        "/accounts/{}/r2",
+        "/accounts/{}/r2-catalog"
+      ],
+      "notes": "Buckets are created by Twilight Zone; bulk object data is data_offline (rclone copy).",
+      "category": "storage"
+    },
+    {
+      "id": "kv",
+      "name": "Workers KV",
+      "dashboard_path": "Workers & Pages > KV",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "Free (with Workers Paid for >1000 keys/day)",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/storage/kv"
+      ],
+      "notes": "Namespaces created; key data round-tripped via bulk API. Expiration TTLs are data_ephemeral.",
+      "category": "storage"
+    },
+    {
+      "id": "d1",
+      "name": "D1 Database",
+      "dashboard_path": "Workers & Pages > D1",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": "d1",
+      "path_prefixes": [
+        "/accounts/{}/d1"
+      ],
+      "notes": "Database created; schema and data are data_offline (wrangler d1 backup/restore).",
+      "category": "storage"
+    },
+    {
+      "id": "queues",
+      "name": "Queues",
+      "dashboard_path": "Workers & Pages > Queues",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "queues",
+      "path_prefixes": [
+        "/accounts/{}/queues"
+      ],
+      "notes": "Queue created; in-flight messages are data_ephemeral.",
+      "category": "storage"
+    },
+    {
+      "id": "vectorize",
+      "name": "Vectorize",
+      "dashboard_path": "AI > Vectorize",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "vectorize",
+      "path_prefixes": [
+        "/accounts/{}/vectorize"
+      ],
+      "notes": "Index created; vectors data_offline.",
+      "category": "storage"
+    },
+    {
+      "id": "hyperdrive",
+      "name": "Hyperdrive",
+      "dashboard_path": "Workers & Pages > Hyperdrive",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "hyperdrive",
+      "path_prefixes": [
+        "/accounts/{}/hyperdrive"
+      ],
+      "notes": "Config object migrated; origin DB credentials must be re-supplied.",
+      "category": "storage"
+    },
+    {
+      "id": "workflows",
+      "name": "Workflows",
+      "dashboard_path": "Workers & Pages > Workflows",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": "workflows",
+      "path_prefixes": [
+        "/accounts/{}/workflows"
+      ],
+      "notes": null,
+      "category": "storage"
+    },
+    {
+      "id": "pipelines",
+      "name": "Pipelines",
+      "dashboard_path": "R2 > Pipelines",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "pipelines",
+      "path_prefixes": [
+        "/accounts/{}/pipelines"
+      ],
+      "notes": null,
+      "category": "storage"
+    },
+    {
+      "id": "flagship",
+      "name": "Flagship (Feature Flags)",
+      "dashboard_path": "Flagship",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "flagship",
+      "path_prefixes": [
+        "/accounts/{}/flagship"
+      ],
+      "notes": "Out of scope — account-scoped feature-flag service (public beta 2026-05-26). Flag config (apps/flags) is evaluated INSIDE a customer's Worker via a binding (env.FLAGS.getBooleanValue(...)); it is not a zone setting applied to traffic by the Cloudflare edge, so a zone-to-account migration does not change flag behavior on its own. Documented as its own developer-platform product surface rather than left to the broad /accounts catch-all. Revisit as in-scope (like Vectorize/Hyperdrive) if/when Twilight Zone adds Flagship worker-binding support — at that point the apps/flags would need re-creating on the destination so the migrated binding resolves.",
+      "category": "workers_pages"
+    },
+    {
+      "id": "secrets_store",
+      "name": "Secrets Store",
+      "dashboard_path": "Workers & Pages > Secrets Store",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/secrets_store"
+      ],
+      "notes": "Secret references migrated; values cryptographic — user re-supplies.",
+      "category": "storage"
+    },
+    {
+      "id": "containers",
+      "name": "Containers",
+      "dashboard_path": "Workers & Pages > Containers",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free (beta)",
+      "addon_required": null,
+      "entitlement_required": "containers",
+      "path_prefixes": [
+        "/accounts/{}/containers"
+      ],
+      "notes": "Out of scope for v1 — separate Container migration workflow.",
+      "category": "storage"
+    },
+    {
+      "id": "load_balancing",
+      "name": "Traffic > Load Balancing",
+      "dashboard_path": "Traffic > Load Balancing",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": "Load Balancing",
+      "entitlement_required": "load_balancing",
+      "path_prefixes": [
+        "/accounts/{}/load_balancers",
+        "/zones/{}/load_balancers",
+        "/accounts/{}/healthchecks",
+        "/zones/{}/healthchecks",
+        "/user/pools",
+        "/user/monitors"
+      ],
+      "notes": "Pools+monitors+LBs+healthchecks. Subscription required.",
+      "category": "traffic"
+    },
+    {
+      "id": "spectrum",
+      "name": "Spectrum",
+      "dashboard_path": "Spectrum",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": "Spectrum",
+      "entitlement_required": "spectrum",
+      "path_prefixes": [
+        "/zones/{}/spectrum"
+      ],
+      "notes": null,
+      "category": "traffic"
+    },
+    {
+      "id": "waiting_rooms",
+      "name": "Traffic > Waiting Rooms",
+      "dashboard_path": "Traffic > Waiting Rooms",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Business",
+      "addon_required": "Waiting Room",
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/waiting_rooms"
+      ],
+      "notes": null,
+      "category": "traffic"
+    },
+    {
+      "id": "email_routing",
+      "name": "Email > Email Routing",
+      "dashboard_path": "Email > Email Routing",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/email/routing",
+        "/zones/{}/email/sending",
+        "/accounts/{}/email"
+      ],
+      "notes": "Forward addresses require verification at destination — manual_external.",
+      "category": "email"
+    },
+    {
+      "id": "logs_logpush",
+      "name": "Logs > Logpush",
+      "dashboard_path": "Analytics & Logs > Logs",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Enterprise",
+      "addon_required": "Logpush",
+      "entitlement_required": "logpush",
+      "path_prefixes": [
+        "/zones/{}/logpush",
+        "/accounts/{}/logpush",
+        "/zones/{}/logs",
+        "/accounts/{}/logs"
+      ],
+      "notes": "Buffered batches in-flight are data_ephemeral.",
+      "category": "logs"
+    },
+    {
+      "id": "workers_observability",
+      "name": "Logs > Workers Observability",
+      "dashboard_path": "Workers & Pages > Observability",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/workers/observability"
+      ],
+      "notes": "Workers Observability (Workers Logs / telemetry) is runtime observability data, not configuration. Its history is data_ephemeral and is offered for capture via the analytics snapshot modal (Step 1/3/4), not migrated as config. The deeper /workers/observability prefix wins over the broad workers feature so these endpoints are organized under Logs & Analytics.",
+      "category": "logs"
+    },
+    {
+      "id": "web3",
+      "name": "Web3 Gateways",
+      "dashboard_path": "Web3 (legacy)",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free (beta)",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/web3"
+      ],
+      "notes": null,
+      "category": "zone_ops"
+    },
+    {
+      "id": "zone_admin",
+      "name": "Zone Administration",
+      "dashboard_path": "Overview / Settings",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones",
+        "/zones/{}/activation_check",
+        "/zones/{}/hold",
+        "/zones/{}/subscription",
+        "/zones/{}/tags",
+        "/zones/{}/devices",
+        "/zones/{}/pay-per-crawl",
+        "/zones/{}/environments"
+      ],
+      "notes": "Zone create/edit + hold + subscription + tags + zone-pay settings. Twilight Zone handles zone creation via its own flow rather than the bare POST /zones endpoint.",
+      "category": "zone_ops"
+    },
+    {
+      "id": "speed_api",
+      "name": "Speed > Observatory",
+      "dashboard_path": "Speed > Observatory",
+      "scope": "zone",
+      "in_scope": true,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/speed_api"
+      ],
+      "notes": null,
+      "category": "logs"
+    },
+    {
+      "id": "security_center",
+      "name": "Security > Security Center",
+      "dashboard_path": "Security > Security Center",
+      "scope": "both",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/zones/{}/security-center",
+        "/accounts/{}/security-center"
+      ],
+      "notes": "Read-only/auto-managed dashboard; no configuration migrates.",
+      "category": "security"
+    },
+    {
+      "id": "access",
+      "name": "Zero Trust > Access",
+      "dashboard_path": "Zero Trust > Access",
+      "scope": "both",
+      "in_scope": true,
+      "plan_required": "Free (50 users)",
+      "addon_required": "Zero Trust",
+      "entitlement_required": "access",
+      "path_prefixes": [
+        "/accounts/{}/access",
+        "/zones/{}/access",
+        "/accounts/{}/scim",
+        "/accounts/{}/sso_connectors"
+      ],
+      "notes": "Apps, policies, IdPs, service tokens (service token client_secret cryptographic).",
+      "category": "zero_trust"
+    },
+    {
+      "id": "gateway",
+      "name": "Zero Trust > Gateway",
+      "dashboard_path": "Zero Trust > Gateway",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free (Zero Trust)",
+      "addon_required": "Zero Trust",
+      "entitlement_required": "gateway",
+      "path_prefixes": [
+        "/accounts/{}/gateway"
+      ],
+      "notes": "Out of scope for zone migration — Zero Trust admin surface.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "warp_devices",
+      "name": "Zero Trust > Settings > WARP Client",
+      "dashboard_path": "Zero Trust > Settings",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free (Zero Trust)",
+      "addon_required": "Zero Trust",
+      "entitlement_required": "warp",
+      "path_prefixes": [
+        "/accounts/{}/devices",
+        "/accounts/{}/warp_connector",
+        "/accounts/{}/teamnet"
+      ],
+      "notes": "Out of scope — device enrollment is per-organization.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "dlp",
+      "name": "Zero Trust > DLP",
+      "dashboard_path": "Zero Trust > DLP",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "DLP",
+      "entitlement_required": "dlp",
+      "path_prefixes": [
+        "/accounts/{}/dlp",
+        "/accounts/{}/dls"
+      ],
+      "notes": "Out of scope — Zero Trust admin.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "dex",
+      "name": "Zero Trust > DEX",
+      "dashboard_path": "Zero Trust > Analytics > DEX",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "DEX",
+      "entitlement_required": "dex",
+      "path_prefixes": [
+        "/accounts/{}/dex"
+      ],
+      "notes": "Out of scope — Zero Trust observability.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "zt_risk_scoring",
+      "name": "Zero Trust > Risk Scoring",
+      "dashboard_path": "Zero Trust > Risk Scoring",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise (Zero Trust)",
+      "addon_required": "Zero Trust",
+      "entitlement_required": "zt_risk_scoring",
+      "path_prefixes": [
+        "/accounts/{}/zerotrust",
+        "/accounts/{}/zt_risk_scoring"
+      ],
+      "notes": "Out of scope — Zero Trust admin.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "tunnels",
+      "name": "Networks > Tunnels",
+      "dashboard_path": "Networks > Tunnels",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/cfd_tunnel",
+        "/accounts/{}/cni"
+      ],
+      "notes": "Out of scope — tunnel endpoints are per-organization.",
+      "category": "zero_trust"
+    },
+    {
+      "id": "magic_networking",
+      "name": "Magic Networking",
+      "dashboard_path": "Magic > Transit / WAN / Firewall",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "Magic Transit/WAN/Firewall",
+      "entitlement_required": "magic_*",
+      "path_prefixes": [
+        "/accounts/{}/magic",
+        "/accounts/{}/mnm",
+        "/accounts/{}/infrastructure",
+        "/accounts/{}/connectivity",
+        "/accounts/{}/addressing"
+      ],
+      "notes": "Out of scope — account-tied per IMPOSSIBLE_TO_MIGRATE.",
+      "category": "magic"
+    },
+    {
+      "id": "ai_run",
+      "name": "AI > Workers AI",
+      "dashboard_path": "AI > Workers AI",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "workers_ai",
+      "path_prefixes": [
+        "/accounts/{}/ai"
+      ],
+      "notes": "Out of scope — model invocation, no per-account configuration to migrate.",
+      "category": "ai"
+    },
+    {
+      "id": "ai_gateway",
+      "name": "AI > AI Gateway",
+      "dashboard_path": "AI > AI Gateway",
+      "scope": "account",
+      "in_scope": true,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/ai-gateway"
+      ],
+      "notes": "Gateways and their config can be migrated.",
+      "category": "ai"
+    },
+    {
+      "id": "ai_search",
+      "name": "AI > AI Search",
+      "dashboard_path": "AI > AI Search",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "ai_search",
+      "path_prefixes": [
+        "/accounts/{}/ai-search",
+        "/accounts/{}/autorag"
+      ],
+      "notes": "Out of scope for v1.",
+      "category": "ai"
+    },
+    {
+      "id": "browser_rendering",
+      "name": "Browser Rendering",
+      "dashboard_path": "Workers & Pages > Browser Rendering",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free (beta)",
+      "addon_required": null,
+      "entitlement_required": "browser_rendering",
+      "path_prefixes": [
+        "/accounts/{}/browser-rendering"
+      ],
+      "notes": "Worker binding migrated; standalone REST API out of scope.",
+      "category": "ai"
+    },
+    {
+      "id": "stream",
+      "name": "Stream",
+      "dashboard_path": "Stream",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "stream",
+      "path_prefixes": [
+        "/accounts/{}/stream"
+      ],
+      "notes": "Out of scope for v1 — separate Stream migration workflow.",
+      "category": "media"
+    },
+    {
+      "id": "images",
+      "name": "Images",
+      "dashboard_path": "Images",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (usage-based)",
+      "addon_required": null,
+      "entitlement_required": "images",
+      "path_prefixes": [
+        "/accounts/{}/images"
+      ],
+      "notes": "Out of scope for v1.",
+      "category": "media"
+    },
+    {
+      "id": "pages",
+      "name": "Workers & Pages > Pages",
+      "dashboard_path": "Workers & Pages > Pages",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/pages"
+      ],
+      "notes": "Out of scope — separate Pages migration workflow.",
+      "category": "workers_pages"
+    },
+    {
+      "id": "realtime",
+      "name": "Realtime / Calls / MoQ",
+      "dashboard_path": "Realtime",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "N/A (beta)",
+      "addon_required": null,
+      "entitlement_required": "realtime",
+      "path_prefixes": [
+        "/accounts/{}/realtime",
+        "/accounts/{}/calls",
+        "/accounts/{}/moq"
+      ],
+      "notes": "Out of scope for v1.",
+      "category": "media"
+    },
+    {
+      "id": "email_security",
+      "name": "Email > Email Security",
+      "dashboard_path": "Email > Email Security",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "Email Security",
+      "entitlement_required": "email_security",
+      "path_prefixes": [
+        "/accounts/{}/email-security"
+      ],
+      "notes": "Out of scope — account-level mail security policy.",
+      "category": "email"
+    },
+    {
+      "id": "brand_protection",
+      "name": "Security > Brand Protection",
+      "dashboard_path": "Security Center > Brand Protection",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "Brand Protection",
+      "entitlement_required": "brand_protection",
+      "path_prefixes": [
+        "/accounts/{}/brand-protection"
+      ],
+      "notes": "Out of scope — account-level intel.",
+      "category": "security"
+    },
+    {
+      "id": "cloudforce_one",
+      "name": "Security > CloudForce One",
+      "dashboard_path": "Security Center > CloudForce One",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": "CloudForce One",
+      "entitlement_required": "cloudforce_one",
+      "path_prefixes": [
+        "/accounts/{}/cloudforce-one"
+      ],
+      "notes": "Out of scope — account-level threat intel.",
+      "category": "security"
+    },
+    {
+      "id": "intel",
+      "name": "Security > Investigate (Intel)",
+      "dashboard_path": "Security Center > Investigate",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Enterprise",
+      "addon_required": null,
+      "entitlement_required": "intel",
+      "path_prefixes": [
+        "/accounts/{}/intel",
+        "/accounts/{}/urlscanner",
+        "/accounts/{}/botnet_feed",
+        "/accounts/{}/vuln_scanner"
+      ],
+      "notes": "Out of scope — account-level intel queries.",
+      "category": "security"
+    },
+    {
+      "id": "abuse_reports",
+      "name": "Account > Abuse Reports",
+      "dashboard_path": "Account > Manage Account > Abuse Reports",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts/{}/abuse-reports"
+      ],
+      "notes": "Out of scope — account-level safety queue.",
+      "category": "account_admin"
+    },
+    {
+      "id": "account_admin",
+      "name": "Account Administration",
+      "dashboard_path": "Manage Account",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/accounts",
+        "/accounts/{}/members",
+        "/accounts/{}/iam",
+        "/accounts/{}/tokens",
+        "/accounts/{}/profile",
+        "/accounts/{}/subscriptions",
+        "/accounts/{}/shares",
+        "/accounts/{}/organizations",
+        "/accounts/move",
+        "/accounts/{}/move",
+        "/accounts/{}/challenges",
+        "/accounts/{}/registrar",
+        "/accounts/{}/diagnostics",
+        "/accounts/{}/pay-per-crawl",
+        "/accounts/{}/event_notifications",
+        "/accounts/{}/event_subscriptions",
+        "/accounts/{}/alerting",
+        "/accounts/{}/builds",
+        "/accounts/{}/pcaps",
+        "/accounts/{}/slurper",
+        "/accounts/{}/rum",
+        "/accounts/{}/request-tracer",
+        "/accounts/{}/rules",
+        "/accounts/{}/custom_csrs",
+        "/accounts/{}/custom_ns",
+        "/accounts/{}/custom_pages",
+        "/accounts/{}/dns_firewall",
+        "/accounts/{}/dns_settings",
+        "/accounts/{}/mtls_certificates",
+        "/accounts/{}/tags"
+      ],
+      "notes": "Out of scope — account-level admin surfaces (IAM, billing, registrar, account-pay-per-crawl, etc.). These are managed independently of any zone migration.",
+      "category": "account_admin"
+    },
+    {
+      "id": "system",
+      "name": "System / Internal",
+      "dashboard_path": "(none)",
+      "scope": "other",
+      "in_scope": false,
+      "plan_required": null,
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/system",
+        "/memberships",
+        "/organizations",
+        "/certificates",
+        "/internal",
+        "/radar",
+        "/tenants",
+        "/zones/{}/dcv_delegation",
+        "/zones/{}/custom_pages",
+        "/zones/{}/email/dmarc"
+      ],
+      "notes": "Internal/non-customer-facing endpoints + top-level /zones and /accounts/{id} CRUD that Twilight Zone handles via its own zone creation flow (not via OpenAPI). Acknowledged.",
+      "category": "account_admin"
+    },
+    {
+      "id": "user",
+      "name": "User Profile",
+      "dashboard_path": "Account > Profile",
+      "scope": "user",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/user"
+      ],
+      "notes": "User-level (not account-level) endpoints. Out of scope for zone migration.",
+      "category": "account_admin"
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations",
+      "dashboard_path": "Integrations",
+      "scope": "account",
+      "in_scope": false,
+      "plan_required": "Free",
+      "addon_required": null,
+      "entitlement_required": null,
+      "path_prefixes": [
+        "/integrations"
+      ],
+      "notes": "Top-level org/account Integrations management (connect/pause/resume/delete third-party integrations). Not a zone-scoped, traffic-affecting resource — out of scope for a zone-to-account migration.",
+      "category": "account_admin"
+    }
+  ],
+  "_categories": {
+    "dns": {
+      "name": "DNS",
+      "icon": "Globe",
+      "order": 1,
+      "description": "Records, settings, DNSSEC, secondary DNS, custom nameservers."
+    },
+    "ssl_tls": {
+      "name": "SSL/TLS",
+      "icon": "Lock",
+      "order": 2,
+      "description": "Certificates, custom hostnames, SSL configuration."
+    },
+    "security": {
+      "name": "Security",
+      "icon": "ShieldCheck",
+      "order": 3,
+      "description": "WAF, Bot Management, Page Shield, API Shield, rate limits."
+    },
+    "rules": {
+      "name": "Rules",
+      "icon": "Sliders",
+      "order": 4,
+      "description": "Page rules, transform rules, origin rules, snippets."
+    },
+    "caching": {
+      "name": "Caching",
+      "icon": "Stack",
+      "order": 5,
+      "description": "Cache rules, tiered cache, Argo Smart Routing."
+    },
+    "traffic": {
+      "name": "Traffic",
+      "icon": "ArrowsClockwise",
+      "order": 6,
+      "description": "Load balancing, Spectrum, waiting rooms."
+    },
+    "workers_pages": {
+      "name": "Workers & Pages",
+      "icon": "Code",
+      "order": 7,
+      "description": "Worker scripts, routes, bindings, Pages projects."
+    },
+    "storage": {
+      "name": "Storage",
+      "icon": "Database",
+      "order": 8,
+      "description": "R2, KV, D1, Queues, Vectorize, Hyperdrive, Workflows."
+    },
+    "email": {
+      "name": "Email",
+      "icon": "Envelope",
+      "order": 9,
+      "description": "Email Routing, Email Security."
+    },
+    "logs": {
+      "name": "Logs & Analytics",
+      "icon": "ChartBar",
+      "order": 10,
+      "description": "Logpush, Speed Observatory."
+    },
+    "zero_trust": {
+      "name": "Zero Trust",
+      "icon": "UserCircle",
+      "order": 11,
+      "description": "Access, Gateway, WARP, DLP, DEX."
+    },
+    "ai": {
+      "name": "AI",
+      "icon": "Cpu",
+      "order": 12,
+      "description": "Workers AI, AI Gateway, AI Search, Browser Rendering."
+    },
+    "magic": {
+      "name": "Magic Networking",
+      "icon": "Lightning",
+      "order": 13,
+      "description": "Magic Transit, WAN, Firewall."
+    },
+    "media": {
+      "name": "Media",
+      "icon": "PlayCircle",
+      "order": 14,
+      "description": "Stream, Images, Realtime."
+    },
+    "zone_ops": {
+      "name": "Zone Operations",
+      "icon": "GearSix",
+      "order": 15,
+      "description": "Zone settings, admin, Web3 gateways."
+    },
+    "account_admin": {
+      "name": "Account Admin",
+      "icon": "UsersThree",
+      "order": 99,
+      "description": "Account-wide administration (out of zone migration scope)."
+    }
+  },
+  "_comment_categories": "Each feature has a `category` field grouping it into a dashboard top-level area (DNS, SSL/TLS, Security, Rules, Caching, Traffic, Workers & Pages, Storage, Email, Logs, Zero Trust, AI, Magic, Media, Zone Operations, Account Admin). _categories provides display metadata (name, icon, order, description) for each category and is consumed by the landing-page coverage tiles."
+}

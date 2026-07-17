@@ -1,0 +1,344 @@
+{
+  "metadata": {
+    "company": "MaxWorkerOmnibus",
+    "rank": 2,
+    "domain": "maxworker.example.com",
+    "profile": "maxworker-omnibus",
+    "industry": "Test - MaxWorker with all 26 binding types + secrets-manual-action assertion",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Consolidated omnibus: every Worker binding type the engine supports. Stacks assertSecretsManualAction since MaxWorker already includes a secret_text binding whose value comes via worker_secrets \u2014 verifies the manual-action surfaces correctly even when other secrets are provided. Replaces test 116 + folds in test 113's assertion.",
+    "products": [
+      "dns",
+      "workers",
+      "worker_routes",
+      "worker_custom_domains",
+      "worker_secrets",
+      "durable_objects",
+      "kv_namespaces",
+      "kv_data",
+      "d1_databases",
+      "d1_schema",
+      "r2_buckets",
+      "r2_objects",
+      "queues",
+      "vectorize_indexes",
+      "ai_binding",
+      "analytics_engine_binding",
+      "browser_rendering_binding",
+      "send_email_binding",
+      "workflows",
+      "dispatch_namespaces",
+      "pipelines_binding",
+      "version_metadata_binding",
+      "assets_binding",
+      "rate_limit_binding",
+      "json_binding",
+      "plain_text_binding",
+      "service_binding",
+      "service_binding_rpc",
+      "hyperdrive_binding",
+      "mtls_certificate_binding",
+      "secrets_store_secret_binding",
+      "vpc_service_binding"
+    ],
+    "postRun": "assertWorkerBindingsCompletelyMigrated,assertSecretsManualAction,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e02-maxworker-bindings.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "worker-origin.test.example.com",
+      "content": "192.0.2.10",
+      "proxied": false,
+      "ttl": 1
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "title": "maxworker-kv-primary"
+    },
+    {
+      "title": "maxworker-kv-secondary"
+    }
+  ],
+  "kv_seed_data": {
+    "maxworker-kv-primary": [
+      {
+        "key": "config:version",
+        "value": "1.0.0"
+      },
+      {
+        "key": "config:env",
+        "value": "test",
+        "metadata": {
+          "owner": "maxworker-test"
+        }
+      }
+    ],
+    "maxworker-kv-secondary": [
+      {
+        "key": "session:abc",
+        "value": "session-data-abc"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "name": "maxworker-d1-primary"
+    }
+  ],
+  "d1_seed_schema": {
+    "maxworker-d1-primary": "CREATE TABLE IF NOT EXISTS feature_flags (id INTEGER PRIMARY KEY, name TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 0); INSERT OR REPLACE INTO feature_flags (id, name, enabled) VALUES (1, 'dark-mode', 1), (2, 'beta-ui', 0), (3, 'ai-suggest', 1);"
+  },
+  "r2_buckets": [
+    {
+      "name": "maxworker-r2-bucket"
+    }
+  ],
+  "r2_seed_objects": {
+    "maxworker-r2-bucket": [
+      {
+        "key": "config.json",
+        "content": "{\"feature\":\"all-bindings-test\"}",
+        "contentType": "application/json"
+      },
+      {
+        "key": "static/index.html",
+        "content": "<html><body>MaxWorker test asset</body></html>",
+        "contentType": "text/html"
+      }
+    ]
+  },
+  "queues": [
+    {
+      "queue_name": "maxworker-queue-main"
+    }
+  ],
+  "vectorize_indexes": [
+    {
+      "name": "maxworker-vectorize-idx",
+      "config": {
+        "dimensions": 768,
+        "metric": "cosine"
+      },
+      "description": "MaxWorker vectorize index"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "maxworker-workflow",
+      "class_name": "MaxWorkerWorkflow",
+      "script_name": "maxworker-zone-worker"
+    }
+  ],
+  "dispatch_namespaces": [
+    {
+      "name": "maxworker-dispatch-ns"
+    }
+  ],
+  "pipelines": [
+    {
+      "name": "maxworker-pipeline",
+      "source": [
+        {
+          "type": "binding",
+          "format": "json"
+        }
+      ],
+      "destination": {
+        "type": "r2",
+        "bucket": "maxworker-r2-bucket"
+      }
+    }
+  ],
+  "workers": [
+    {
+      "name": "maxworker-child-svc",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "// Child worker reachable via service binding (both legacy and RPC style).\n// The parent worker calls both env.CHILD_SVC.fetch(...) AND env.CHILD_RPC.ping().\nexport class ChildEntrypoint {\n  async ping() { return 'pong-from-rpc'; }\n  async echo(x) { return { echoed: x, by: 'child-rpc' }; }\n}\nexport default {\n  async fetch(request) {\n    return new Response(JSON.stringify({ from: 'child-svc', via: 'fetch' }), { headers: { 'Content-Type': 'application/json' } });\n  },\n};",
+      "bindings": []
+    },
+    {
+      "name": "maxworker-zone-worker",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "// MaxWorker \u2014 exercises every binding type the engine supports.\n//\n// Each route validates ONE binding so the post-migration runtime smoke\n// test (if run) can hit each endpoint and confirm the binding is wired.\n\nexport class MaxWorkerDO {\n  constructor(state) { this.state = state; }\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/incr') {\n      const c = (await this.state.storage.get('count') || 0) + 1;\n      await this.state.storage.put('count', c);\n      return Response.json({ count: c });\n    }\n    return Response.json({ do: 'MaxWorkerDO' });\n  }\n}\n\nexport class MaxWorkerWorkflow {\n  async run(event, step) {\n    await step.do('step-1', async () => ({ ok: true }));\n    return { workflowRan: true };\n  }\n}\n\nexport default {\n  async fetch(request, env, ctx) {\n    const url = new URL(request.url);\n    const path = url.pathname;\n    try {\n      // 1. KV (primary)\n      if (path === '/kv') {\n        const v = await env.KV_PRIMARY.get('config:version');\n        return Response.json({ binding: 'kv_namespace', name: 'KV_PRIMARY', value: v });\n      }\n      // 2. KV (secondary \u2014 multiple bindings of same type)\n      if (path === '/kv2') {\n        const v = await env.KV_SECONDARY.get('session:abc');\n        return Response.json({ binding: 'kv_namespace', name: 'KV_SECONDARY', value: v });\n      }\n      // 3. R2\n      if (path === '/r2') {\n        const obj = await env.R2.get('config.json');\n        const text = obj ? await obj.text() : null;\n        return Response.json({ binding: 'r2_bucket', value: text });\n      }\n      // 4. D1\n      if (path === '/d1') {\n        const r = await env.D1.prepare('SELECT * FROM feature_flags').all();\n        return Response.json({ binding: 'd1', rows: r.results });\n      }\n      // 5. Queues (producer side)\n      if (path === '/queue') {\n        await env.QUEUE.send({ ts: Date.now(), source: 'maxworker' });\n        return Response.json({ binding: 'queue', sent: true });\n      }\n      // 6. Durable Object\n      if (path === '/do') {\n        const id = env.DO.idFromName('default');\n        return env.DO.get(id).fetch(new Request(url.origin + '/incr'));\n      }\n      // 7. Service binding (fetch style)\n      if (path === '/svc') {\n        return env.CHILD_SVC.fetch(request);\n      }\n      // 8. Service binding (RPC style \u2014 entrypoint set)\n      if (path === '/svc-rpc') {\n        const v = await env.CHILD_RPC.ping();\n        return Response.json({ binding: 'service-rpc', value: v });\n      }\n      // 9. Secret\n      if (path === '/secret') {\n        return new Response(JSON.stringify({ binding: 'secret_text', len: (env.SECRET || '').length }), { headers: { 'Content-Type': 'application/json' } });\n      }\n      // 10. Workers AI\n      if (path === '/ai') {\n        // Smoke test: just confirm the binding object exists\n        const present = typeof env.AI?.run === 'function';\n        return Response.json({ binding: 'ai', has_run: present });\n      }\n      // 11. Analytics Engine\n      if (path === '/ae') {\n        env.ANALYTICS.writeDataPoint({ blobs: ['test'], doubles: [1.0], indexes: ['idx'] });\n        return Response.json({ binding: 'analytics_engine', wrote: true });\n      }\n      // 12. Browser Rendering\n      if (path === '/browser') {\n        const has = typeof env.BROWSER?.fetch === 'function' || typeof env.BROWSER === 'object';\n        return Response.json({ binding: 'browser', present: has });\n      }\n      // 13. Vectorize\n      if (path === '/vec') {\n        const has = typeof env.VECTORIZE?.query === 'function';\n        return Response.json({ binding: 'vectorize', has_query: has });\n      }\n      // 14. Send Email\n      if (path === '/email') {\n        const has = typeof env.EMAIL?.send === 'function';\n        return Response.json({ binding: 'send_email', has_send: has });\n      }\n      // 15. Workflow binding\n      if (path === '/workflow') {\n        const has = typeof env.WORKFLOW?.create === 'function';\n        return Response.json({ binding: 'workflow', has_create: has });\n      }\n      // 16. Dispatch namespace (Workers for Platforms)\n      if (path === '/dispatch') {\n        const has = typeof env.DISPATCH?.get === 'function';\n        return Response.json({ binding: 'dispatch_namespace', has_get: has });\n      }\n      // 17. Pipelines\n      if (path === '/pipeline') {\n        const has = typeof env.PIPELINE?.send === 'function';\n        return Response.json({ binding: 'pipelines', has_send: has });\n      }\n      // 18. Version metadata\n      if (path === '/version') {\n        return Response.json({ binding: 'version_metadata', value: env.VERSION_META });\n      }\n      // 19. Assets binding\n      if (path === '/asset') {\n        const has = typeof env.ASSETS?.fetch === 'function';\n        return Response.json({ binding: 'assets', has_fetch: has });\n      }\n      // 20. Rate Limit binding\n      if (path === '/rate') {\n        const r = env.RATE_LIMITER ? await env.RATE_LIMITER.limit({ key: 'test-key' }) : null;\n        return Response.json({ binding: 'rate_limit', result: r });\n      }\n      // 21. JSON binding\n      if (path === '/json') {\n        return Response.json({ binding: 'json', value: env.CONFIG_JSON });\n      }\n      // 22. Plain text binding\n      if (path === '/text') {\n        return Response.json({ binding: 'plain_text', value: env.PLAIN_GREETING });\n      }\n      // 23. Hyperdrive (manual binding \u2014 surface presence only)\n      if (path === '/hyperdrive') {\n        const has = !!env.HYPERDRIVE;\n        return Response.json({ binding: 'hyperdrive', present: has });\n      }\n      // 24. mTLS Certificate (manual binding)\n      if (path === '/mtls') {\n        const has = !!env.MTLS_CERT;\n        return Response.json({ binding: 'mtls_certificate', present: has });\n      }\n      // 25. Secrets Store (manual binding)\n      if (path === '/store-secret') {\n        const has = !!env.STORE_SECRET;\n        return Response.json({ binding: 'secrets_store_secret', present: has });\n      }\n      // 26. VPC Service binding (manual binding)\n      if (path === '/vpc') {\n        const has = !!env.VPC_BACKEND;\n        return Response.json({ binding: 'vpc_service', present: has });\n      }\n\n      // Self-test endpoint: list every binding that's present on env\n      if (path === '/bindings') {\n        const present = Object.keys(env).filter(k => env[k] !== undefined);\n        return Response.json({ worker: 'maxworker-zone-worker', bindings_present: present });\n      }\n\n      return new Response('MaxWorker \u2014 try /bindings to list', { status: 200 });\n    } catch (e) {\n      return new Response(String(e?.message || e), { status: 500 });\n    }\n  },\n};",
+      "bindings": [
+        {
+          "type": "kv_namespace",
+          "name": "KV_PRIMARY",
+          "namespace_id": "__MAXWORKER_KV_PRIMARY_ID__"
+        },
+        {
+          "type": "kv_namespace",
+          "name": "KV_SECONDARY",
+          "namespace_id": "__MAXWORKER_KV_SECONDARY_ID__"
+        },
+        {
+          "type": "r2_bucket",
+          "name": "R2",
+          "bucket_name": "maxworker-r2-bucket"
+        },
+        {
+          "type": "d1",
+          "name": "D1",
+          "database_id": "__MAXWORKER_D1_PRIMARY_ID__"
+        },
+        {
+          "type": "queue",
+          "name": "QUEUE",
+          "queue_name": "maxworker-queue-main"
+        },
+        {
+          "type": "durable_object_namespace",
+          "name": "DO",
+          "class_name": "MaxWorkerDO"
+        },
+        {
+          "type": "service",
+          "name": "CHILD_SVC",
+          "service": "maxworker-child-svc",
+          "environment": "production"
+        },
+        {
+          "type": "service",
+          "name": "CHILD_RPC",
+          "service": "maxworker-child-svc",
+          "environment": "production",
+          "entrypoint": "ChildEntrypoint"
+        },
+        {
+          "type": "secret_text",
+          "name": "SECRET"
+        },
+        {
+          "type": "ai",
+          "name": "AI"
+        },
+        {
+          "type": "analytics_engine",
+          "name": "ANALYTICS",
+          "dataset": "maxworker_dataset"
+        },
+        {
+          "type": "browser",
+          "name": "BROWSER"
+        },
+        {
+          "type": "vectorize",
+          "name": "VECTORIZE",
+          "index_name": "maxworker-vectorize-idx"
+        },
+        {
+          "type": "send_email",
+          "name": "EMAIL",
+          "destination_address": "test@example.com"
+        },
+        {
+          "type": "workflow",
+          "name": "WORKFLOW",
+          "workflow_name": "maxworker-workflow",
+          "class_name": "MaxWorkerWorkflow",
+          "script_name": "maxworker-zone-worker"
+        },
+        {
+          "type": "dispatch_namespace",
+          "name": "DISPATCH",
+          "namespace": "maxworker-dispatch-ns"
+        },
+        {
+          "type": "pipelines",
+          "name": "PIPELINE",
+          "pipeline": "maxworker-pipeline"
+        },
+        {
+          "type": "version_metadata",
+          "name": "VERSION_META"
+        },
+        {
+          "type": "assets",
+          "name": "ASSETS"
+        },
+        {
+          "type": "ratelimit",
+          "name": "RATE_LIMITER",
+          "namespace_id": "1001",
+          "simple": {
+            "limit": 100,
+            "period": 60
+          }
+        },
+        {
+          "type": "json",
+          "name": "CONFIG_JSON",
+          "json": {
+            "version": "1.0",
+            "feature": "maxworker",
+            "nested": {
+              "a": 1,
+              "b": [
+                2,
+                3,
+                4
+              ]
+            }
+          }
+        },
+        {
+          "type": "plain_text",
+          "name": "PLAIN_GREETING",
+          "text": "hello-from-maxworker"
+        },
+        {
+          "type": "hyperdrive",
+          "name": "HYPERDRIVE",
+          "id": "11111111111111111111111111111111"
+        },
+        {
+          "type": "mtls_certificate",
+          "name": "MTLS_CERT",
+          "certificate_id": "22222222-2222-2222-2222-222222222222"
+        },
+        {
+          "type": "secrets_store_secret",
+          "name": "STORE_SECRET",
+          "store_id": "33333333-3333-3333-3333-333333333333",
+          "secret_name": "shared-api-key"
+        },
+        {
+          "type": "vpc_service",
+          "name": "VPC_BACKEND",
+          "service_id": "44444444-4444-4444-4444-444444444444"
+        }
+      ]
+    }
+  ],
+  "worker_routes": [
+    {
+      "pattern": "test.example.com/maxworker/*",
+      "script": "maxworker-zone-worker"
+    }
+  ],
+  "worker_custom_domains": [
+    {
+      "hostname": "maxworker.test.example.com",
+      "service": "maxworker-zone-worker",
+      "environment": "production"
+    }
+  ],
+  "worker_secrets": {
+    "maxworker-zone-worker": {
+      "SECRET": "e2e-secret-value"
+    }
+  }
+}

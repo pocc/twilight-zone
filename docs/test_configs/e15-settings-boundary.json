@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "company": "SettingsBoundary",
+    "rank": 15,
+    "domain": "settingsboundary.example.com",
+    "profile": "settings-boundary",
+    "industry": "Test - zone settings at boundary/low values (complements e01 max)",
+    "notes": "L6 edge case. e01 drives every setting to its MAX value; this drives a representative set to LOW / opposite-of-default values (ssl=full not strict, min_tls=1.0, security=essentially_off, brotli/0rtt/tls_1_3/http3/rocket_loader off, browser_cache_ttl=30, challenge_ttl=300, cache_level=basic). Catches value-coercion / default-substitution bugs that a max-only test would miss (e.g. a setting that silently snaps to its default instead of carrying the source value). Reuses the validated independent settings assertions; no new hook code.",
+    "postRun": "assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertZoneSingletonSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "testFile": "e15-settings-boundary.json"
+  },
+  "dns_records": [
+    { "type": "A", "name": "test.example.com", "content": "192.0.2.1", "proxied": true, "ttl": 1 },
+    { "type": "A", "name": "www.test.example.com", "content": "192.0.2.2", "proxied": false, "ttl": 300 }
+  ],
+  "zone_settings": {
+    "ssl": "full",
+    "min_tls_version": "1.0",
+    "security_level": "essentially_off",
+    "browser_cache_ttl": 30,
+    "challenge_ttl": 300,
+    "cache_level": "basic",
+    "brotli": "off",
+    "always_use_https": "off",
+    "automatic_https_rewrites": "off",
+    "0rtt": "off",
+    "tls_1_3": "off",
+    "http3": "off",
+    "early_hints": "off",
+    "opportunistic_encryption": "off",
+    "rocket_loader": "off",
+    "ip_geolocation": "off",
+    "email_obfuscation": "off",
+    "hotlink_protection": "off",
+    "websockets": "off"
+  }
+}

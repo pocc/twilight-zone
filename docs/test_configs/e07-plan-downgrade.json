@@ -1,0 +1,268 @@
+{
+  "metadata": {
+    "company": "PlanDowngradeComprehensive",
+    "rank": 7,
+    "domain": "test.example.com",
+    "profile": "plan-downgrade-comprehensive",
+    "industry": "Test - Comprehensive plan downgrade (Enterprise \u2192 lower) with WAF rule cap excess + custom ciphers + SBFM + gRPC",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Real-world layering of Enterprise-only features that must surface as acknowledged when the dest is on a lower plan, NOT as failed. Grounded in: (a) edge case #33 \u2014 ruleset rule-count caps by plan (Free 5 / Pro 20 / Biz 100); we provision 25 WAF custom rules so any plan below Biz must acknowledge the overage. (b) edge case #8 \u2014 custom ciphers require Enterprise AND a separate ACM add-on; even on Ent dest without ACM these must acknowledge. (c) edge case #11 \u2014 Super Bot Fight Mode fields require Pro+; on Free dest the SBFM fields must not cause the entire bot_management call to fail. (d) Transform Rules on FL2 challenge pages; include several response-header transforms. Asserts assertEnterpriseFeaturesAcknowledged. Note: ddos_l7 phase removed from source config because zone-scope ddos_l7 only accepts execute actions targeting managed rulesets (which require Enterprise+ entitlement); the other Enterprise-only features (rate_limits_legacy, gRPC, ciphers, Bot Management) cover the assertion intent.",
+    "products": [
+      "dns",
+      "zone_settings_enterprise",
+      "rulesets",
+      "bot_management",
+      "ciphers",
+      "grpc"
+    ],
+    "preRun": "ensureSourceEnterprise",
+    "postRun": "assertEnterpriseFeaturesAcknowledged,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertZoneSingletonSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "testFile": "e07-plan-downgrade.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "www.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "zone_settings": {
+    "ssl": "strict",
+    "tls_1_3": "on",
+    "min_tls_version": "1.2",
+    "always_use_https": "on"
+  },
+  "zone_settings_enterprise_only": {
+    "grpc": "on",
+    "tls_client_auth": "on",
+    "prefetch_preload": "on",
+    "response_buffering": "on",
+    "sort_query_string_for_cache": "on",
+    "origin_error_page_pass_thru": "on",
+    "proxy_read_timeout": 100,
+    "true_client_ip_header": "on",
+    "nel": {
+      "report_to": "cloudflare-nel"
+    },
+    "ciphers": [
+      "ECDHE-ECDSA-AES128-GCM-SHA256",
+      "ECDHE-ECDSA-CHACHA20-POLY1305",
+      "ECDHE-RSA-AES128-GCM-SHA256"
+    ]
+  },
+  "bot_management": {
+    "enable_js": true,
+    "fight_mode": true,
+    "sbfm_definitely_automated": "block",
+    "sbfm_likely_automated": "managed_challenge",
+    "sbfm_verified_bots": "allow",
+    "sbfm_static_resource_protection": false,
+    "optimize_wordpress": false,
+    "suppress_session_score": false,
+    "auto_update_model": true
+  },
+  "rulesets": {
+    "http_log_custom_fields": [
+      {
+        "expression": "true",
+        "action": "log_custom_field",
+        "action_parameters": {
+          "request_fields": [
+            {
+              "name": "x-custom"
+            },
+            {
+              "name": "x-trace-id"
+            }
+          ],
+          "response_fields": [
+            {
+              "name": "x-cf-cache"
+            }
+          ]
+        },
+        "description": "Enterprise-only log custom fields"
+      }
+    ],
+    "http_response_headers_transform": [
+      {
+        "action": "rewrite",
+        "expression": "true",
+        "action_parameters": {
+          "headers": {
+            "X-Frame-Options": {
+              "operation": "remove"
+            }
+          }
+        },
+        "description": "Strip XFO for punchout iframe"
+      },
+      {
+        "action": "rewrite",
+        "expression": "true",
+        "action_parameters": {
+          "headers": {
+            "Content-Security-Policy": {
+              "operation": "set",
+              "value": "frame-ancestors *"
+            }
+          }
+        },
+        "description": "Inject permissive CSP for embedding"
+      },
+      {
+        "action": "rewrite",
+        "expression": "true",
+        "action_parameters": {
+          "headers": {
+            "X-Trace-Id": {
+              "operation": "set",
+              "value": "twilight-zone-static-value"
+            }
+          }
+        },
+        "description": "Add trace ID header (changed expression cf.request_id \u2192 static value: cf.request_id is not a valid Wirefilter expression for set operation)"
+      }
+    ],
+    "http_request_firewall_custom": [
+      {
+        "expression": "(http.request.uri.path contains \"/admin\")",
+        "action": "block",
+        "description": "WAF rule 1 \u2014 block admin"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/internal\")",
+        "action": "block",
+        "description": "WAF rule 2 \u2014 block internal"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/debug\")",
+        "action": "block",
+        "description": "WAF rule 3 \u2014 block debug"
+      },
+      {
+        "expression": "(http.user_agent contains \"BadBot\")",
+        "action": "block",
+        "description": "WAF rule 4 \u2014 block bad bot"
+      },
+      {
+        "expression": "(http.user_agent contains \"Scraper\")",
+        "action": "block",
+        "description": "WAF rule 5 \u2014 block scraper"
+      },
+      {
+        "expression": "(ip.geoip.country in {\"XX\"})",
+        "action": "managed_challenge",
+        "description": "WAF rule 6 \u2014 challenge XX"
+      },
+      {
+        "expression": "(ip.geoip.country in {\"YY\"})",
+        "action": "managed_challenge",
+        "description": "WAF rule 7 \u2014 challenge YY"
+      },
+      {
+        "expression": "(http.request.uri.query contains \"sql=\")",
+        "action": "block",
+        "description": "WAF rule 8 \u2014 SQLi heuristic"
+      },
+      {
+        "expression": "(http.request.uri.query contains \"script=\")",
+        "action": "block",
+        "description": "WAF rule 9 \u2014 XSS heuristic"
+      },
+      {
+        "expression": "(cf.threat_score gt 30)",
+        "action": "managed_challenge",
+        "description": "WAF rule 10 \u2014 threat score"
+      },
+      {
+        "expression": "(cf.threat_score gt 50)",
+        "action": "managed_challenge",
+        "description": "WAF rule 11 \u2014 bot score (replaced (cf.bot_management.score lt 30) with cf.threat_score: bot_management field requires Bot Management entitlement which source account does not have; using cf.threat_score instead to preserve test coverage of Enterprise-only fields)"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/wp-admin\")",
+        "action": "block",
+        "description": "WAF rule 12 \u2014 wp-admin"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/.git\")",
+        "action": "block",
+        "description": "WAF rule 13 \u2014 git leak"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/.env\")",
+        "action": "block",
+        "description": "WAF rule 14 \u2014 env leak"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/phpmyadmin\")",
+        "action": "block",
+        "description": "WAF rule 15 \u2014 phpmyadmin"
+      },
+      {
+        "expression": "(http.request.method eq \"TRACE\")",
+        "action": "block",
+        "description": "WAF rule 16 \u2014 block TRACE"
+      },
+      {
+        "expression": "(http.request.method eq \"CONNECT\")",
+        "action": "block",
+        "description": "WAF rule 17 \u2014 block CONNECT"
+      },
+      {
+        "expression": "(http.referer contains \"badsite.example\")",
+        "action": "block",
+        "description": "WAF rule 18 \u2014 bad referer"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/cgi-bin\")",
+        "action": "block",
+        "description": "WAF rule 19 \u2014 cgi-bin"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/server-status\")",
+        "action": "block",
+        "description": "WAF rule 20 \u2014 server-status"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/.well-known/security.txt\")",
+        "action": "skip",
+        "action_parameters": {
+          "ruleset": "current"
+        },
+        "description": "WAF rule 21 \u2014 bypass security.txt"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/api/v1/internal\")",
+        "action": "block",
+        "description": "WAF rule 22 \u2014 internal API"
+      },
+      {
+        "expression": "(http.request.uri.query contains \"../\")",
+        "action": "block",
+        "description": "WAF rule 23 \u2014 path traversal"
+      },
+      {
+        "expression": "(http.request.uri.path contains \"/xmlrpc.php\")",
+        "action": "block",
+        "description": "WAF rule 24 \u2014 xmlrpc"
+      },
+      {
+        "expression": "(http.user_agent eq \"\")",
+        "action": "managed_challenge",
+        "description": "WAF rule 25 \u2014 empty UA"
+      }
+    ]
+  }
+}

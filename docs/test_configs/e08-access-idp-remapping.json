@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "company": "AccessIdpRemapping",
+    "rank": 8,
+    "domain": "access-test.example.com",
+    "profile": "access-idp-remapping",
+    "industry": "Test - Access app IdP reference handling",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Provisions an Access app on the source that references the source account's default IdPs. Verifies that the dest app's allowed_idps[] do NOT contain source IdP IDs (which would be invalid on dest). Either the migration must remap to dest IdPs OR clear the allowed_idps list so the dest defaults apply.",
+    "products": [
+      "dns",
+      "access_apps",
+      "access_policies"
+    ],
+    "postRun": "assertAccessPolicyIdpRemapped,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e08-access-idp-remapping.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "access_apps": [
+    {
+      "name": "Access IdP Test App",
+      "domain": "secured.test.example.com",
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "allowed_idps": [],
+      "auto_redirect_to_identity": false
+    }
+  ],
+  "access_policies": [
+    {
+      "app_name": "Access IdP Test App",
+      "name": "Allow domain",
+      "decision": "allow",
+      "include": [
+        {
+          "email_domain": {
+            "domain": "example.com"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [],
+      "precedence": 1
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+Twilight Zone
+Copyright 2026 Cloudflare, Inc.
+
+This product is licensed under the Apache License, Version 2.0 (the
+"License"). You may obtain a copy of the License in the LICENSE file in this
+repository or at http://www.apache.org/licenses/LICENSE-2.0.
+
+-------------------------------------------------------------------------------
+NOT A CLOUDFLARE PRODUCT — NO WARRANTY, NO SUPPORT
+-------------------------------------------------------------------------------
+
+Twilight Zone is NOT an official Cloudflare product and is NOT supported by
+Cloudflare Support. It is an independent, best-effort tool. Do not open
+Cloudflare support tickets or escalations for it. Bugs, feature requests, and
+questions should be directed to this repository's issue tracker or
+twilight-zone[АТ]ross.gg, not to Cloudflare.
+
+The software is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+OF ANY KIND, either express or implied, as stated in the License. Cloudflare,
+Inc. makes no warranty regarding, and accepts no liability arising from, the
+use of this tool.
+
+You are solely responsible for verifying the outcome of any migration before
+relying on it. In particular, always confirm the destination zone's
+configuration is correct before changing nameservers at your registrar.
+Twilight Zone copies a zone configuration between accounts; it does not move a
+zone and does not modify or delete the source zone.

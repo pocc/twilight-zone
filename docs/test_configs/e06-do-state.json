@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "company": "DoStateMigration",
+    "rank": 6,
+    "domain": "do-test.example.com",
+    "profile": "do-state-migration",
+    "industry": "Test - Durable Object state sandwich migration",
+    "generatedAt": "2026-05-12T00:00:00.000Z",
+    "notes": "Provisions a DO-bearing worker. Asserts the DO namespace is created on the destination account via the worker upload path (the engine's default behaviour). Does NOT exercise Step 3 state-copy \u2014 that requires a pre-run hook + Step 3 form-fill (sourceWorkerUrl/destWorkerUrl) which this config does not configure. To validate state copy, write a separate config that wires the Step 3 DO migration UI and use assertDoStateMigrated.",
+    "products": [
+      "dns",
+      "workers",
+      "durable_objects"
+    ],
+    "postRun": "assertDoNamespaceCreated,assertZoneSettingsMatch,assertDedicatedSettingsMatch,assertDedicatedScalarSettingsMatch,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": true,
+    "testFile": "e06-do-state.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "workers": [
+    {
+      "name": "do-state-worker",
+      "format": "modules",
+      "main_module": "worker.js",
+      "script": "export class StateDO {\n  constructor(state) { this.state = state; }\n  async fetch(request) {\n    const url = new URL(request.url);\n    if (url.pathname === '/set') {\n      const k = url.searchParams.get('k');\n      const v = url.searchParams.get('v');\n      await this.state.storage.put(k, v);\n      return new Response('ok');\n    }\n    if (url.pathname === '/get') {\n      const k = url.searchParams.get('k');\n      const v = await this.state.storage.get(k);\n      return new Response(v ?? '');\n    }\n    if (url.pathname === '/list') {\n      const all = await this.state.storage.list();\n      return Response.json([...all]);\n    }\n    return new Response('do-state-worker');\n  }\n}\n\nexport default {\n  async fetch(request, env) {\n    const id = env.STATE.idFromName('default');\n    const stub = env.STATE.get(id);\n    return stub.fetch(request);\n  }\n};",
+      "bindings": [
+        {
+          "type": "durable_object_namespace",
+          "name": "STATE",
+          "class_name": "StateDO"
+        }
+      ]
+    }
+  ],
+  "worker_routes": [
+    {
+      "pattern": "test.example.com/do/*",
+      "script": "do-state-worker"
+    }
+  ]
+}

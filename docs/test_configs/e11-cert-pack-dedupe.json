@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "company": "CertPackDedupe",
+    "rank": 11,
+    "domain": "certdedupe.example.com",
+    "profile": "cert-pack-dedupe",
+    "industry": "Test - Cert pack dedupe edge case (post-fix 2026-05-14)",
+    "generatedAt": "2026-05-14T00:00:00.000Z",
+    "notes": "Reproduces the cert-pack duplicate-hostname pattern that previously surfaced as 12+ identical 'transient cert service unavailable' acknowledgments in test runs (see run-2026-05-14, tests 201-208). Source zones routinely accumulate multiple certificate_packs for the same {hosts, type, CA} tuple (CF keeps one record per pinned certificate); migrating them verbatim hits a destination-side quota guard that returns a misleading error. This test seeds 5 cert packs that all share the same hostname pair and verifies the migrate code dedupes them to a single POST and acknowledges the rest as 'skipped: duplicate certificate pack on source'. See src/migrate.ts:dedupeCertificatePacks.",
+    "products": [
+      "dns",
+      "ssl_tls",
+      "certificate_packs"
+    ],
+    "postRun": "assertCertPackDedupe,assertNoUnexpectedFailures",
+    "postRunAuthoritative": true,
+    "selectAccountScoped": false,
+    "testFile": "e11-cert-pack-dedupe.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "certdedupe.example.com",
+      "content": "192.0.2.10",
+      "proxied": true,
+      "ttl": 1
+    },
+    {
+      "type": "A",
+      "name": "api.certdedupe.example.com",
+      "content": "192.0.2.11",
+      "proxied": true,
+      "ttl": 1
+    }
+  ],
+  "_provisioning_notes": [
+    "The harness's applyConfig cannot seed duplicate cert packs directly \u2014 the certificate_packs API on the source side rejects exact duplicates with 'already exists'. Instead, this test relies on the source zone already having multiple historical cert packs for the same hostname pair (which is the empirical state of test zones after months of repeated runs).",
+    "If the source zone is clean, this test will simply verify the dedupe code path is a no-op (no duplicates \u2192 unique == input, duplicates == [])."
+  ],
+  "certificate_packs": []
+}

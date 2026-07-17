@@ -1,0 +1,9 @@
+{
+  "_comment": "CI ratchet for scripts/coverage-report.mjs --check. The values here are upper bounds; the real-gap counts may not EXCEED these values without reviewer approval. To loosen the ratchet, the PR must explain why (regression is OK, intentional out-of-scope, etc.). Intent: this file only ever decreases over time. A 'real gap' is an in-scope POST/PATCH/PUT endpoint that (a) Twilight Zone does not implement and (b) is not covered by an entry in scripts/coverage-overrides.json. Endpoints in scripts/coverage-overrides.json are formally excluded from the gap count with a stated reason (data_plane, imperative_action, redundant_with_put, dual_scope_covered, sub_feature_oos).",
+  "_metric_definitions": {
+    "max_in_scope_gaps_in_sdk": "Real-gap endpoints in the public cloudflare-typescript SDK. These are the actionable gaps — pick one and either implement it OR add an override entry justifying why it's not really a gap.",
+    "max_in_scope_gaps": "All real-gap endpoints (SDK + non-SDK). Larger number; most non-SDK gaps are alpha/internal endpoints that won't be closed."
+  },
+  "max_in_scope_gaps_in_sdk": 0,
+  "max_in_scope_gaps": 0
+}

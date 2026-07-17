@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "company": "ZoneFallback",
+    "rank": 3,
+    "domain": "test.example.com",
+    "profile": "zone-fallback",
+    "industry": "Test - Zone-creation fallback path",
+    "generatedAt": "2026-05-11T00:00:00.000Z",
+    "preRun": "ensureDestZone",
+    "postRun": "assertDestZoneInTargetAccount,assertNoUnexpectedFailures",
+    "notes": "Validates the src/migrate.ts zone-fallback fix. The dest zone is pre-created in the dest account BEFORE migration runs, so the migration's POST /zones returns 'already exists' and the code falls into the fallback branch. The fixed code MUST select the zone whose account matches CF_TARGET_ACCOUNT_ID and whose name exactly matches the source zone name. The pre-fix code could silently fall back to the source zone (a data-corruption-class bug). Pass criteria: console-log.txt contains 'Using existing destination zone:' with the dest-account ID, AND missing=0 AND mismatched=0.",
+    "products": [
+      "dns",
+      "ssl_tls"
+    ],
+    "testFile": "e03-same-root-fallback.json"
+  },
+  "dns_records": [
+    {
+      "type": "A",
+      "name": "test.example.com",
+      "content": "192.0.2.1",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Test 103 - apex"
+    },
+    {
+      "type": "A",
+      "name": "www.test.example.com",
+      "content": "192.0.2.2",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Test 103 - www"
+    },
+    {
+      "type": "CNAME",
+      "name": "api.test.example.com",
+      "content": "test.example.com",
+      "proxied": true,
+      "ttl": 1,
+      "comment": "Test 103 - api alias"
+    },
+    {
+      "type": "TXT",
+      "name": "test.example.com",
+      "content": "v=spf1 -all",
+      "proxied": false,
+      "ttl": 3600,
+      "comment": "Test 103 - SPF"
+    },
+    {
+      "type": "MX",
+      "name": "test.example.com",
+      "content": "mail.test.example.com",
+      "priority": 10,
+      "proxied": false,
+      "ttl": 3600,
+      "comment": "Test 103 - MX"
+    }
+  ],
+  "zone_settings": {
+    "ssl": "strict",
+    "always_use_https": "on",
+    "min_tls_version": "1.2"
+  }
+}
