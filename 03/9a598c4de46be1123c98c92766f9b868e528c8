@@ -1,0 +1,19 @@
+test/normalizeSingletons.test.ts
+  s_43c1a3431b474a::t_3220a66a272b6c 11,199-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "039a598c4de46be1123c98c92766f9b868e528c8",
+  "prompts": {},
+  "sessions": {
+    "s_43c1a3431b474a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05abf9975ffeNdftxP4VVpwv4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <ross@ross.gg>"
+    }
+  }
+}
