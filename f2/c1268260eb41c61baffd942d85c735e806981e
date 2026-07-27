@@ -1,0 +1,19 @@
+docs/COVERAGE.md
+  s_43c1a3431b474a::t_fa7868bfda1de6 3,25,27,33-36,42-43,45,53-54,56,58,61,63,70-73,86-88,91,102,108,113,128-130,134-135,137,139,141-145,147,149,151,324,334-402,462,464-466,470-491,744,847,900-912,1064-1066,1070-1071,1073,1075,1077-1081,1083,1085,1087
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f2c1268260eb41c61baffd942d85c735e806981e",
+  "prompts": {},
+  "sessions": {
+    "s_43c1a3431b474a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05abf9975ffeNdftxP4VVpwv4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <ross@ross.gg>"
+    }
+  }
+}
