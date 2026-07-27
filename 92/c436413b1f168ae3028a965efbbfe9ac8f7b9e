@@ -1,0 +1,19 @@
+scripts/coverage-overrides.json
+  s_43c1a3431b474a::t_6dc44056ef20f4 4,7,9-12,15,489-495,524-537,553-559,574-589,653-660,1276-1282,1529-1535,1708-1714,2068-2074,2750-2765,2773-2779
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "92c436413b1f168ae3028a965efbbfe9ac8f7b9e",
+  "prompts": {},
+  "sessions": {
+    "s_43c1a3431b474a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05abf9975ffeNdftxP4VVpwv4b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <ross@ross.gg>"
+    }
+  }
+}
