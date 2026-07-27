@@ -1,0 +1,19 @@
+app/assets/deploy-to-cloudflare.svg
+  s_ede4bdfd541b65::t_c2819ffd362427 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "60d353b849608cdfe62a7981d1381afce147da06",
+  "prompts": {},
+  "sessions": {
+    "s_ede4bdfd541b65": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05a819b73fferij8QM9Yrq2mPb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    }
+  }
+}
