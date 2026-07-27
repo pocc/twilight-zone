@@ -459,6 +459,11 @@ export interface ZoneExport {
   managedHeaders?: { managed_request_headers?: { id: string; enabled: boolean }[]; managed_response_headers?: { id: string; enabled: boolean }[] } | null;
   cloudConnectorRules?: { id?: string; expression: string; provider: string; parameters: { host: string }; description?: string; enabled?: boolean }[];
   urlNormalization?: { type: string; scope: string } | null;
+  /** Precursor enforcement config (singleton). Migrated via PUT /zones/{}/precursor. */
+  precursor?: {
+    default_mode?: 'off' | 'min-friction' | 'max-security';
+    enforcement_rules?: { expression: string; mode: 'min-friction' | 'max-security'; description?: string; enabled?: boolean }[];
+  } | null;
   cacheReserve?: { value: 'on' | 'off' } | null;
   snippets?: { snippet_name: string; code: string }[];
   snippetRules?: { id?: string; expression: string; description?: string; enabled?: boolean; snippet_name: string }[];

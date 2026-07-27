@@ -3301,6 +3301,58 @@ export async function updateUrlNormalization(auth: ApiAuth | string, zoneId: str
   });
 }
 
+// Precursor APIs (zone-scoped enforcement config — GET + PUT singleton)
+export type PrecursorMode = 'off' | 'min-friction' | 'max-security';
+export interface PrecursorEnforcementRule {
+  expression: string;
+  mode: 'min-friction' | 'max-security';
+  description?: string;
+  enabled?: boolean;
+}
+export interface PrecursorConfig {
+  default_mode?: PrecursorMode;
+  enforcement_rules?: PrecursorEnforcementRule[];
+}
+export async function getPrecursor(auth: ApiAuth | string, zoneId: string): Promise<PrecursorConfig | null> {
+  try {
+    return await cfFetch<PrecursorConfig>(auth, `/zones/${zoneId}/precursor`);
+  } catch (e) {
+    const m = (e as Error).message?.toLowerCase() || '';
+    if (isExportTolerable(m)) return null;
+    throw e;
+  }
+}
+/**
+ * Precursor PUT body: `{ default_mode?, enforcement_rules? }` (minProperties:1).
+ * Each rule's `id` is read-only (assigned by Cloudflare) and rejected/ignored on
+ * input, so it is stripped here — replaying it would risk a surprise failed row
+ * (Principle 1). `mode:'off'` is not a valid *rule* mode (use `default_mode`).
+ */
+export function normalizePrecursorConfig(config: unknown): PrecursorConfig {
+  const c = asWritableObject(config);
+  const out: PrecursorConfig = {};
+  if (typeof c.default_mode === 'string') out.default_mode = c.default_mode as PrecursorMode;
+  if (Array.isArray(c.enforcement_rules)) {
+    out.enforcement_rules = c.enforcement_rules.map((r) => {
+      const rr = asWritableObject(r);
+      const rule: PrecursorEnforcementRule = {
+        expression: typeof rr.expression === 'string' ? rr.expression : '',
+        mode: (rr.mode === 'max-security' ? 'max-security' : 'min-friction'),
+      };
+      if (typeof rr.description === 'string') rule.description = rr.description;
+      if (typeof rr.enabled === 'boolean') rule.enabled = rr.enabled;
+      return rule;
+    });
+  }
+  return out;
+}
+export async function updatePrecursor(auth: ApiAuth | string, zoneId: string, config: PrecursorConfig): Promise<unknown> {
+  return cfFetch(auth, `/zones/${zoneId}/precursor`, {
+    method: 'PUT',
+    body: JSON.stringify(normalizePrecursorConfig(config)),
+  });
+}
+
 // Cache Reserve APIs (entitlement-gated — wrap errors)
 export interface CacheReserveSetting {
   id: string;

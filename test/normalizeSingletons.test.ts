@@ -8,6 +8,7 @@ import {
   normalizeAcmTotalTls,
   normalizeCtAlerting,
   normalizeEmailRoutingSettings,
+  normalizePrecursorConfig,
 } from '../src/api';
 
 // Regression for the 2026-06-09 E2E run: six zone-singleton PUT/POSTs replayed
@@ -193,5 +194,40 @@ describe('normalizeEmailRoutingSettings', () => {
   it('coerces a non-object (array / null) to {}', () => {
     expect(normalizeEmailRoutingSettings([])).toEqual({});
     expect(normalizeEmailRoutingSettings(null)).toEqual({});
+  });
+});
+
+describe('normalizePrecursorConfig', () => {
+  // PUT /zones/{}/precursor body: { default_mode?, enforcement_rules? }, minProperties:1.
+  // Each rule's `id` is read-only (Cloudflare-assigned) and must be stripped;
+  // replaying it risks a surprise failed row (Principle 1).
+  it('keeps default_mode + writable rule fields and strips the read-only rule id', () => {
+    expect(normalizePrecursorConfig({
+      default_mode: 'min-friction',
+      enforcement_rules: [
+        { id: '3a03d665bac043e3a684e0d385a4b1e2', expression: 'http.request.uri.path eq "/shop"', mode: 'max-security', description: 'shop', enabled: true },
+      ],
+    })).toEqual({
+      default_mode: 'min-friction',
+      enforcement_rules: [
+        { expression: 'http.request.uri.path eq "/shop"', mode: 'max-security', description: 'shop', enabled: true },
+      ],
+    });
+  });
+
+  it('omits optional rule fields that are absent', () => {
+    expect(normalizePrecursorConfig({ enforcement_rules: [{ expression: 'true', mode: 'min-friction' }] }))
+      .toEqual({ enforcement_rules: [{ expression: 'true', mode: 'min-friction' }] });
+  });
+
+  it('coerces an unknown rule mode to the safe min-friction (off is not a valid rule mode)', () => {
+    expect(normalizePrecursorConfig({ enforcement_rules: [{ expression: 'true', mode: 'off' }] }))
+      .toEqual({ enforcement_rules: [{ expression: 'true', mode: 'min-friction' }] });
+  });
+
+  it('coerces a non-object (array / null) to {} and never emits an array', () => {
+    expect(normalizePrecursorConfig([])).toEqual({});
+    expect(normalizePrecursorConfig(null)).toEqual({});
+    expect(Array.isArray(normalizePrecursorConfig([]))).toBe(false);
   });
 });

@@ -964,9 +964,10 @@
       "addon_required": null,
       "entitlement_required": null,
       "path_prefixes": [
-        "/accounts/{}/pages"
+        "/accounts/{}/pages",
+        "/pages/assets"
       ],
-      "notes": "Out of scope — separate Pages migration workflow.",
+      "notes": "Out of scope — separate Pages migration workflow. /pages/assets/* are Pages Direct-Upload asset endpoints (data-plane build-asset upload).",
       "category": "workers_pages"
     },
     {

@@ -1,18 +1,18 @@
 {
   "_comment": "Per-endpoint coverage overrides. Each entry corresponds to an in-SDK in-scope endpoint that Twilight Zone does NOT implement. Reasons counted as covered exclusions: data_plane (runtime data ops — queue messages, vectorize insert/query, R2 object writes, email send, AI inference); imperative_action (one-shot admin actions — purge, force_axfr, validate, preview, rollback, rotate, refresh, enable/disable); redundant_with_put (PATCH X covered by PUT X with full-record semantics); redundant_with_post_dns (deprecated alias covered by POST /email/routing/dns); redundant_with_bundle_put (per-aspect Workers script endpoint covered by the multipart bundle PUT); redundant_with_record_post (DNS bulk endpoint covered by per-record POST); redundant_with_ruleset_put (per-rule ruleset CRUD covered by full-record ruleset PUT); dual_scope_covered (endpoint at one scope (zone or account) covered by the other); updated_via_post (PUT/PATCH on a resource TZ POSTs fresh on the destination); admin_only (account-wide admin sub-resource not part of per-zone migration). reason:newer_subfeature is triaged but unsupported and still counts as a gap. reason:null means an untriaged real gap. Re-seed via `node scripts/seed-coverage-overrides.mjs --write`.",
   "_stats": {
-    "total": 390,
+    "total": 404,
     "by_reason": {
       "admin_only": 53,
-      "imperative_action": 84,
+      "imperative_action": 86,
       "updated_via_post": 88,
-      "data_plane": 55,
-      "out_of_scope_subfeature": 43,
-      "impossible_cryptographic": 2,
-      "dual_scope_covered": 6,
+      "data_plane": 59,
+      "out_of_scope_subfeature": 45,
+      "impossible_cryptographic": 3,
+      "dual_scope_covered": 9,
       "redundant_with_ruleset_put": 4,
       "redundant_with_bundle_put": 17,
-      "redundant_with_put": 12,
+      "redundant_with_put": 14,
       "redundant_with_post": 11,
       "redundant_with_record_post": 2,
       "redundant_with_post_dns": 2,
@@ -486,6 +486,13 @@
       "in_sdk": false,
       "example_path": "/accounts/{account_id}/email/routing/addresses/{destination_address_identifier}"
     },
+    "POST /accounts/{}/email/routing/rules/plan": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/routing/rules/plan"
+    },
     "POST /accounts/{}/email/routing/suppression": {
       "reason": "data_plane",
       "notes": "",
@@ -514,6 +521,20 @@
       "in_sdk": false,
       "example_path": "/accounts/{account_id}/email/sending/suppression"
     },
+    "POST /accounts/{}/email/sending/suppressions/bulk": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/sending/suppressions/bulk"
+    },
+    "POST /accounts/{}/email/sending/suppressions": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/email/sending/suppressions"
+    },
     "PATCH /accounts/{}/firewall/access_rules/rules/{}": {
       "reason": "updated_via_post",
       "notes": "",
@@ -529,6 +550,13 @@
       "example_path": "/accounts/{account_id}/firewall/access_rules/rules",
       "in_sdk": true
     },
+    "POST /accounts/{}/hyperdrive/configs/{}/restart": {
+      "reason": "imperative_action",
+      "notes": "",
+      "feature": "hyperdrive",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}/restart"
+    },
     "PATCH /accounts/{}/hyperdrive/configs/{}": {
       "reason": "updated_via_post",
       "notes": "",
@@ -542,6 +570,22 @@
       "feature": "hyperdrive",
       "example_path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}",
       "in_sdk": true
+    },
+    "PATCH /accounts/{}/load_balancers/{}": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /zones/{}/load_balancers",
+      "notes": "",
+      "feature": "load_balancing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/load_balancers/{load_balancer_id}"
+    },
+    "PUT /accounts/{}/load_balancers/{}": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /zones/{}/load_balancers",
+      "notes": "",
+      "feature": "load_balancing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/load_balancers/{load_balancer_id}"
     },
     "PATCH /accounts/{}/load_balancers/monitor_groups/{}": {
       "reason": "updated_via_post",
@@ -605,6 +649,14 @@
       "feature": "load_balancing",
       "in_sdk": false,
       "example_path": "/accounts/{account_id}/load_balancers/pools"
+    },
+    "POST /accounts/{}/load_balancers": {
+      "reason": "dual_scope_covered",
+      "covers": "POST /zones/{}/load_balancers",
+      "notes": "",
+      "feature": "load_balancing",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/load_balancers"
     },
     "PUT /accounts/{}/logpush/jobs/{}": {
       "reason": "updated_via_post",
@@ -1221,6 +1273,13 @@
       "in_sdk": true,
       "example_path": "/accounts/{account_id}/workers/observability/destinations/{slug}"
     },
+    "POST /accounts/{}/workers/observability/metricsexport": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "workers_observability",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workers/observability/metricsexport"
+    },
     "PATCH /accounts/{}/workers/observability/queries/{}": {
       "reason": "data_plane",
       "notes": "",
@@ -1467,6 +1526,13 @@
       "example_path": "/accounts/{account_id}/workflows/{workflow_name}",
       "in_sdk": true
     },
+    "PATCH /accounts/{}/workflows/settings": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "workflows",
+      "in_sdk": false,
+      "example_path": "/accounts/{account_id}/workflows/settings"
+    },
     "POST /workers/builds/deploy_hooks/{}": {
       "reason": "imperative_action",
       "notes": "",
@@ -1638,6 +1704,13 @@
       "feature": "zone_admin",
       "example_path": "/zones/{zone_id}/addressing/regional_hostnames/{hostname}",
       "in_sdk": true
+    },
+    "POST /zones/{}/ai-audit/robots/bulk": {
+      "reason": "data_plane",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/ai-audit/robots/bulk"
     },
     "PATCH /zones/{}/api_gateway/discovery/operations/{}": {
       "reason": "updated_via_post",
@@ -1991,6 +2064,13 @@
       "feature": "email_routing",
       "in_sdk": false,
       "example_path": "/zones/{zone_id}/email/sending/subdomains/{subdomain_id}/dns"
+    },
+    "PATCH /zones/{}/email/sending/subdomains/{}": {
+      "reason": "out_of_scope_subfeature",
+      "notes": "",
+      "feature": "email_routing",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/email/sending/subdomains/{subdomain_id}"
     },
     "POST /zones/{}/email/sending/subdomains/preview": {
       "reason": "imperative_action",
@@ -2667,12 +2747,35 @@
       "example_path": "/zones/{zone_id}/subscription",
       "in_sdk": true
     },
+    "POST /zones/{}/subscriptions": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/subscription",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/subscriptions"
+    },
+    "PUT /zones/{}/subscriptions": {
+      "reason": "redundant_with_put",
+      "covers": "PUT /zones/{}/subscription",
+      "notes": "",
+      "feature": "zone_admin",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/subscriptions"
+    },
     "PUT /zones/{}/tags": {
       "reason": "updated_via_post",
       "notes": "",
       "feature": "zone_admin",
       "example_path": "/zones/{zone_id}/tags",
       "in_sdk": true
+    },
+    "PATCH /zones/{}/token_validation/config/{}/credentials": {
+      "reason": "impossible_cryptographic",
+      "notes": "",
+      "feature": "api_shield",
+      "in_sdk": false,
+      "example_path": "/zones/{zone_id}/token_validation/config/{config_id}/credentials"
     },
     "PUT /zones/{}/token_validation/config/{}/credentials": {
       "reason": "impossible_cryptographic",

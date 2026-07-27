@@ -242,6 +242,23 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
     );
   }
 
+  // Precursor — zone enforcement config. Only migrate when meaningfully
+  // configured (a non-default mode or at least one rule); the GET always
+  // returns a default `{ default_mode: 'off', enforcement_rules: [] }`, and
+  // re-writing that default would be a noisy no-op row for every zone.
+  if (
+    exportData.precursor &&
+    ((exportData.precursor.default_mode && exportData.precursor.default_mode !== 'off') ||
+      (exportData.precursor.enforcement_rules?.length ?? 0) > 0)
+  ) {
+    await migrateSingleton(
+      'Precursor',
+      true,
+      `PUT /zones/${destZoneId}/precursor`,
+      () => api.updatePrecursor(destAuth, destZoneId, exportData.precursor!),
+    );
+  }
+
   // Cache Reserve — entitlement-gated, log+continue
   if (exportData.cacheReserve) {
     await migrateSingleton(

@@ -737,6 +737,45 @@ const EXPLICIT_DISPOSITIONS = {
   'PUT /zones/{}/settings/zaraz/history': { reason: 'imperative_action', notes: 'Restores a historical Zaraz config; one-shot action.' },
   'POST /zones/{}/settings/zaraz/publish': { reason: 'imperative_action', notes: 'Publishes the staged Zaraz config; one-shot action.' },
   'PUT /zones/{}/settings/zaraz/workflow': { reason: 'imperative_action', notes: 'Switches the active Zaraz workflow (realtime/preview); one-shot action.' },
+
+  // ── 2026-07-27 spec-drift triage: newly-shipped write endpoints ───────
+  // Load Balancing — account-scoped load balancers. These are a cross-zone
+  // SUPERSET VIEW of the same load-balancer objects TZ already migrates via
+  // the zone-scoped POST /zones/{}/load_balancers: both scopes share the
+  // OpenAPI response schema (load-balancing_load-balancer_..._response_collection)
+  // and an account LB's `name` is a DNS hostname bound to a zone. Driving the
+  // account endpoint during a single-zone migration would either duplicate
+  // that write or touch OTHER zones in the account — forbidden by the
+  // "protect other zones in the account" safety model (AGENTS §7 MaxConfig).
+  'POST /accounts/{}/load_balancers': { reason: 'dual_scope_covered', covers: 'POST /zones/{}/load_balancers', notes: 'Account-scoped LBs are the cross-zone superset of the same objects TZ migrates per-zone via POST /zones/{}/load_balancers (shared response schema; LB name is a zone hostname). Driving the account endpoint would touch other zones in the account.' },
+  'PATCH /accounts/{}/load_balancers/{}': { reason: 'dual_scope_covered', covers: 'POST /zones/{}/load_balancers', notes: "Account-scoped LB update; TZ recreates the migrated zone's LBs fresh via POST /zones/{}/load_balancers." },
+  'PUT /accounts/{}/load_balancers/{}': { reason: 'dual_scope_covered', covers: 'POST /zones/{}/load_balancers', notes: "Account-scoped LB update; TZ recreates the migrated zone's LBs fresh via POST /zones/{}/load_balancers." },
+
+  // Zone Subscription (plural) — deprecated audit-only alias of the singular
+  // /zones/{}/subscription; TZ sets the zone plan via PUT /zones/{}/subscription.
+  'POST /zones/{}/subscriptions': { reason: 'redundant_with_put', covers: 'PUT /zones/{}/subscription', notes: 'Deprecated plural alias (spec: "Retained for audit-log coverage. Use the singular /zones/{}/subscription path instead."). TZ sets the zone plan via PUT /zones/{}/subscription.' },
+  'PUT /zones/{}/subscriptions': { reason: 'redundant_with_put', covers: 'PUT /zones/{}/subscription', notes: 'Deprecated plural alias of the singular subscription endpoint; TZ sets the zone plan via PUT /zones/{}/subscription.' },
+
+  // Email Routing / Email Sending — new plural + planning endpoints.
+  'POST /accounts/{}/email/routing/rules/plan': { reason: 'imperative_action', notes: 'Read-only reconciliation planner for a Wrangler-managed ruleset (spec: "read-only and does not create, update, or delete rules"). Computes a diff, not config state.' },
+  'POST /accounts/{}/email/sending/suppressions': { reason: 'data_plane', notes: 'Email Sending suppression list is runtime delivery data (matches the existing singular .../suppression override).' },
+  'POST /accounts/{}/email/sending/suppressions/bulk': { reason: 'data_plane', notes: 'Bulk Email Sending suppression-list write — runtime delivery data.' },
+  'PATCH /zones/{}/email/sending/subdomains/{}': { reason: 'out_of_scope_subfeature', notes: 'Toggles the activity-log preview preference on an Email Sending subdomain; Email Sending is a separate product surface, not zone-migration config.' },
+
+  // Hyperdrive restart — imperative one-shot action.
+  'POST /accounts/{}/hyperdrive/configs/{}/restart': { reason: 'imperative_action', notes: 'Restarts a Hyperdrive config; one-shot action, not config state.' },
+
+  // Workers Observability metrics export — runtime telemetry query.
+  'POST /accounts/{}/workers/observability/metricsexport': { reason: 'data_plane', notes: 'Exports/queries observability metrics — runtime telemetry data op, surfaced in the analytics capture modal, not migrated as zone config.' },
+
+  // Workflows account settings — account-global, does not touch zone traffic.
+  'PATCH /accounts/{}/workflows/settings': { reason: 'out_of_scope_subfeature', notes: "Account-global Workflows default_retention; not tied to the migrated zone's traffic or experience." },
+
+  // AI Audit robots.txt bulk — a read op exposed as POST.
+  'POST /zones/{}/ai-audit/robots/bulk': { reason: 'data_plane', notes: 'Bulk fetches/parses robots.txt for hostnames (spec: "Bulk get robots.txt rules"); a read op, not config.' },
+
+  // API Shield token-validation credentials — PATCH variant of the impossible PUT.
+  'PATCH /zones/{}/token_validation/config/{}/credentials': { reason: 'impossible_cryptographic', notes: 'JWKS signing/verification keys are write-only; cannot be exported. Matches the PUT sibling. See IMPOSSIBLE_TO_MIGRATE api_shield_token_validation_credentials.' },
 };
 
 function seedReason(method, pathShape) {

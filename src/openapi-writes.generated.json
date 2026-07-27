@@ -1,15 +1,15 @@
 {
   "source": "/tmp/api-schemas/openapi.json",
-  "generated_at": "2026-06-28T06:03:49.482Z",
+  "generated_at": "2026-07-27T21:01:59.082Z",
   "openapi_version": "3.0.3",
   "api_version": "4.0.0",
   "counts": {
-    "POST": 719,
-    "DELETE": 399,
-    "PUT": 314,
-    "PATCH": 224
+    "POST": 671,
+    "DELETE": 415,
+    "PUT": 323,
+    "PATCH": 233
   },
-  "total": 1656,
+  "total": 1642,
   "operations": [
     {
       "method": "POST",
@@ -1233,6 +1233,140 @@
       "deprecated": false
     },
     {
+      "method": "POST",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/ingest",
+      "operationId": "agent-memory-ingest",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/memories/{memory_id}",
+      "operationId": "agent-memory-memory-delete",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name",
+        "memory_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/recall",
+      "operationId": "agent-memory-recall",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/remember",
+      "operationId": "agent-memory-remember",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/sessions/{session_id}",
+      "operationId": "agent-memory-session-delete",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name",
+        "session_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/summary",
+      "operationId": "agent-memory-summary",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}",
+      "operationId": "agent-memory-profile-delete",
+      "tags": [
+        "Memory"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name",
+        "profile_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}",
+      "operationId": "agent-memory-namespace-delete",
+      "tags": [
+        "Namespaces"
+      ],
+      "pathParams": [
+        "account_id",
+        "namespace_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/agent-memory/namespaces",
+      "operationId": "agent-memory-namespace-create",
+      "tags": [
+        "Namespaces"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/ai-gateway/billing/spending-limit",
       "operationId": "aig-billing-delete-spending-limit",
@@ -1880,6 +2014,21 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/ai-search/namespaces/{name}/instances/{id}/purge_cache",
+      "operationId": "ai-search-namespace-purge-instance-cache",
+      "tags": [
+        "AI Search Instances"
+      ],
+      "pathParams": [
+        "account_id",
+        "id",
+        "name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/ai-search/namespaces/{name}/instances/{id}/search",
       "operationId": "ai-search-namespace-instance-search",
       "tags": [
@@ -2087,1654 +2236,6 @@
         "model_name"
       ],
       "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/ai4bharat/indictrans2-en-indic-1B",
-      "operationId": "workers-ai-post-run-cf-ai4bharat-indictrans2-en-indic-1B",
-      "tags": [
-        "Workers AI Translation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/ai4bharat/nonomni-indictrans2-en-indic-1b",
-      "operationId": "workers-ai-post-run-cf-ai4bharat-nonomni-indictrans2-en-indic-1b",
-      "tags": [
-        "Workers AI Translation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/aisingapore/gemma-sea-lion-v4-27b-it",
-      "operationId": "workers-ai-post-run-cf-aisingapore-gemma-sea-lion-v4-27b-it",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/bge-base-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-bge-base-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/bge-large-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-bge-large-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/bge-m3",
-      "operationId": "workers-ai-post-run-cf-baai-bge-m3",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/bge-reranker-base",
-      "operationId": "workers-ai-post-run-cf-baai-bge-reranker-base",
-      "tags": [
-        "Workers AI Text Classification"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/bge-small-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-bge-small-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/nonomni-bge-base-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-nonomni-bge-base-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/nonomni-bge-large-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-nonomni-bge-large-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/nonomni-bge-m3",
-      "operationId": "workers-ai-post-run-cf-baai-nonomni-bge-m3",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/baai/nonomni-bge-small-en-v1.5",
-      "operationId": "workers-ai-post-run-cf-baai-nonomni-bge-small-en-v1-5",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/black-forest-labs/flux-1-schnell",
-      "operationId": "workers-ai-post-run-cf-black-forest-labs-flux-1-schnell",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/black-forest-labs/flux-2-dev",
-      "operationId": "workers-ai-post-run-cf-black-forest-labs-flux-2-dev",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/black-forest-labs/flux-2-klein-4b",
-      "operationId": "workers-ai-post-run-cf-black-forest-labs-flux-2-klein-4b",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/black-forest-labs/flux-2-klein-9b",
-      "operationId": "workers-ai-post-run-cf-black-forest-labs-flux-2-klein-9b",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/bytedance/stable-diffusion-xl-lightning",
-      "operationId": "workers-ai-post-run-cf-bytedance-stable-diffusion-xl-lightning",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-1",
-      "operationId": "workers-ai-post-run-cf-deepgram-aura-1",
-      "tags": [
-        "Workers AI Text To Speech"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2-en",
-      "operationId": "workers-ai-post-run-cf-deepgram-aura-2-en",
-      "tags": [
-        "Workers AI Text To Speech"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2-es",
-      "operationId": "workers-ai-post-run-cf-deepgram-aura-2-es",
-      "tags": [
-        "Workers AI Text To Speech"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepgram/flux",
-      "operationId": "workers-ai-post-run-cf-deepgram-flux",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepgram/nova-3",
-      "operationId": "workers-ai-post-run-cf-deepgram-nova-3",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepseek-ai/deepseek-math-7b-instruct",
-      "operationId": "workers-ai-post-run-cf-deepseek-ai-deepseek-math-7b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
-      "operationId": "workers-ai-post-run-cf-deepseek-ai-deepseek-r1-distill-qwen-32b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/defog/sqlcoder-7b-2",
-      "operationId": "workers-ai-post-run-cf-defog-sqlcoder-7b-2",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/facebook/bart-large-cnn",
-      "operationId": "workers-ai-post-run-cf-facebook-bart-large-cnn",
-      "tags": [
-        "Workers AI Summarization"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/facebook/nonomni-bart-large-cnn",
-      "operationId": "workers-ai-post-run-cf-facebook-nonomni-bart-large-cnn",
-      "tags": [
-        "Workers AI Summarization"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/facebook/nonomni-detr-resnet-50",
-      "operationId": "workers-ai-post-run-cf-facebook-nonomni-detr-resnet-50",
-      "tags": [
-        "Workers AI Object Detection"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/fblgit/una-cybertron-7b-v2-bf16",
-      "operationId": "workers-ai-post-run-cf-fblgit-una-cybertron-7b-v2-bf16",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/embeddinggemma-300m",
-      "operationId": "workers-ai-post-run-cf-google-embeddinggemma-300m",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/gemma-2b-it-lora",
-      "operationId": "workers-ai-post-run-cf-google-gemma-2b-it-lora",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/gemma-3-12b-it",
-      "operationId": "workers-ai-post-run-cf-google-gemma-3-12b-it",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/gemma-4-26b-a4b-it",
-      "operationId": "workers-ai-post-run-cf-google-gemma-4-26b-a4b-it",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/gemma-7b-it-lora",
-      "operationId": "workers-ai-post-run-cf-google-gemma-7b-it-lora",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/google/nonomni-embeddinggemma-300m",
-      "operationId": "workers-ai-post-run-cf-google-nonomni-embeddinggemma-300m",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/huggingface/distilbert-sst-2-int8",
-      "operationId": "workers-ai-post-run-cf-huggingface-distilbert-sst-2-int8",
-      "tags": [
-        "Workers AI Text Classification"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/huggingface/nonomni-distilbert-sst-2-int8",
-      "operationId": "workers-ai-post-run-cf-huggingface-nonomni-distilbert-sst-2-int8",
-      "tags": [
-        "Workers AI Text Classification"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/ibm-granite/granite-4.0-h-micro",
-      "operationId": "workers-ai-post-run-cf-ibm-granite-granite-4-0-h-micro",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/leonardo/lucid-origin",
-      "operationId": "workers-ai-post-run-cf-leonardo-lucid-origin",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/leonardo/phoenix-1.0",
-      "operationId": "workers-ai-post-run-cf-leonardo-phoenix-1-0",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/lykon/dreamshaper-8-lcm",
-      "operationId": "workers-ai-post-run-cf-lykon-dreamshaper-8-lcm",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta-llama/llama-2-7b-chat-hf-lora",
-      "operationId": "workers-ai-post-run-cf-meta-llama-llama-2-7b-chat-hf-lora",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-2-7b-chat-fp16",
-      "operationId": "workers-ai-post-run-cf-meta-llama-2-7b-chat-fp16",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-2-7b-chat-int8",
-      "operationId": "workers-ai-post-run-cf-meta-llama-2-7b-chat-int8",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3-8b-instruct-awq",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-8b-instruct-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3-8b-instruct",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-8b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.1-70b-instruct-fp8-fast",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-1-70b-instruct-fp8-fast",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.1-8b-instruct-awq",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-1-8b-instruct-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8-fast",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-1-8b-instruct-fp8-fast",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.1-8b-instruct-fp8",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-1-8b-instruct-fp8",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.2-11b-vision-instruct",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-2-11b-vision-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.2-1b-instruct",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-2-1b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.2-3b-instruct",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-2-3b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      "operationId": "workers-ai-post-run-cf-meta-llama-3-3-70b-instruct-fp8-fast",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-4-scout-17b-16e-instruct",
-      "operationId": "workers-ai-post-run-cf-meta-llama-4-scout-17b-16e-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/llama-guard-3-8b",
-      "operationId": "workers-ai-post-run-cf-meta-llama-guard-3-8b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/meta/m2m100-1.2b",
-      "operationId": "workers-ai-post-run-cf-meta-m2m100-1-2b",
-      "tags": [
-        "Workers AI Translation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/microsoft/nonomni-resnet-50",
-      "operationId": "workers-ai-post-run-cf-microsoft-nonomni-resnet-50",
-      "tags": [
-        "Workers AI Image Classification"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/microsoft/phi-2",
-      "operationId": "workers-ai-post-run-cf-microsoft-phi-2",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/microsoft/resnet-50",
-      "operationId": "workers-ai-post-run-cf-microsoft-resnet-50",
-      "tags": [
-        "Workers AI Image Classification"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/mistral/mistral-7b-instruct-v0.1",
-      "operationId": "workers-ai-post-run-cf-mistral-mistral-7b-instruct-v0-1",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/mistral/mistral-7b-instruct-v0.2-lora",
-      "operationId": "workers-ai-post-run-cf-mistral-mistral-7b-instruct-v0-2-lora",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/mistralai/mistral-small-3.1-24b-instruct",
-      "operationId": "workers-ai-post-run-cf-mistralai-mistral-small-3-1-24b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/moonshotai/kimi-k2.5",
-      "operationId": "workers-ai-post-run-cf-moonshotai-kimi-k2-5",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/moonshotai/kimi-k2.6",
-      "operationId": "workers-ai-post-run-cf-moonshotai-kimi-k2-6",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/moonshotai/kimi-k2.7-code",
-      "operationId": "workers-ai-post-run-cf-moonshotai-kimi-k2-7-code",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/myshell-ai/melotts",
-      "operationId": "workers-ai-post-run-cf-myshell-ai-melotts",
-      "tags": [
-        "Workers AI Text To Speech"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/nvidia/nemotron-3-120b-a12b",
-      "operationId": "workers-ai-post-run-cf-nvidia-nemotron-3-120b-a12b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/nvidia/nemotron-speech-streaming-en-0.6b",
-      "operationId": "workers-ai-post-run-cf-nvidia-nemotron-speech-streaming-en-0-6b",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openai/gpt-oss-120b",
-      "operationId": "workers-ai-post-run-cf-openai-gpt-oss-120b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openai/gpt-oss-20b",
-      "operationId": "workers-ai-post-run-cf-openai-gpt-oss-20b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openai/whisper-large-v3-turbo",
-      "operationId": "workers-ai-post-run-cf-openai-whisper-large-v3-turbo",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openai/whisper-tiny-en",
-      "operationId": "workers-ai-post-run-cf-openai-whisper-tiny-en",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openai/whisper",
-      "operationId": "workers-ai-post-run-cf-openai-whisper",
-      "tags": [
-        "Workers AI Automatic Speech Recognition"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/openchat/openchat-3.5-0106",
-      "operationId": "workers-ai-post-run-cf-openchat-openchat-3-5-0106",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/pfnet/plamo-embedding-1b",
-      "operationId": "workers-ai-post-run-cf-pfnet-plamo-embedding-1b",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen1.5-0.5b-chat",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen1-5-0-5b-chat",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen1.5-1.8b-chat",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen1-5-1-8b-chat",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen1.5-14b-chat-awq",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen1-5-14b-chat-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen1.5-7b-chat-awq",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen1-5-7b-chat-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen2.5-coder-32b-instruct",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen2-5-coder-32b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen3-30b-a3b-fp8",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen3-30b-a3b-fp8",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwen3-embedding-0.6b",
-      "operationId": "workers-ai-post-run-cf-qwen-qwen3-embedding-0-6b",
-      "tags": [
-        "Workers AI Text Embeddings"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/qwen/qwq-32b",
-      "operationId": "workers-ai-post-run-cf-qwen-qwq-32b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/runwayml/stable-diffusion-v1-5-img2img",
-      "operationId": "workers-ai-post-run-cf-runwayml-stable-diffusion-v1-5-img2img",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/runwayml/stable-diffusion-v1-5-inpainting",
-      "operationId": "workers-ai-post-run-cf-runwayml-stable-diffusion-v1-5-inpainting",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/stabilityai/stable-diffusion-xl-base-1.0",
-      "operationId": "workers-ai-post-run-cf-stabilityai-stable-diffusion-xl-base-1-0",
-      "tags": [
-        "Workers AI Text To Image"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/thebloke/discolm-german-7b-v1-awq",
-      "operationId": "workers-ai-post-run-cf-thebloke-discolm-german-7b-v1-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/tiiuae/falcon-7b-instruct",
-      "operationId": "workers-ai-post-run-cf-tiiuae-falcon-7b-instruct",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
-      "operationId": "workers-ai-post-run-cf-tinyllama-tinyllama-1-1b-chat-v1-0",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/zai-org/glm-4.7-flash",
-      "operationId": "workers-ai-post-run-cf-zai-org-glm-4-7-flash",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@cf/zai-org/glm-5.2",
-      "operationId": "workers-ai-post-run-cf-zai-org-glm-5-2",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/google/gemma-7b-it",
-      "operationId": "workers-ai-post-run-hf-google-gemma-7b-it",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/mistral/mistral-7b-instruct-v0.2",
-      "operationId": "workers-ai-post-run-hf-mistral-mistral-7b-instruct-v0-2",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/nexusflow/starling-lm-7b-beta",
-      "operationId": "workers-ai-post-run-hf-nexusflow-starling-lm-7b-beta",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/nousresearch/hermes-2-pro-mistral-7b",
-      "operationId": "workers-ai-post-run-hf-nousresearch-hermes-2-pro-mistral-7b",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/deepseek-coder-6.7b-base-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-deepseek-coder-6-7b-base-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/deepseek-coder-6.7b-instruct-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-deepseek-coder-6-7b-instruct-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/llama-2-13b-chat-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-llama-2-13b-chat-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/mistral-7b-instruct-v0.1-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-mistral-7b-instruct-v0-1-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/neural-chat-7b-v3-1-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-neural-chat-7b-v3-1-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/openhermes-2.5-mistral-7b-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-openhermes-2-5-mistral-7b-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/ai/run/@hf/thebloke/zephyr-7b-beta-awq",
-      "operationId": "workers-ai-post-run-hf-thebloke-zephyr-7b-beta-awq",
-      "tags": [
-        "Workers AI Text Generation"
-      ],
-      "pathParams": [
-        "account_id"
-      ],
-      "queryParams": [
-        "queueRequest",
-        "tags"
-      ],
       "deprecated": false
     },
     {
@@ -3955,6 +2456,78 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/{dataset}/summary",
+      "operationId": "art-analytics-query-summary",
+      "tags": [
+        "ART Analytics"
+      ],
+      "pathParams": [
+        "dataset"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/{dataset}/timeseries",
+      "operationId": "art-analytics-query-timeseries",
+      "tags": [
+        "ART Analytics"
+      ],
+      "pathParams": [
+        "dataset"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/{dataset}/top-n",
+      "operationId": "art-analytics-query-top-n",
+      "tags": [
+        "ART Analytics"
+      ],
+      "pathParams": [
+        "dataset"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/data-security/content-findings/top-n",
+      "operationId": "data-security-content-findings-top-n",
+      "tags": [
+        "Data Security"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/data-security/findings/summary",
+      "operationId": "data-security-findings-summary",
+      "tags": [
+        "Data Security"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/analytics/query/data-security/findings/timeseries",
+      "operationId": "data-security-findings-timeseries",
+      "tags": [
+        "Data Security"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/artifacts/namespaces/{namespace}/repos/{name}/fork",
       "operationId": "artifacts_repos_fork",
       "tags": [
@@ -4100,6 +2673,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/alerts/clear",
+      "operationId": "patchAccountsAccountIdBrandProtectionAlertsClear",
       "tags": [
         "brand_protection"
       ],
@@ -4112,6 +2686,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/alerts/refute",
+      "operationId": "patchAccountsAccountIdBrandProtectionAlertsRefute",
       "tags": [
         "brand_protection"
       ],
@@ -4124,6 +2699,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/alerts/verify",
+      "operationId": "patchAccountsAccountIdBrandProtectionAlertsVerify",
       "tags": [
         "brand_protection"
       ],
@@ -4136,6 +2712,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/alerts",
+      "operationId": "patchAccountsAccountIdBrandProtectionAlerts",
       "tags": [
         "brand_protection"
       ],
@@ -4148,6 +2725,7 @@
     {
       "method": "DELETE",
       "path": "/accounts/{account_id}/brand-protection/brands/patterns",
+      "operationId": "deleteAccountsAccountIdBrandProtectionBrandsPatterns",
       "tags": [
         "brand_protection"
       ],
@@ -4160,6 +2738,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/brands/patterns",
+      "operationId": "postAccountsAccountIdBrandProtectionBrandsPatterns",
       "tags": [
         "brand_protection"
       ],
@@ -4172,6 +2751,7 @@
     {
       "method": "DELETE",
       "path": "/accounts/{account_id}/brand-protection/brands",
+      "operationId": "deleteAccountsAccountIdBrandProtectionBrands",
       "tags": [
         "brand_protection"
       ],
@@ -4184,6 +2764,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/brands",
+      "operationId": "postAccountsAccountIdBrandProtectionBrands",
       "tags": [
         "brand_protection"
       ],
@@ -4196,6 +2777,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/clear",
+      "operationId": "patchAccountsAccountIdBrandProtectionClear",
       "tags": [
         "brand_protection"
       ],
@@ -4208,6 +2790,7 @@
     {
       "method": "DELETE",
       "path": "/accounts/{account_id}/brand-protection/logos/{logo_id}",
+      "operationId": "deleteAccountsAccountIdBrandProtectionLogosLogoId",
       "tags": [
         "logo_match"
       ],
@@ -4221,6 +2804,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/logos",
+      "operationId": "postAccountsAccountIdBrandProtectionLogos",
       "tags": [
         "logo_match"
       ],
@@ -4237,6 +2821,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/queries/bulk",
+      "operationId": "postAccountsAccountIdBrandProtectionQueriesBulk",
       "tags": [
         "domain_search"
       ],
@@ -4249,6 +2834,7 @@
     {
       "method": "DELETE",
       "path": "/accounts/{account_id}/brand-protection/queries",
+      "operationId": "deleteAccountsAccountIdBrandProtectionQueries",
       "tags": [
         "domain_search"
       ],
@@ -4265,6 +2851,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/queries",
+      "operationId": "patchAccountsAccountIdBrandProtectionQueries",
       "tags": [
         "domain_search"
       ],
@@ -4277,6 +2864,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/queries",
+      "operationId": "postAccountsAccountIdBrandProtectionQueries",
       "tags": [
         "domain_search"
       ],
@@ -4293,6 +2881,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/refute",
+      "operationId": "patchAccountsAccountIdBrandProtectionRefute",
       "tags": [
         "brand_protection"
       ],
@@ -4305,6 +2894,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/scan-logo",
+      "operationId": "postAccountsAccountIdBrandProtectionScanLogo",
       "tags": [
         "logo_match"
       ],
@@ -4317,6 +2907,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/scan-page",
+      "operationId": "postAccountsAccountIdBrandProtectionScanPage",
       "tags": [
         "logo_match"
       ],
@@ -4329,6 +2920,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/search",
+      "operationId": "postAccountsAccountIdBrandProtectionSearch",
       "tags": [
         "domain_search"
       ],
@@ -4341,6 +2933,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/brand-protection/submit",
+      "operationId": "postAccountsAccountIdBrandProtectionSubmit",
       "tags": [
         "brand_protection"
       ],
@@ -4353,6 +2946,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/brand-protection/verify",
+      "operationId": "patchAccountsAccountIdBrandProtectionVerify",
       "tags": [
         "brand_protection"
       ],
@@ -4360,6 +2954,21 @@
         "account_id"
       ],
       "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/browser-rendering/accessibilityTree",
+      "operationId": "brapi-post_AccessibilityTree",
+      "tags": [
+        "brapi"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [
+        "cacheTTL"
+      ],
       "deprecated": false
     },
     {
@@ -4418,7 +3027,8 @@
         "session_id"
       ],
       "queryParams": [
-        "url"
+        "url",
+        "liveViewUrlExpiresInMs"
       ],
       "deprecated": false
     },
@@ -4450,6 +3060,7 @@
         "keep_alive",
         "lab",
         "targets",
+        "liveViewUrlExpiresInMs",
         "recording"
       ],
       "deprecated": false
@@ -4759,6 +3370,21 @@
       ],
       "pathParams": [],
       "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/bulk/subscriptions",
+      "operationId": "account-subscriptions-bulk-create-subscription",
+      "tags": [
+        "Account Subscriptions"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [
+        "idemp_key"
+      ],
       "deprecated": false
     },
     {
@@ -5690,28 +4316,6 @@
     },
     {
       "method": "DELETE",
-      "path": "/accounts/{account_id}/cloudforce-one/exemptions",
-      "operationId": "cloudforce-one-remove-account-exemptions",
-      "tags": [
-        "Exemptions"
-      ],
-      "pathParams": [],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/accounts/{account_id}/cloudforce-one/exemptions",
-      "operationId": "cloudforce-one-add-account-exemptions",
-      "tags": [
-        "Exemptions"
-      ],
-      "pathParams": [],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "DELETE",
       "path": "/accounts/{account_id}/cloudforce-one/requests/{request_id}/asset/{asset_id}",
       "operationId": "cloudforce-one-request-asset-delete",
       "tags": [
@@ -5961,6 +4565,39 @@
       "deprecated": false
     },
     {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/cloudforce-one/rules/exemptions",
+      "operationId": "cloudforce-one-remove-account-exemptions",
+      "tags": [
+        "Rules"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/cloudforce-one/rules/exemptions",
+      "operationId": "cloudforce-one-add-account-exemptions",
+      "tags": [
+        "Rules"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/cloudforce-one/rules/exemptions",
+      "operationId": "cloudforce-one-update-account-exemptions",
+      "tags": [
+        "Rules"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/accounts/{account_id}/cloudforce-one/rules/validate",
       "operationId": "cloudforce-one-validate-rule",
@@ -6027,6 +4664,47 @@
       "operationId": "post_ConfigCreate",
       "tags": [
         "Scans"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/cloudforce-one/v2/brand-protection/domain/queries/{query_id}",
+      "operationId": "delete_DeleteDomainQuery",
+      "tags": [
+        "Brand Protection"
+      ],
+      "pathParams": [
+        "account_id",
+        "query_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/cloudforce-one/v2/brand-protection/domain/queries/{query_id}",
+      "operationId": "patch_UpdateDomainQuery",
+      "tags": [
+        "Brand Protection"
+      ],
+      "pathParams": [
+        "account_id",
+        "query_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/cloudforce-one/v2/brand-protection/domain/queries",
+      "operationId": "post_InsertDomainQuery",
+      "tags": [
+        "Brand Protection"
       ],
       "pathParams": [
         "account_id"
@@ -6494,6 +5172,65 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/containers/applications/{application_id}/instances/{instance_id}/exec",
+      "operationId": "containerInstanceExec",
+      "tags": [
+        "Applications",
+        "Container Instances"
+      ],
+      "pathParams": [
+        "application_id",
+        "instance_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/containers/applications/{application_id}/instances/{instance_id}/fetch",
+      "operationId": "containerInstanceFetch",
+      "tags": [
+        "Applications",
+        "Container Instances"
+      ],
+      "pathParams": [
+        "application_id",
+        "instance_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/containers/applications/{application_id}/instances/{instance_id}",
+      "operationId": "deleteContainerInstance",
+      "tags": [
+        "Applications",
+        "Container Instances"
+      ],
+      "pathParams": [
+        "application_id",
+        "instance_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/containers/applications/{application_id}/instances",
+      "operationId": "createContainerInstance",
+      "tags": [
+        "Applications",
+        "Container Instances"
+      ],
+      "pathParams": [
+        "application_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/containers/applications/{application_id}/rollouts",
       "operationId": "createApplicationRollout",
       "tags": [
@@ -6759,6 +5496,193 @@
       "pathParams": [
         "account_id"
       ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/content/export",
+      "operationId": "CreateContentExport",
+      "tags": [
+        "exports"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/instances/archive",
+      "operationId": "ArchiveFindingInstance",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/instances/unarchive",
+      "operationId": "UnarchiveFindingInstance",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/reset_finding_severity",
+      "operationId": "ResetFindingSeverity",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/tune_finding_severity",
+      "operationId": "ChangeFindingSeverity",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/{storage_namespace_id}/instances/export",
+      "operationId": "CreateFindingInstancesExportCSV",
+      "tags": [
+        "exports"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/export",
+      "operationId": "CreateFindingExportCSV",
+      "tags": [
+        "exports"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/ignore",
+      "operationId": "IgnoreFinding",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/findings/unignore",
+      "operationId": "UnIgnoreFinding",
+      "tags": [
+        "findings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/remediations/jobs/export",
+      "operationId": "CreateRemediationJobsExportCSV",
+      "tags": [
+        "exports"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/remediations/jobs",
+      "operationId": "CreateRemediationJobs",
+      "tags": [
+        "remediations"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks/{webhook_id}/evaluate",
+      "operationId": "EvaluateExistingWebhook",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks/{webhook_id}",
+      "operationId": "DeleteWebhook",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks/{webhook_id}",
+      "operationId": "UpdateWebhook",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks/evaluate",
+      "operationId": "EvaluateNewWebhook",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks/jobs",
+      "operationId": "CreateWebhookJobs",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/data-security/posture/webhooks",
+      "operationId": "CreateWebhook",
+      "tags": [
+        "webhooks"
+      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -8586,6 +7510,52 @@
       "deprecated": false
     },
     {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/email-security/settings/domains/{domain_id}",
+      "operationId": "email_security_replace_domain",
+      "tags": [
+        "Email Security Settings"
+      ],
+      "pathParams": [
+        "domain_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/email-security/settings/domains/batch",
+      "operationId": "email_security_batch_domains",
+      "tags": [
+        "Email Security Settings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/email-security/settings/domains",
+      "operationId": "email_security_delete_domains",
+      "tags": [
+        "Email Security Settings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": true
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/email-security/settings/domains",
+      "operationId": "email_security_create_domains",
+      "tags": [
+        "Email Security Settings"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/email-security/settings/impersonation_registry/{impersonation_registry_id}",
       "operationId": "email_security_delete_impersonation_registry",
@@ -8808,11 +7778,24 @@
       "deprecated": false
     },
     {
+      "method": "POST",
+      "path": "/accounts/{account_id}/email/routing/rules/plan",
+      "operationId": "email-routing-routing-rules-plan-account-routing-rules",
+      "tags": [
+        "Email Routing routing rules"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/email/routing/suppression/{suppression_id}",
       "operationId": "delete_publicDeleteSuppressionRouting",
       "tags": [
-        "Public"
+        "Email Routing suppressions"
       ],
       "pathParams": [
         "account_id",
@@ -8826,7 +7809,7 @@
       "path": "/accounts/{account_id}/email/routing/suppression",
       "operationId": "post_publicNewSuppressionRouting",
       "tags": [
-        "Public"
+        "Email Routing suppressions"
       ],
       "pathParams": [
         "account_id"
@@ -8865,7 +7848,7 @@
       "path": "/accounts/{account_id}/email/sending/suppression/{suppression_id}",
       "operationId": "delete_publicDeleteSuppressionSending",
       "tags": [
-        "Public"
+        "Email Sending suppressions"
       ],
       "pathParams": [
         "account_id",
@@ -8879,7 +7862,47 @@
       "path": "/accounts/{account_id}/email/sending/suppression",
       "operationId": "post_publicNewSuppressionSending",
       "tags": [
-        "Public"
+        "Email Sending suppressions"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/email/sending/suppressions/{suppression_id}",
+      "operationId": "delete_publicDeleteSendingSuppression",
+      "tags": [
+        "Email Sending suppressions"
+      ],
+      "pathParams": [
+        "account_id",
+        "suppression_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/email/sending/suppressions/bulk",
+      "operationId": "post_publicBulkCreateSendingSuppressions",
+      "tags": [
+        "Email Sending suppressions"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/email/sending/suppressions",
+      "operationId": "post_publicCreateSendingSuppression",
+      "tags": [
+        "Email Sending suppressions"
       ],
       "pathParams": [
         "account_id"
@@ -8995,6 +8018,20 @@
       ],
       "pathParams": [
         "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/flagship/apps/{app_id}/evaluate",
+      "operationId": "flagship_evaluate_flag_post",
+      "tags": [
+        "Evaluation"
+      ],
+      "pathParams": [
+        "account_id",
+        "app_id"
       ],
       "queryParams": [],
       "deprecated": false
@@ -9504,6 +8541,20 @@
       "deprecated": false
     },
     {
+      "method": "POST",
+      "path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}/restart",
+      "operationId": "restart-hyperdrive",
+      "tags": [
+        "Hyperdrive"
+      ],
+      "pathParams": [
+        "account_id",
+        "hyperdrive_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}",
       "operationId": "delete-hyperdrive",
@@ -9712,6 +8763,19 @@
       "deprecated": false
     },
     {
+      "method": "POST",
+      "path": "/accounts/{account_id}/images/v1/direct_upload",
+      "operationId": "cloudflare-images-create-authenticated-direct-upload-url-v-1",
+      "tags": [
+        "Cloudflare Images"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": true
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/images/v1/keys/{signing_key_name}",
       "operationId": "cloudflare-images-keys-delete-signing-key",
@@ -9799,6 +8863,115 @@
       "operationId": "cloudflare-images-create-authenticated-direct-upload-url-v-2",
       "tags": [
         "Cloudflare Images"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}/lifecycle/abort",
+      "operationId": "cloudflare-images-sourcingkit-abort-migration",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id",
+        "migration_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}/lifecycle/start",
+      "operationId": "cloudflare-images-sourcingkit-start-migration",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id",
+        "migration_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}",
+      "operationId": "cloudflare-images-sourcingkit-delete-migration",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id",
+        "migration_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations",
+      "operationId": "cloudflare-images-sourcingkit-create-migration",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/sources/{source_id}",
+      "operationId": "cloudflare-images-sourcingkit-delete-source",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id",
+        "source_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/sources/{source_id}",
+      "operationId": "cloudflare-images-sourcingkit-update-source",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id",
+        "source_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/sources/connectivity-precheck",
+      "operationId": "cloudflare-images-sourcingkit-precheck-source-connectivity",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/images/v2/sourcingkit/sources",
+      "operationId": "cloudflare-images-sourcingkit-create-source",
+      "tags": [
+        "Cloudflare Images Sourcing Kit"
       ],
       "pathParams": [
         "account_id"
@@ -10028,6 +9201,48 @@
     },
     {
       "method": "DELETE",
+      "path": "/accounts/{account_id}/load_balancers/{load_balancer_id}",
+      "operationId": "account-load-balancers-delete-account-load-balancer",
+      "tags": [
+        "Account Load Balancers"
+      ],
+      "pathParams": [
+        "account_id",
+        "load_balancer_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/load_balancers/{load_balancer_id}",
+      "operationId": "account-load-balancers-patch-account-load-balancer",
+      "tags": [
+        "Account Load Balancers"
+      ],
+      "pathParams": [
+        "account_id",
+        "load_balancer_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/load_balancers/{load_balancer_id}",
+      "operationId": "account-load-balancers-update-account-load-balancer",
+      "tags": [
+        "Account Load Balancers"
+      ],
+      "pathParams": [
+        "account_id",
+        "load_balancer_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
       "path": "/accounts/{account_id}/load_balancers/monitor_groups/{monitor_group_id}",
       "operationId": "account-load-balancer-monitor-groups-delete-monitor-group",
       "tags": [
@@ -10225,6 +9440,19 @@
       "operationId": "account-load-balancer-pools-create-pool",
       "tags": [
         "Account Load Balancer Pools"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/load_balancers",
+      "operationId": "account-load-balancers-create-account-load-balancer",
+      "tags": [
+        "Account Load Balancers"
       ],
       "pathParams": [
         "account_id"
@@ -11304,7 +10532,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/magic/connectors/{connector_id}/interrupts",
-      "operationId": "mconn-connector-interrupt-create",
+      "operationId": "mconn-connector-interrupts-create",
       "tags": [
         "Magic Connectors"
       ],
@@ -11318,7 +10546,7 @@
     {
       "method": "DELETE",
       "path": "/accounts/{account_id}/magic/connectors/{connector_id}",
-      "operationId": "mconn-connector-delete",
+      "operationId": "mconn-connectors-delete",
       "tags": [
         "Magic Connectors"
       ],
@@ -11332,7 +10560,7 @@
     {
       "method": "PATCH",
       "path": "/accounts/{account_id}/magic/connectors/{connector_id}",
-      "operationId": "mconn-connector-update",
+      "operationId": "mconn-connectors-edit",
       "tags": [
         "Magic Connectors"
       ],
@@ -11346,7 +10574,7 @@
     {
       "method": "PUT",
       "path": "/accounts/{account_id}/magic/connectors/{connector_id}",
-      "operationId": "mconn-connector-replace",
+      "operationId": "mconn-connectors-update",
       "tags": [
         "Magic Connectors"
       ],
@@ -11360,7 +10588,7 @@
     {
       "method": "POST",
       "path": "/accounts/{account_id}/magic/connectors",
-      "operationId": "mconn-connector-create",
+      "operationId": "mconn-connectors-create",
       "tags": [
         "Magic Connectors"
       ],
@@ -12099,6 +11327,32 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/mnm/rules/bulk",
+      "operationId": "magic-network-monitoring-rules-create-rules-bulk",
+      "tags": [
+        "Magic Network Monitoring Rules"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/mnm/rules/bulk",
+      "operationId": "magic-network-monitoring-rules-update-rules-bulk",
+      "tags": [
+        "Magic Network Monitoring Rules"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/mnm/rules",
       "operationId": "magic-network-monitoring-rules-create-rules",
       "tags": [
@@ -12137,9 +11391,20 @@
       "deprecated": false
     },
     {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/moq/relays/{relay_id}/tokens/{jti}",
+      "operationId": "moq-relays-tokens-delete",
+      "tags": [
+        "MoQ Relays"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
-      "path": "/accounts/{account_id}/moq/relays/{relay_id}/tokens/rotate",
-      "operationId": "moq-relays-tokens-rotate",
+      "path": "/accounts/{account_id}/moq/relays/{relay_id}/tokens",
+      "operationId": "moq-relays-tokens-create",
       "tags": [
         "MoQ Relays"
       ],
@@ -12291,6 +11556,75 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/one/integrations/{id}/pause",
+      "operationId": "pause_integration_v2",
+      "tags": [
+        "Integrations"
+      ],
+      "pathParams": [
+        "account_id",
+        "id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/one/integrations/{id}/resume",
+      "operationId": "resume_integration_v2",
+      "tags": [
+        "Integrations"
+      ],
+      "pathParams": [
+        "account_id",
+        "id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/one/integrations/{id}",
+      "operationId": "delete_integration_v2",
+      "tags": [
+        "Integrations"
+      ],
+      "pathParams": [
+        "account_id",
+        "id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/one/integrations/{id}",
+      "operationId": "update_integration_v2",
+      "tags": [
+        "Integrations"
+      ],
+      "pathParams": [
+        "account_id",
+        "id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/one/integrations",
+      "operationId": "create_integration_v2",
+      "tags": [
+        "Integrations"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}/retry",
       "operationId": "pages-deployment-retry-deployment",
       "tags": [
@@ -12308,6 +11642,37 @@
       "method": "POST",
       "path": "/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}/rollback",
       "operationId": "pages-deployment-rollback-deployment",
+      "tags": [
+        "Pages Deployment"
+      ],
+      "pathParams": [
+        "deployment_id",
+        "project_name",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}/tails/{tail_id}",
+      "operationId": "pages-deployment-delete-tail",
+      "tags": [
+        "Pages Deployment"
+      ],
+      "pathParams": [
+        "tail_id",
+        "deployment_id",
+        "project_name",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}/tails",
+      "operationId": "pages-deployment-create-tail",
       "tags": [
         "Pages Deployment"
       ],
@@ -13741,6 +13106,46 @@
     },
     {
       "method": "POST",
+      "path": "/accounts/{account_id}/registrar-sandbox/domain-check",
+      "operationId": "sandbox-registrar-domain-discovery-check",
+      "tags": [
+        "Domain Discovery"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/registrar-sandbox/registrations/{domain_name}",
+      "operationId": "sandbox-registrar-domain-registration-update",
+      "tags": [
+        "Registrar Registration"
+      ],
+      "pathParams": [
+        "account_id",
+        "domain_name"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/registrar-sandbox/registrations",
+      "operationId": "sandbox-registrar-domain-registration-create",
+      "tags": [
+        "Registrar Registration"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/accounts/{account_id}/registrar/domain-check",
       "operationId": "registrar-domain-discovery-check",
       "tags": [
@@ -14314,11 +13719,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id",
-        "secret_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14329,11 +13730,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id",
-        "secret_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14344,11 +13741,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id",
-        "secret_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14359,10 +13752,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14373,10 +13763,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14387,10 +13774,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id",
-        "store_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -14401,9 +13785,7 @@
       "tags": [
         "Secrets Store"
       ],
-      "pathParams": [
-        "account_id"
-      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -15197,6 +14579,20 @@
       "deprecated": false
     },
     {
+      "method": "POST",
+      "path": "/accounts/{account_id}/stream/live_inputs/{live_input_identifier}/rotate_keys",
+      "operationId": "stream-live-inputs-rotate-keys-for-a-live-input",
+      "tags": [
+        "Stream Live Inputs"
+      ],
+      "pathParams": [
+        "live_input_identifier",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "DELETE",
       "path": "/accounts/{account_id}/stream/live_inputs/{live_input_identifier}",
       "operationId": "stream-live-inputs-delete-a-live-input",
@@ -15303,6 +14699,20 @@
       "queryParams": [
         "direct_user"
       ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/subscriptions/{subscription_identifier}/action/append",
+      "operationId": "account-subscriptions-action-append-subscription",
+      "tags": [
+        "Account Subscriptions"
+      ],
+      "pathParams": [
+        "subscription_identifier",
+        "account_id"
+      ],
+      "queryParams": [],
       "deprecated": false
     },
     {
@@ -15550,6 +14960,48 @@
         "Account Owned API Tokens"
       ],
       "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/triggers/{script_name}",
+      "operationId": "wor-delete-script-triggers",
+      "tags": [
+        "Workflows"
+      ],
+      "pathParams": [
+        "script_name",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/accounts/{account_id}/triggers/{script_name}",
+      "operationId": "wor-add-script-triggers",
+      "tags": [
+        "Workflows"
+      ],
+      "pathParams": [
+        "script_name",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/triggers/{script_name}",
+      "operationId": "wor-replace-script-triggers",
+      "tags": [
+        "Workflows"
+      ],
+      "pathParams": [
+        "script_name",
         "account_id"
       ],
       "queryParams": [],
@@ -16401,6 +15853,32 @@
     },
     {
       "method": "DELETE",
+      "path": "/accounts/{account_id}/workers/observability/metricsexport",
+      "operationId": "metricsExport.delete",
+      "tags": [
+        "Metrics Export"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/{account_id}/workers/observability/metricsexport",
+      "operationId": "metricsExport.upsert",
+      "tags": [
+        "Metrics Export"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
       "path": "/accounts/{account_id}/workers/observability/queries/{queryId}",
       "operationId": "queries.delete",
       "tags": [
@@ -16974,6 +16452,21 @@
       "deprecated": false
     },
     {
+      "method": "DELETE",
+      "path": "/accounts/{account_id}/workflows/{workflow_name}/instances/{instance_id}",
+      "operationId": "wor-delete-workflow-instance",
+      "tags": [
+        "Workflows"
+      ],
+      "pathParams": [
+        "workflow_name",
+        "instance_id",
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/accounts/{account_id}/workflows/{workflow_name}/instances/batch/terminate",
       "operationId": "wor-batch-terminate-workflow-instances",
@@ -17045,6 +16538,19 @@
     },
     {
       "method": "PATCH",
+      "path": "/accounts/{account_id}/workflows/settings",
+      "operationId": "wor-update-workflow-settings",
+      "tags": [
+        "Workflows"
+      ],
+      "pathParams": [
+        "account_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
       "path": "/accounts/{account_id}/zerotrust/connectivity_settings",
       "operationId": "zero-trust-accounts-patch-connectivity-settings",
       "tags": [
@@ -17101,6 +16607,20 @@
       "method": "PATCH",
       "path": "/accounts/{account_id}/zerotrust/subnets/cloudflare_source/{address_family}",
       "operationId": "zero-trust-networks-subnet-update-cloudflare-source",
+      "tags": [
+        "Zero Trust Subnets"
+      ],
+      "pathParams": [
+        "account_id",
+        "address_family"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/accounts/{account_id}/zerotrust/subnets/initial_resolved_ip/{address_family}",
+      "operationId": "zero-trust-networks-subnet-update-gateway-ephemeral",
       "tags": [
         "Zero Trust Subnets"
       ],
@@ -17362,70 +16882,8 @@
     },
     {
       "method": "POST",
-      "path": "/integrations/{id}/pause",
-      "operationId": "pause_integration_v2",
-      "tags": [
-        "Integrations"
-      ],
-      "pathParams": [
-        "id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/integrations/{id}/resume",
-      "operationId": "resume_integration_v2",
-      "tags": [
-        "Integrations"
-      ],
-      "pathParams": [
-        "id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "DELETE",
-      "path": "/integrations/{id}",
-      "operationId": "delete_integration_v2",
-      "tags": [
-        "Integrations"
-      ],
-      "pathParams": [
-        "id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "PATCH",
-      "path": "/integrations/{id}",
-      "operationId": "update_integration_v2",
-      "tags": [
-        "Integrations"
-      ],
-      "pathParams": [
-        "id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/integrations",
-      "operationId": "create_integration_v2",
-      "tags": [
-        "Integrations"
-      ],
-      "pathParams": [],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
       "path": "/internal/submit",
+      "operationId": "postInternalSubmit",
       "tags": [
         "brand_protection"
       ],
@@ -17551,6 +17009,39 @@
     },
     {
       "method": "POST",
+      "path": "/pages/assets/check-missing",
+      "operationId": "pages-assets-check-missing",
+      "tags": [
+        "Pages Assets"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/pages/assets/upload",
+      "operationId": "pages-assets-upload",
+      "tags": [
+        "Pages Assets"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/pages/assets/upsert-hashes",
+      "operationId": "pages-assets-upsert-hashes",
+      "tags": [
+        "Pages Assets"
+      ],
+      "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
       "path": "/radar/datasets/download",
       "operationId": "radar-post-reports-dataset-download-url",
       "tags": [
@@ -17560,98 +17051,6 @@
       "queryParams": [
         "format"
       ],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets/{secret_id}/duplicate",
-      "operationId": "secrets-store-system-duplicate-by-id",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id",
-        "secret_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "DELETE",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets/{secret_id}",
-      "operationId": "secrets-store-system-secret-delete-by-id",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id",
-        "secret_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "PATCH",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets/{secret_id}",
-      "operationId": "secrets-store-system-patch-by-id",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id",
-        "secret_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "DELETE",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets",
-      "operationId": "secrets-store-system-delete-bulk",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets",
-      "operationId": "secrets-store-system-secret-create",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "DELETE",
-      "path": "/system/accounts/{account_tag}/stores/{store_id}",
-      "operationId": "secrets-store-system-delete-by-id",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [
-        "store_id"
-      ],
-      "queryParams": [],
-      "deprecated": false
-    },
-    {
-      "method": "POST",
-      "path": "/system/accounts/{account_tag}/stores",
-      "operationId": "secrets-store-system-create",
-      "tags": [
-        "Secrets Store"
-      ],
-      "pathParams": [],
-      "queryParams": [],
       "deprecated": false
     },
     {
@@ -17904,6 +17303,17 @@
       "pathParams": [
         "identifier"
       ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/user/subscriptions",
+      "operationId": "user-subscription-create-user-subscription",
+      "tags": [
+        "User Subscription"
+      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },
@@ -18433,6 +17843,19 @@
         "DLS Regional Services"
       ],
       "pathParams": [],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/zones/{zone_id}/ai-audit/robots/bulk",
+      "operationId": "ai-audit-bulk-get-robots",
+      "tags": [
+        "AI Audit"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
       "queryParams": [],
       "deprecated": false
     },
@@ -19653,7 +19076,7 @@
       "path": "/zones/{zone_id}/email/routing/suppression/{suppression_id}",
       "operationId": "delete_publicDeleteSuppressionZoneRouting",
       "tags": [
-        "Public"
+        "Email Routing suppressions"
       ],
       "pathParams": [
         "zone_id",
@@ -19667,7 +19090,7 @@
       "path": "/zones/{zone_id}/email/routing/suppression",
       "operationId": "post_publicNewSuppressionZoneRouting",
       "tags": [
-        "Public"
+        "Email Routing suppressions"
       ],
       "pathParams": [
         "zone_id"
@@ -19743,6 +19166,20 @@
       "deprecated": false
     },
     {
+      "method": "PATCH",
+      "path": "/zones/{zone_id}/email/sending/subdomains/{subdomain_id}",
+      "operationId": "email-sending-subdomains-update-sending-subdomain",
+      "tags": [
+        "Email Sending subdomains"
+      ],
+      "pathParams": [
+        "subdomain_id",
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/zones/{zone_id}/email/sending/subdomains/preview",
       "operationId": "email-sending-subdomains-preview-sending-subdomain",
@@ -19773,7 +19210,7 @@
       "path": "/zones/{zone_id}/email/sending/suppression/{suppression_id}",
       "operationId": "delete_publicDeleteSuppressionZoneSending",
       "tags": [
-        "Public"
+        "Email Sending suppressions"
       ],
       "pathParams": [
         "zone_id",
@@ -19787,7 +19224,7 @@
       "path": "/zones/{zone_id}/email/sending/suppression",
       "operationId": "post_publicNewSuppressionZoneSending",
       "tags": [
-        "Public"
+        "Email Sending suppressions"
       ],
       "pathParams": [
         "zone_id"
@@ -21047,6 +20484,19 @@
       "deprecated": false
     },
     {
+      "method": "PUT",
+      "path": "/zones/{zone_id}/precursor",
+      "operationId": "precursor-for-a-zone-update-config",
+      "tags": [
+        "Precursor"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/zones/{zone_id}/purge_cache",
       "operationId": "zone-purge",
@@ -22066,6 +21516,19 @@
       "deprecated": false
     },
     {
+      "method": "DELETE",
+      "path": "/zones/{zone_id}/subscription",
+      "operationId": "zone-subscription-delete-zone-subscription",
+      "tags": [
+        "Zone Subscription"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/zones/{zone_id}/subscription",
       "operationId": "zone-subscription-create-zone-subscription",
@@ -22082,6 +21545,45 @@
       "method": "PUT",
       "path": "/zones/{zone_id}/subscription",
       "operationId": "zone-subscription-update-zone-subscription",
+      "tags": [
+        "Zone Subscription"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/zones/{zone_id}/subscriptions",
+      "operationId": "zone-subscription-delete-zone-subscriptions",
+      "tags": [
+        "Zone Subscription"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/zones/{zone_id}/subscriptions",
+      "operationId": "zone-subscription-create-zone-subscriptions",
+      "tags": [
+        "Zone Subscription"
+      ],
+      "pathParams": [
+        "zone_id"
+      ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/zones/{zone_id}/subscriptions",
+      "operationId": "zone-subscription-update-zone-subscriptions",
       "tags": [
         "Zone Subscription"
       ],
@@ -22114,6 +21616,17 @@
       "pathParams": [
         "zone_id"
       ],
+      "queryParams": [],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/zones/{zone_id}/token_validation/config/{config_id}/credentials",
+      "operationId": "token-validation-config-credentials-edit",
+      "tags": [
+        "Token Validation Token Configuration"
+      ],
+      "pathParams": [],
       "queryParams": [],
       "deprecated": false
     },

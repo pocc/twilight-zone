@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT BY HAND.
 // Source: /tmp/api-schemas/openapi.json
-// Generated: 2026-06-28T06:03:49.465Z
+// Generated: 2026-07-27T21:01:59.079Z
 
 export type OpenApiGetOperation = {
   method: 'GET';
@@ -60,6 +60,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "type",
       "mitigation_status"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/abuse-reports/{report_id}/appeals/eligibility",
+    "operationId": "CheckAppealEligibility",
+    "tags": [
+      "tseng-abuse-complaint-processor_other"
+    ],
+    "pathParams": [
+      "account_id",
+      "report_id"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -137,6 +150,20 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     ],
     "pathParams": [
       "id",
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/access/ai-controls/mcp/portals/{portal_id}/servers/{server_id}/effective-redirect-uri",
+    "operationId": "mcp-portals-api-effective-redirect-uri",
+    "tags": [
+      "MCP Portal"
+    ],
+    "pathParams": [
+      "portal_id",
+      "server_id",
       "account_id"
     ],
     "queryParams": []
@@ -547,6 +574,37 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "user_idOp",
       "fields"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/access/logs/jit_requests",
+    "operationId": "access-jit-request-logs-list",
+    "tags": [
+      "Access JIT request logs"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "per_page",
+      "status",
+      "search",
+      "since",
+      "until"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/access/logs/jit_requests/{knock_request_id}",
+    "operationId": "access-jit-request-logs-get",
+    "tags": [
+      "Access JIT request logs"
+    ],
+    "pathParams": [
+      "account_id",
+      "knock_request_id"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -1007,6 +1065,70 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     ],
     "pathParams": [
       "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/agent-memory/namespaces",
+    "operationId": "agent-memory-namespace-list",
+    "tags": [
+      "Namespaces"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "per_page",
+      "order",
+      "direction",
+      "cursor"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}",
+    "operationId": "agent-memory-namespace-get",
+    "tags": [
+      "Namespaces"
+    ],
+    "pathParams": [
+      "account_id",
+      "namespace_name"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/memories",
+    "operationId": "agent-memory-memory-list",
+    "tags": [
+      "Memory"
+    ],
+    "pathParams": [
+      "account_id",
+      "namespace_name",
+      "profile_name"
+    ],
+    "queryParams": [
+      "per_page",
+      "cursor",
+      "session_id",
+      "type"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/agent-memory/namespaces/{namespace_name}/profiles/{profile_name}/memories/{memory_id}",
+    "operationId": "agent-memory-memory-get",
+    "tags": [
+      "Memory"
+    ],
+    "pathParams": [
+      "account_id",
+      "namespace_name",
+      "profile_name",
+      "memory_id"
     ],
     "queryParams": []
   },
@@ -1638,7 +1760,8 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "status",
       "source",
       "metadata_filter",
-      "item_id"
+      "item_id",
+      "key"
     ]
   },
   {
@@ -1875,198 +1998,6 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "include_deprecated",
       "format"
     ]
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-1",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-1",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-1-internal",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-1-internal",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-2",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2-en",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-2-en",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2-en-ws",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-2-en-ws",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/aura-2-es",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-aura-2-es",
-    "tags": [
-      "Workers AI Text To Speech"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/flux",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-flux",
-    "tags": [
-      "Workers AI Automatic Speech Recognition"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/nova-3",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-nova-3",
-    "tags": [
-      "Workers AI Automatic Speech Recognition"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/nova-3-internal",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-nova-3-internal",
-    "tags": [
-      "Workers AI Automatic Speech Recognition"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/deepgram/nova-3-ws",
-    "operationId": "workers-ai-post-websocket-run-cf-deepgram-nova-3-ws",
-    "tags": [
-      "Workers AI Automatic Speech Recognition"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/nvidia/nemotron-speech-streaming-en-0.6b",
-    "operationId": "workers-ai-post-websocket-run-cf-nvidia-nemotron-speech-streaming-en-0-6b",
-    "tags": [
-      "Workers AI Automatic Speech Recognition"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/pipecat-ai/smart-turn-v2",
-    "operationId": "workers-ai-post-websocket-run-cf-pipecat-ai-smart-turn-v2",
-    "tags": [
-      "Workers AI Dumb Pipe"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/pipecat-ai/smart-turn-v3",
-    "operationId": "workers-ai-post-websocket-run-cf-pipecat-ai-smart-turn-v3",
-    "tags": [
-      "Workers AI Dumb Pipe"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/sven/test-pipe-http",
-    "operationId": "workers-ai-post-websocket-run-cf-sven-test-pipe-http",
-    "tags": [
-      "Workers AI Text To Image"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/ai/run/@cf/test/hello-world-cog",
-    "operationId": "workers-ai-post-websocket-run-cf-test-hello-world-cog",
-    "tags": [
-      "Workers AI Dumb Pipe"
-    ],
-    "pathParams": [
-      "account_id"
-    ],
-    "queryParams": []
   },
   {
     "method": "GET",
@@ -2550,6 +2481,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/billing/usage",
+    "operationId": "usage-analytics-get-account-billing-usage",
+    "tags": [
+      "Usage Analytics"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/botnet_feed/asn/{asn_id}/day_report",
     "operationId": "botnet-threat-feed-get-day-report",
     "tags": [
@@ -2591,6 +2532,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/alerts",
+    "operationId": "getAccountsAccountIdBrandProtectionAlerts",
     "tags": [
       "brand_protection"
     ],
@@ -2602,6 +2544,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/brands",
+    "operationId": "getAccountsAccountIdBrandProtectionBrands",
     "tags": [
       "brand_protection"
     ],
@@ -2613,6 +2556,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/brands/patterns",
+    "operationId": "getAccountsAccountIdBrandProtectionBrandsPatterns",
     "tags": [
       "brand_protection"
     ],
@@ -2624,6 +2568,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/domain-info",
+    "operationId": "getAccountsAccountIdBrandProtectionDomainInfo",
     "tags": [
       "brand_protection"
     ],
@@ -2635,6 +2580,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/logo-matches",
+    "operationId": "getAccountsAccountIdBrandProtectionLogoMatches",
     "tags": [
       "logo_match"
     ],
@@ -2650,6 +2596,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/logo-matches/download",
+    "operationId": "getAccountsAccountIdBrandProtectionLogoMatchesDownload",
     "tags": [
       "logo_match"
     ],
@@ -2665,6 +2612,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/logos",
+    "operationId": "getAccountsAccountIdBrandProtectionLogos",
     "tags": [
       "logo_match"
     ],
@@ -2676,6 +2624,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/logos/{logo_id}",
+    "operationId": "getAccountsAccountIdBrandProtectionLogosLogoId",
     "tags": [
       "logo_match"
     ],
@@ -2688,6 +2637,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/matches",
+    "operationId": "getAccountsAccountIdBrandProtectionMatches",
     "tags": [
       "domain_search"
     ],
@@ -2704,6 +2654,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/matches/download",
+    "operationId": "getAccountsAccountIdBrandProtectionMatchesDownload",
     "tags": [
       "domain_search"
     ],
@@ -2720,6 +2671,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/queries",
+    "operationId": "getAccountsAccountIdBrandProtectionQueries",
     "tags": [
       "domain_search"
     ],
@@ -2731,6 +2683,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/recent-submissions",
+    "operationId": "getAccountsAccountIdBrandProtectionRecentSubmissions",
     "tags": [
       "brand_protection"
     ],
@@ -2742,6 +2695,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/submission-info",
+    "operationId": "getAccountsAccountIdBrandProtectionSubmissionInfo",
     "tags": [
       "brand_protection"
     ],
@@ -2753,6 +2707,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/total-queries",
+    "operationId": "getAccountsAccountIdBrandProtectionTotalQueries",
     "tags": [
       "domain_search"
     ],
@@ -2764,6 +2719,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/tracked-domains",
+    "operationId": "getAccountsAccountIdBrandProtectionTrackedDomains",
     "tags": [
       "brand_protection"
     ],
@@ -2775,12 +2731,23 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/brand-protection/url-info",
+    "operationId": "getAccountsAccountIdBrandProtectionUrlInfo",
     "tags": [
       "brand_protection"
     ],
     "pathParams": [
       "account_id"
     ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/browser-extension/config",
+    "operationId": "accounts-browser-extension-config-get",
+    "tags": [
+      "Browser Extension Config"
+    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -2845,7 +2812,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "account_id",
       "session_id"
     ],
-    "queryParams": []
+    "queryParams": [
+      "liveViewUrlExpiresInMs"
+    ]
   },
   {
     "method": "GET",
@@ -2886,7 +2855,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "account_id",
       "session_id"
     ],
-    "queryParams": []
+    "queryParams": [
+      "liveViewUrlExpiresInMs"
+    ]
   },
   {
     "method": "GET",
@@ -3320,7 +3291,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "order",
       "datasetId",
       "forceRefresh",
-      "format"
+      "format",
+      "source",
+      "cache"
     ]
   },
   {
@@ -3639,14 +3612,15 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "account_id"
     ],
     "queryParams": [
-      "nodeType",
-      "nodeId",
-      "datasetId",
-      "relationshipTypes",
+      "seeds",
       "direction",
-      "datasetIds",
+      "hydration",
       "limit",
-      "cursor"
+      "max_nodes",
+      "relationshipTypes",
+      "datasetIds",
+      "cursor",
+      "expand"
     ]
   },
   {
@@ -3688,7 +3662,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "relatedEventsLimit",
       "includeTags",
       "includeTotalCount",
-      "format"
+      "format",
+      "source",
+      "cache"
     ]
   },
   {
@@ -3779,7 +3755,8 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "pageSize",
       "search",
       "categoryUuid",
-      "filters"
+      "filters",
+      "cache"
     ]
   },
   {
@@ -3840,16 +3817,6 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "pathParams": [
       "account_id"
     ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/accounts/{account_id}/cloudforce-one/exemptions",
-    "operationId": "cloudforce-one-get-exemptions",
-    "tags": [
-      "Exemptions"
-    ],
-    "pathParams": [],
     "queryParams": []
   },
   {
@@ -3972,6 +3939,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/cloudforce-one/rules/exemptions",
+    "operationId": "cloudforce-one-get-exemptions",
+    "tags": [
+      "Rules"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/cloudforce-one/rules/managed",
     "operationId": "cloudforce-one-get-managed-rules",
     "tags": [
@@ -4078,7 +4055,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "account_id"
     ],
     "queryParams": [
-      "id"
+      "id",
+      "page",
+      "per_page"
     ]
   },
   {
@@ -4491,6 +4470,36 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/containers/applications/{application_id}/instances",
+    "operationId": "listContainerInstances",
+    "tags": [
+      "Applications",
+      "Container Instances"
+    ],
+    "pathParams": [
+      "application_id"
+    ],
+    "queryParams": [
+      "per_page",
+      "page_token"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/containers/applications/{application_id}/instances/{instance_id}",
+    "operationId": "getContainerInstance",
+    "tags": [
+      "Applications",
+      "Container Instances"
+    ],
+    "pathParams": [
+      "application_id",
+      "instance_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/containers/applications/{application_id}/versions",
     "operationId": "listApplicationVersions",
     "tags": [
@@ -4535,7 +4544,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     ],
     "queryParams": [
       "page",
-      "per_page"
+      "per_page",
+      "order",
+      "direction"
     ]
   },
   {
@@ -4608,6 +4619,156 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "queryParams": [
       "timestamp"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/content",
+    "operationId": "ListContentAssets",
+    "tags": [
+      "content"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "dlp_profile_id",
+      "order"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/exports",
+    "operationId": "ListExportJobs",
+    "tags": [
+      "exports"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "status"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/exports/{id}",
+    "operationId": "GetExportJob",
+    "tags": [
+      "exports"
+    ],
+    "pathParams": [
+      "id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/finding_types",
+    "operationId": "ListFindingTypes",
+    "tags": [
+      "finding_types"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/finding_types/{finding_type_id}",
+    "operationId": "GetFindingType",
+    "tags": [
+      "finding_types"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/finding_types/{finding_type_id}/remediation_types",
+    "operationId": "GetRemediationTypesForFindingType",
+    "tags": [
+      "finding_types"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "cursor"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/findings",
+    "operationId": "ListFindings",
+    "tags": [
+      "findings"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "cursor"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}",
+    "operationId": "GetFinding",
+    "tags": [
+      "findings"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/instances",
+    "operationId": "ListFindingInstances",
+    "tags": [
+      "findings"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "cursor"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/findings/{finding_id}/instances/{instance_id}",
+    "operationId": "GetFindingInstance",
+    "tags": [
+      "findings"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/remediations/jobs",
+    "operationId": "ListRemediationJobs",
+    "tags": [
+      "remediations"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "cursor",
+      "min_updated_at",
+      "max_updated_at",
+      "status",
+      "triggered_by_actor",
+      "order"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/webhooks",
+    "operationId": "ListWebhooks",
+    "tags": [
+      "webhooks"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/data-security/posture/webhooks/{webhook_id}",
+    "operationId": "GetWebhookConfigByID",
+    "tags": [
+      "webhooks"
+    ],
+    "pathParams": [],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -6331,6 +6492,18 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/email-security/settings/domains/{domain_id}/verification",
+    "operationId": "email_security_get_domain_verification",
+    "tags": [
+      "Email Security Settings"
+    ],
+    "pathParams": [
+      "domain_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/email-security/settings/impersonation_registry",
     "operationId": "email_security_list_impersonation_registry",
     "tags": [
@@ -6499,7 +6672,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/accounts/{account_id}/email/routing/suppression",
     "operationId": "get_publicListSuppressionRouting",
     "tags": [
-      "Public"
+      "Email Routing suppressions"
     ],
     "pathParams": [
       "account_id"
@@ -6516,7 +6689,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/accounts/{account_id}/email/routing/suppression/{suppression_id}",
     "operationId": "get_publicGetSuppressionRouting",
     "tags": [
-      "Public"
+      "Email Routing suppressions"
     ],
     "pathParams": [
       "account_id",
@@ -6529,7 +6702,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/accounts/{account_id}/email/sending/feedback",
     "operationId": "get_publicFeedbackStatus",
     "tags": [
-      "Public"
+      "Email Sending feedback"
     ],
     "pathParams": [
       "account_id"
@@ -6553,10 +6726,23 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/email/sending/messages/{message_id}",
+    "operationId": "email-sending-get-email-message",
+    "tags": [
+      "Email Sending"
+    ],
+    "pathParams": [
+      "account_id",
+      "message_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/email/sending/suppression",
     "operationId": "get_publicListSuppressionSending",
     "tags": [
-      "Public"
+      "Email Sending suppressions"
     ],
     "pathParams": [
       "account_id"
@@ -6573,7 +6759,39 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/accounts/{account_id}/email/sending/suppression/{suppression_id}",
     "operationId": "get_publicGetSuppressionSending",
     "tags": [
-      "Public"
+      "Email Sending suppressions"
+    ],
+    "pathParams": [
+      "account_id",
+      "suppression_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/email/sending/suppressions",
+    "operationId": "get_publicListSendingSuppressions",
+    "tags": [
+      "Email Sending suppressions"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "per_page",
+      "cursor",
+      "email",
+      "reason",
+      "order",
+      "direction"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/email/sending/suppressions/{suppression_id}",
+    "operationId": "get_publicGetSendingSuppression",
+    "tags": [
+      "Email Sending suppressions"
     ],
     "pathParams": [
       "account_id",
@@ -7093,7 +7311,10 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "pathParams": [
       "account_id"
     ],
-    "queryParams": []
+    "queryParams": [
+      "page",
+      "per_page"
+    ]
   },
   {
     "method": "GET",
@@ -7352,6 +7573,105 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "creator",
       "meta.<field>[<operator>]"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations",
+    "operationId": "cloudflare-images-sourcingkit-list-migrations",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "offset",
+      "limit"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}",
+    "operationId": "cloudflare-images-sourcingkit-get-migration",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id",
+      "migration_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}/lifecycle",
+    "operationId": "cloudflare-images-sourcingkit-get-migration-progress",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id",
+      "migration_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/migrations/{migration_id}/logs",
+    "operationId": "cloudflare-images-sourcingkit-list-migration-logs",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id",
+      "migration_id"
+    ],
+    "queryParams": [
+      "offset",
+      "limit"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/sources",
+    "operationId": "cloudflare-images-sourcingkit-list-sources",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "offset",
+      "limit",
+      "name"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/sources/{source_id}",
+    "operationId": "cloudflare-images-sourcingkit-get-source",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id",
+      "source_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/images/v2/sourcingkit/sources/{source_id}/connectivity",
+    "operationId": "cloudflare-images-sourcingkit-get-source-connectivity",
+    "tags": [
+      "Cloudflare Images Sourcing Kit"
+    ],
+    "pathParams": [
+      "account_id",
+      "source_id"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -7748,6 +8068,31 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/load_balancers",
+    "operationId": "account-load-balancers-list-account-load-balancers",
+    "tags": [
+      "Account Load Balancers"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/load_balancers/{load_balancer_id}",
+    "operationId": "account-load-balancers-account-load-balancer-details",
+    "tags": [
+      "Account Load Balancers"
+    ],
+    "pathParams": [
+      "account_id",
+      "load_balancer_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/load_balancers/monitor_groups",
     "operationId": "account-load-balancer-monitor-groups-list-monitor-groups",
     "tags": [
@@ -7936,6 +8281,18 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/load_balancers/usage",
+    "operationId": "account-load-balancers-list-load-balancer-usage",
+    "tags": [
+      "Account Load Balancers"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/logpush/datasets/{dataset_id}/fields",
     "operationId": "get-accounts-account_id-logpush-datasets-dataset_id-fields",
     "tags": [
@@ -8016,6 +8373,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "resource_product",
       "resource_type",
       "resource_scope",
+      "product_category",
       "zone_id",
       "zone_name",
       "account_name.not",
@@ -8066,6 +8424,18 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "limit",
       "cursor"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/logs/audit/product_categories",
+    "operationId": "audit-logs-v2-list-account-product-categories",
+    "tags": [
+      "Audit Logs"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -8690,7 +9060,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/magic/connectors",
-    "operationId": "mconn-connector-list",
+    "operationId": "mconn-connectors-list",
     "tags": [
       "Magic Connectors"
     ],
@@ -8704,7 +9074,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/magic/connectors/{connector_id}",
-    "operationId": "mconn-connector-fetch",
+    "operationId": "mconn-connectors-get",
     "tags": [
       "Magic Connectors"
     ],
@@ -8717,7 +9087,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/magic/connectors/{connector_id}/interrupts",
-    "operationId": "mconn-connector-interrupt-list",
+    "operationId": "mconn-connector-interrupts-list",
     "tags": [
       "Magic Connectors"
     ],
@@ -8764,7 +9134,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/magic/connectors/{connector_id}/telemetry/events/latest",
-    "operationId": "mconn-connector-telemetry-events-listLatest",
+    "operationId": "mconn-connector-telemetry-events-latest-get",
     "tags": [
       "Magic Connectors"
     ],
@@ -8809,7 +9179,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/accounts/{account_id}/magic/connectors/{connector_id}/telemetry/snapshots/latest",
-    "operationId": "mconn-connector-telemetry-snapshots-listLatest",
+    "operationId": "mconn-connector-telemetry-snapshots-latest-get",
     "tags": [
       "Magic Connectors"
     ],
@@ -9055,6 +9425,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/media/usage",
+    "operationId": "usage-analytics-get-account-media-usage",
+    "tags": [
+      "Usage Analytics"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/members",
     "operationId": "account-members-list-members",
     "tags": [
@@ -9155,6 +9535,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/moq/relays/{relay_id}/tokens",
+    "operationId": "moq-relays-tokens-list",
+    "tags": [
+      "MoQ Relays"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/mtls_certificates",
     "operationId": "m-tls-certificate-management-list-m-tls-certificates",
     "tags": [
@@ -9215,6 +9605,97 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "pathParams": [
       "account_id",
       "oauth_client_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/applications",
+    "operationId": "list_applications_v2",
+    "tags": [
+      "Applications"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "environment"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/applications/{application_id}",
+    "operationId": "get_application_v2",
+    "tags": [
+      "Applications"
+    ],
+    "pathParams": [
+      "account_id",
+      "application_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/applications/{application_id}/auth-methods",
+    "operationId": "get_application_auth_methods_v2",
+    "tags": [
+      "Applications"
+    ],
+    "pathParams": [
+      "account_id",
+      "application_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/applications/{application_id}/setup-flows",
+    "operationId": "get_application_setup_flows_v2",
+    "tags": [
+      "Applications"
+    ],
+    "pathParams": [
+      "account_id",
+      "application_id"
+    ],
+    "queryParams": [
+      "auth_method",
+      "environment"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/integrations",
+    "operationId": "list_integrations_v2",
+    "tags": [
+      "Integrations"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "application",
+      "direction",
+      "dlp_enabled",
+      "order",
+      "page",
+      "page_size",
+      "search",
+      "status",
+      "use_cases"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/one/integrations/{id}",
+    "operationId": "get_integration_v2",
+    "tags": [
+      "Integrations"
+    ],
+    "pathParams": [
+      "account_id",
+      "id"
     ],
     "queryParams": []
   },
@@ -9332,6 +9813,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/pages/projects/{project_name}/upload-token",
+    "operationId": "pages-project-get-upload-token",
+    "tags": [
+      "Pages Project"
+    ],
+    "pathParams": [
+      "project_name",
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/pay-per-crawl/crawler/stripe",
     "operationId": "pay-per-crawl.crawlerGetStripeConfig",
     "tags": [
@@ -9358,6 +9852,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "method": "GET",
     "path": "/accounts/{account_id}/paygo-usage",
     "operationId": "billable-usage-get-paygo-account-usage",
+    "tags": [
+      "Billable Usage"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/paygo-usage-info",
+    "operationId": "billable-usage-get-paygo-account-usage-info",
     "tags": [
       "Billable Usage"
     ],
@@ -10298,7 +10802,6 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "session_id"
     ],
     "queryParams": [
-      "filters",
       "include_peer_events"
     ]
   },
@@ -10421,6 +10924,103 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/domain-search",
+    "operationId": "sandbox-registrar-domain-discovery-search",
+    "tags": [
+      "Domain Discovery"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "q",
+      "extensions",
+      "limit"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/extensions",
+    "operationId": "sandbox-registrar-extension-list",
+    "tags": [
+      "Extension"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "name",
+      "sort_by"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/extensions/{extension}",
+    "operationId": "sandbox-registrar-extension-get",
+    "tags": [
+      "Extension"
+    ],
+    "pathParams": [
+      "account_id",
+      "extension"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/registrations",
+    "operationId": "sandbox-registrar-domain-registration-list",
+    "tags": [
+      "Registrar Registration"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "sort_by"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/registrations/{domain_name}",
+    "operationId": "sandbox-registrar-domain-registration-get",
+    "tags": [
+      "Registrar Registration"
+    ],
+    "pathParams": [
+      "account_id",
+      "domain_name"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/registrations/{domain_name}/registration-status",
+    "operationId": "sandbox-registrar-domain-registration-get-status",
+    "tags": [
+      "Registrar Registration"
+    ],
+    "pathParams": [
+      "account_id",
+      "domain_name"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar-sandbox/registrations/{domain_name}/update-status",
+    "operationId": "sandbox-registrar-domain-registration-get-update-status",
+    "tags": [
+      "Registrar Registration"
+    ],
+    "pathParams": [
+      "account_id",
+      "domain_name"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/registrar/domain-search",
     "operationId": "registrar-domain-discovery-search",
     "tags": [
@@ -10457,6 +11057,34 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "pathParams": [
       "domain_name",
       "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar/extensions",
+    "operationId": "registrar-extension-list",
+    "tags": [
+      "Extension"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": [
+      "name",
+      "sort_by"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/registrar/extensions/{extension}",
+    "operationId": "registrar-extension-get",
+    "tags": [
+      "Extension"
+    ],
+    "pathParams": [
+      "account_id",
+      "extension"
     ],
     "queryParams": []
   },
@@ -11062,9 +11690,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "tags": [
       "Secrets Store"
     ],
-    "pathParams": [
-      "account_id"
-    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -11074,9 +11700,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "tags": [
       "Secrets Store"
     ],
-    "pathParams": [
-      "account_id"
-    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -11086,10 +11710,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "tags": [
       "Secrets Store"
     ],
-    "pathParams": [
-      "account_id",
-      "store_id"
-    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -11099,10 +11720,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "tags": [
       "Secrets Store"
     ],
-    "pathParams": [
-      "account_id",
-      "store_id"
-    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -11112,11 +11730,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "tags": [
       "Secrets Store"
     ],
-    "pathParams": [
-      "account_id",
-      "store_id",
-      "secret_id"
-    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -11692,6 +12306,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/stream/usage",
+    "operationId": "usage-analytics-get-account-stream-usage",
+    "tags": [
+      "Usage Analytics"
+    ],
+    "pathParams": [],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/stream/watermarks",
     "operationId": "stream-watermark-profile-list-watermark-profiles",
     "tags": [
@@ -11778,8 +12402,22 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "account_id"
     ],
     "queryParams": [
-      "type"
+      "type",
+      "name",
+      "id"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/tags/summary",
+    "operationId": "tags-list-key-summary",
+    "tags": [
+      "Resource Tagging"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -11930,6 +12568,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "Account Owned API Tokens"
     ],
     "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/triggers/{script_name}",
+    "operationId": "wor-get-script-triggers",
+    "tags": [
+      "Workflows"
+    ],
+    "pathParams": [
+      "script_name",
       "account_id"
     ],
     "queryParams": []
@@ -12635,6 +13286,18 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/workers/observability/metricsexport",
+    "operationId": "metricsExport.list",
+    "tags": [
+      "Metrics Export"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/workers/observability/queries",
     "operationId": "queries.list",
     "tags": [
@@ -13189,6 +13852,18 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/accounts/{account_id}/workflows/settings",
+    "operationId": "wor-get-workflow-settings",
+    "tags": [
+      "Workflows"
+    ],
+    "pathParams": [
+      "account_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/accounts/{account_id}/zerotrust/connectivity_settings",
     "operationId": "zero-trust-accounts-get-connectivity-settings",
     "tags": [
@@ -13256,6 +13931,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "per_page",
       "page"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/accounts/{account_id}/zerotrust/subnets/initial_resolved_ip/{address_family}",
+    "operationId": "zero-trust-networks-subnet-get-gateway-ephemeral",
+    "tags": [
+      "Zero Trust Subnets"
+    ],
+    "pathParams": [
+      "account_id",
+      "address_family"
+    ],
+    "queryParams": []
   },
   {
     "method": "GET",
@@ -13400,45 +14088,6 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
-    "path": "/applications",
-    "operationId": "list_applications_v2",
-    "tags": [
-      "Applications"
-    ],
-    "pathParams": [],
-    "queryParams": [
-      "environment"
-    ]
-  },
-  {
-    "method": "GET",
-    "path": "/applications/{slug}",
-    "operationId": "get_application_v2",
-    "tags": [
-      "Applications"
-    ],
-    "pathParams": [
-      "slug"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/applications/{slug}/setup-flows",
-    "operationId": "get_application_setup_flows_v2",
-    "tags": [
-      "Applications"
-    ],
-    "pathParams": [
-      "slug"
-    ],
-    "queryParams": [
-      "auth_method",
-      "environment"
-    ]
-  },
-  {
-    "method": "GET",
     "path": "/certificates",
     "operationId": "origin-ca-list-certificates",
     "tags": [
@@ -13467,38 +14116,6 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
-    "path": "/integrations",
-    "operationId": "list_integrations_v2",
-    "tags": [
-      "Integrations"
-    ],
-    "pathParams": [],
-    "queryParams": [
-      "application",
-      "direction",
-      "dlp_enabled",
-      "order",
-      "page",
-      "page_size",
-      "search",
-      "status",
-      "use_cases"
-    ]
-  },
-  {
-    "method": "GET",
-    "path": "/integrations/{id}",
-    "operationId": "get_integration_v2",
-    "tags": [
-      "Integrations"
-    ],
-    "pathParams": [
-      "id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
     "path": "/ips",
     "operationId": "cloudflare-ips-cloudflare-ip-details",
     "tags": [
@@ -13512,6 +14129,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/live",
+    "operationId": "getLive",
     "tags": [
       "brand_protection"
     ],
@@ -15671,6 +16289,22 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/radar/bgp/routes/paths/{asn}",
+    "operationId": "radar-get-bgp-routes-paths",
+    "tags": [
+      "Radar BGP"
+    ],
+    "pathParams": [
+      "asn"
+    ],
+    "queryParams": [
+      "ipVersion",
+      "collector",
+      "format"
+    ]
+  },
+  {
+    "method": "GET",
     "path": "/radar/bgp/routes/pfx2as",
     "operationId": "radar-get-bgp-pfx2as",
     "tags": [
@@ -15709,6 +16343,24 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "queryParams": [
       "asn",
       "location",
+      "format"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/radar/bgp/routes/upstreams/{asn}/timeseries",
+    "operationId": "radar-get-bgp-routes-upstreams-timeseries",
+    "tags": [
+      "Radar BGP"
+    ],
+    "pathParams": [
+      "asn"
+    ],
+    "queryParams": [
+      "ipVersion",
+      "dateStart",
+      "dateEnd",
+      "limit",
       "format"
     ]
   },
@@ -19926,6 +20578,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/ready",
+    "operationId": "getReady",
     "tags": [
       "brand_protection"
     ],
@@ -19935,57 +20588,11 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   {
     "method": "GET",
     "path": "/signed-url",
+    "operationId": "getSignedUrl",
     "tags": [
       "logo_match"
     ],
     "pathParams": [],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/system/accounts/{account_tag}/stores",
-    "operationId": "secrets-store-system-list",
-    "tags": [
-      "Secrets Store"
-    ],
-    "pathParams": [],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/system/accounts/{account_tag}/stores/{store_id}",
-    "operationId": "secrets-store-system-get-store-by-id",
-    "tags": [
-      "Secrets Store"
-    ],
-    "pathParams": [
-      "store_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets",
-    "operationId": "secrets-store-system-secrets-list",
-    "tags": [
-      "Secrets Store"
-    ],
-    "pathParams": [
-      "store_id"
-    ],
-    "queryParams": []
-  },
-  {
-    "method": "GET",
-    "path": "/system/accounts/{account_tag}/stores/{store_id}/secrets/{secret_id}",
-    "operationId": "secrets-store-system-get-by-id",
-    "tags": [
-      "Secrets Store"
-    ],
-    "pathParams": [
-      "store_id",
-      "secret_id"
-    ],
     "queryParams": []
   },
   {
@@ -20281,6 +20888,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "preview_id"
     ],
     "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/user/load_balancers/regions",
+    "operationId": "user-load-balancer-regions-list-regions",
+    "tags": [
+      "Load Balancer Regions"
+    ],
+    "pathParams": [],
+    "queryParams": [
+      "subdivision_code",
+      "country_code"
+    ]
   },
   {
     "method": "GET",
@@ -20710,6 +21330,20 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/zones/{zone_id}/ai-audit/robots",
+    "operationId": "ai-audit-get-robots",
+    "tags": [
+      "AI Audit"
+    ],
+    "pathParams": [
+      "zone_id"
+    ],
+    "queryParams": [
+      "subdomain"
+    ]
+  },
+  {
+    "method": "GET",
     "path": "/zones/{zone_id}/ai-security/custom-topics",
     "operationId": "ai-security-custom-topics-get",
     "tags": [
@@ -20871,7 +21505,8 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     ],
     "pathParams": [],
     "queryParams": [
-      "host"
+      "host",
+      "include_schema_kind"
     ]
   },
   {
@@ -21458,7 +22093,9 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "page",
       "per_page",
       "order",
-      "direction"
+      "direction",
+      "shadowed_by_name",
+      "shadowing_name"
     ]
   },
   {
@@ -21638,7 +22275,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/zones/{zone_id}/email/routing/suppression",
     "operationId": "get_publicListSuppressionZoneRouting",
     "tags": [
-      "Public"
+      "Email Routing suppressions"
     ],
     "pathParams": [
       "zone_id"
@@ -21655,7 +22292,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/zones/{zone_id}/email/routing/suppression/{suppression_id}",
     "operationId": "get_publicGetSuppressionZoneRouting",
     "tags": [
-      "Public"
+      "Email Routing suppressions"
     ],
     "pathParams": [
       "zone_id",
@@ -21719,7 +22356,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/zones/{zone_id}/email/sending/suppression",
     "operationId": "get_publicListSuppressionZoneSending",
     "tags": [
-      "Public"
+      "Email Sending suppressions"
     ],
     "pathParams": [
       "zone_id"
@@ -21736,7 +22373,7 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "path": "/zones/{zone_id}/email/sending/suppression/{suppression_id}",
     "operationId": "get_publicGetSuppressionZoneSending",
     "tags": [
-      "Public"
+      "Email Sending suppressions"
     ],
     "pathParams": [
       "zone_id",
@@ -22108,6 +22745,19 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
   },
   {
     "method": "GET",
+    "path": "/zones/{zone_id}/hold/{zone_name}",
+    "operationId": "zones-0-hold-zone-name-get",
+    "tags": [
+      "Zone Holds"
+    ],
+    "pathParams": [
+      "zone_id",
+      "zone_name"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
     "path": "/zones/{zone_id}/hostnames/settings/{setting_id}",
     "operationId": "per-hostname-tls-settings-list",
     "tags": [
@@ -22404,6 +23054,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "pathParams": [
       "zone_id"
     ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/zones/{zone_id}/media/usage",
+    "operationId": "usage-analytics-get-zone-media-usage",
+    "tags": [
+      "Usage Analytics"
+    ],
+    "pathParams": [],
     "queryParams": []
   },
   {
@@ -22744,6 +23404,34 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
       "zone_id"
     ],
     "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/zones/{zone_id}/precursor",
+    "operationId": "precursor-for-a-zone-get-config",
+    "tags": [
+      "Precursor"
+    ],
+    "pathParams": [
+      "zone_id"
+    ],
+    "queryParams": []
+  },
+  {
+    "method": "GET",
+    "path": "/zones/{zone_id}/rate_limit_analytics",
+    "operationId": "rate-limit-analytics-get-zone-analytics",
+    "tags": [
+      "Rate Limiting Analytics"
+    ],
+    "pathParams": [
+      "zone_id"
+    ],
+    "queryParams": [
+      "since",
+      "until",
+      "time_delta"
+    ]
   },
   {
     "method": "GET",
@@ -23717,6 +24405,16 @@ export const OPENAPI_GET_OPERATIONS: OpenApiGetOperation[] = [
     "queryParams": [
       "retry"
     ]
+  },
+  {
+    "method": "GET",
+    "path": "/zones/{zone_id}/stream/usage",
+    "operationId": "usage-analytics-get-zone-stream-usage",
+    "tags": [
+      "Usage Analytics"
+    ],
+    "pathParams": [],
+    "queryParams": []
   },
   {
     "method": "GET",
