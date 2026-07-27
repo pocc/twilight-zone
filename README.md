@@ -7,19 +7,6 @@ a destination account — through an interactive, auditable wizard.
 
 ![Twilight Zone migration wizard](media/screenshot-setup.webp)
 
-> ## ⚠️ Not a Cloudflare product — no warranty, no support
->
-> Twilight Zone is **not an official Cloudflare product** and is **not
-> supported by Cloudflare Support.** Do not open support tickets or
-> escalations for it. It is an independent, best-effort tool; bugs and requests
-> go to this repository's issue tracker or `twilight-zone[АТ]ross.gg`, not to
-> Cloudflare.
->
-> It is provided **"AS IS", WITHOUT WARRANTY OF ANY KIND**, per the
-> [Apache License 2.0](LICENSE). You are solely responsible for verifying the
-> result of any migration. Always confirm the destination zone before changing
-> nameservers at your registrar. See also [NOTICE](NOTICE).
-
 ## Deploy your own
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pocc/twilight-zone)
@@ -116,7 +103,10 @@ verify" checklist if you do use the tool.
 4. **Durable Object state** — the namespace is always created; stored **state** is copied only when you configure object names + source/dest worker URLs.
 5. **KV & R2 data** — namespaces/buckets migrate automatically; KV values copy when you select the namespace, R2 **object data** only when you supply S3 credentials for both accounts.
 
-## Data collection (beta)
+## Data collection
+
+*The website at https://twilight-zone.success.cloudflare.dev/ collects data to improve.
+If you deploy this to your worker, you will get the logs instead.*
 
 A **non-secret, non-PII** summary of each completed migration is logged
 server-side (KV, 90-day retention): resource names, per-resource statuses, and
@@ -138,6 +128,16 @@ src/
 ├── migrate.ts       # Migration orchestration entry (re-exports migrate/)
 └── migrate/         # Export + migrate engine, split by concern
 ```
+
+## ⚠️ Not a Cloudflare product; potential for LOSS OF DATA
+
+> Twilight Zone is provided **"AS IS", WITHOUT WARRANTY OF ANY KIND**, per the
+> [Apache License 2.0](LICENSE). It is an independent, best-effort tool.
+> Bugs and requests go to this repository's issue tracker.
+>
+> You are solely responsible for verifying the
+> result of any migration. Always confirm the destination zone before changing
+> nameservers at your registrar. See also [NOTICE](NOTICE).
 
 ## Documentation
 
