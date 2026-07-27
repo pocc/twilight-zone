@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { Sun, Moon, Lock, Info, ChartPieSlice } from '@phosphor-icons/react';
+import { Sun, Moon, Info, ChartPieSlice, GithubLogo } from '@phosphor-icons/react';
 import { CoverageTiles } from './CoverageTiles';
 import { CoverageStatusLine } from './CoverageStatusLine';
 import { TwinkleStarfield } from './TwinkleStarfield';
@@ -13,6 +13,7 @@ import twilightDoorFrameWebp from '../assets/twilight-door-frame.webp';
 import twilightDoorPanelWebp from '../assets/twilight-door-panel.webp';
 import tzVortexWebp from '../assets/tz-vortex.webp';
 import rossAvatarWebp from '../assets/ross-avatar.webp';
+import deployToCloudflareSvg from '../assets/deploy-to-cloudflare.svg';
 
 // The door-vanish effect is fixed to "flip": the door panel detaches,
 // spins on multiple axes, and grows to fill the screen - bridging into
@@ -37,6 +38,12 @@ const SERLING_NARRATION = `You unlock this door with the key of imagination. Bey
 //     precise per-category numbers.
 const OVERALL_COVERAGE_PCT = Math.round(coverageSummary.totals.implementation_rate_pct);
 const IN_SCOPE_WRITE_SHARE_PCT = Math.round(coverageSummary.totals.in_scope_write_share_pct);
+
+// Source repository + one-click deploy target. The "Deploy to Cloudflare"
+// button clones the repo into the visitor's own account and deploys their own
+// instance (this canonical deployment lives at twilight-zone.ross.gg).
+const GITHUB_REPO_URL = 'https://github.com/pocc/twilight-zone';
+const DEPLOY_TO_CLOUDFLARE_URL = `https://deploy.workers.cloudflare.com/?url=${GITHUB_REPO_URL}`;
 
 // Door halo as a small spiral galaxy: stars laid along two logarithmic
 // spiral arms plus a central core, each twinkling independently. Rendered
@@ -98,7 +105,6 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
     return () => clearTimeout(t);
   }, []);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [securityOpen, setSecurityOpen] = useState(false);
   const [coverageOpen, setCoverageOpen] = useState(false);
 
   // ── CRT Easter Egg ──────────────────────────────────────────
@@ -797,11 +803,16 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
               Cloudflare Zone Migration Tool <span className="text-gray-400">v1.0.0</span>
               <MigrationCounter />
             </p>
+            {/* Links line + coverage-status line share a left column; the
+                one-click "Deploy to Cloudflare" badge sits to their right and
+                spans both rows' height. */}
+            <div className="mt-1 flex items-center justify-center gap-4">
+              <div className="text-right">
             {/* Links on their own line below the subtitle. */}
-            <p className="mt-1 text-gray-400">
+            <p className="text-gray-400">
               <button
                 type="button"
-                onClick={() => { setAboutOpen(true); setSecurityOpen(false); setCoverageOpen(false); }}
+                onClick={() => { setAboutOpen(true); setCoverageOpen(false); }}
                 className="inline-flex items-center gap-1 text-orange-400/70 hover:text-orange-400 transition underline underline-offset-2 cursor-pointer"
                 aria-haspopup="dialog"
               >
@@ -811,17 +822,7 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
               <span className="mx-1.5">&middot;</span>
               <button
                 type="button"
-                onClick={() => { setSecurityOpen(true); setAboutOpen(false); setCoverageOpen(false); }}
-                className="inline-flex items-center gap-1 text-orange-400/70 hover:text-orange-400 transition underline underline-offset-2 cursor-pointer"
-                aria-haspopup="dialog"
-              >
-                <Lock size={20} weight="fill" aria-hidden="true" />
-                Security
-              </button>
-              <span className="mx-1.5">&middot;</span>
-              <button
-                type="button"
-                onClick={() => { setCoverageOpen(true); setAboutOpen(false); setSecurityOpen(false); }}
+                onClick={() => { setCoverageOpen(true); setAboutOpen(false); }}
                 className="inline-flex items-center gap-1 text-orange-400/70 hover:text-orange-400 transition underline underline-offset-2 cursor-pointer"
                 aria-haspopup="dialog"
                 aria-label={`Coverage by category - ${OVERALL_COVERAGE_PCT}% of migratable zone resources implemented; ${IN_SCOPE_WRITE_SHARE_PCT}% of all in-scope write endpoints. Opens a modal with per-category detail.`}
@@ -830,15 +831,26 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
                 Coverage
               </button>
               <span className="mx-1.5">&middot;</span>
-              {/* Maker's mark — small avatar + name, inline with the
-                  About/Security/Coverage links (à la Clear Skies). Links to
-                  user.com; no email, no absolute-positioned card. */}
               <a
-                href="https://user.com/about/"
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-orange-400/70 hover:text-orange-400 transition underline underline-offset-2 cursor-pointer"
+                title="Source on GitHub"
+              >
+                <GithubLogo size={20} weight="fill" aria-hidden="true" />
+                GitHub
+              </a>
+              <span className="mx-1.5">&middot;</span>
+              {/* Maker's mark — small avatar + name, inline with the
+                  About/Coverage/GitHub links (à la Clear Skies). Links to
+                  ross.gg; no email, no absolute-positioned card. */}
+              <a
+                href="https://ross.gg/about/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-1 text-orange-400/70 hover:text-orange-400 transition underline underline-offset-2 cursor-pointer"
-                title="Made by the maintainer — user.com"
+                title="Made by Ross Jacobs — ross.gg"
               >
                 {/* Avatar photo in every theme, including twilight (no longer
                     swapped for the UserCircle phosphor icon). */}
@@ -850,12 +862,35 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
                   className="h-5 w-5 rounded-full object-cover ring-1 ring-gray-700 group-hover:ring-orange-400 transition"
                   draggable={false}
                 />
-                the maintainer
+                Ross Jacobs
               </a>
             </p>
-            {/* Always-visible coverage status (static % fallback, enriched by
-                the live spec-drift monitor). Sits directly under the links. */}
-            <CoverageStatusLine />
+            {/* Coverage status line: the 504/504 spec-coverage line, enriched
+                live by the spec-drift monitor (static % fallback). */}
+            <div className="mt-1 flex items-center justify-end gap-3">
+              <CoverageStatusLine />
+            </div>
+              </div>
+              {/* One-click "Deploy to Cloudflare" badge, to the right of the
+                  stacked links + coverage lines so it can be taller. Cloudflare's
+                  official deploy button, vendored into app/assets so there's no
+                  runtime dependency on deploy.workers.cloudflare.com. */}
+              <a
+                href={DEPLOY_TO_CLOUDFLARE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block shrink-0 transition hover:opacity-90"
+                title="Deploy your own instance to Cloudflare Workers"
+              >
+                <img
+                  src={deployToCloudflareSvg}
+                  alt="Deploy to Cloudflare"
+                  height={48}
+                  className="h-12 w-auto"
+                  draggable={false}
+                />
+              </a>
+            </div>
             {/* Wizard steps sit to the right of the door image. The text
                 column is stretched to the door's height and distributes its
                 children top-to-bottom (`.twilight-header-steps { margin-top:
@@ -947,43 +982,13 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
             server-side for 90 days. <span className="font-medium">Your credentials are never
             logged</span> - tokens, keys, worker secrets, and private keys exist only for the
             duration of each API call. Full configuration (DNS records, etc.) is not logged, only the
-            outcome. See the{' '}
-            <button
-              type="button"
-              onClick={() => { setAboutOpen(false); setSecurityOpen(true); }}
-              className="text-orange-400 underline hover:text-orange-300 cursor-pointer"
-            >
-              Privacy &amp; security
-            </button>
-            {' '}panel for the full allowlist and retention details.
+            outcome. See the <span className="font-medium">Privacy &amp; security</span> section below
+            for the full allowlist and retention details.
           </p>
 
-          <ModalSectionHeading>Time estimates</ModalSectionHeading>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-              <div className="text-lg font-bold text-gray-200 tabular-nums">15–30s</div>
-              <div className="text-xs text-gray-400 mt-0.5">&lt; 50 resources</div>
-            </div>
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-              <div className="text-lg font-bold text-gray-200 tabular-nums">30–60s</div>
-              <div className="text-xs text-gray-400 mt-0.5">50–200 resources</div>
-            </div>
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-              <div className="text-lg font-bold text-gray-200 tabular-nums">1–3 min</div>
-              <div className="text-xs text-gray-400 mt-0.5">200+ resources</div>
-            </div>
-          </div>
-        </InfoModal>
+          <ModalSectionHeading>Privacy &amp; security</ModalSectionHeading>
+          <p className="text-gray-400 text-xs">How credentials are handled.</p>
 
-        <InfoModal
-          open={securityOpen}
-          onClose={() => setSecurityOpen(false)}
-          title="Privacy & security"
-          eyebrow="How credentials are handled"
-          footer={
-            <span>Use &ldquo;Clear localStorage + sessionStorage&rdquo; in the Browser storage section to wipe everything.</span>
-          }
-        >
           <ModalSectionHeading>Credentials</ModalSectionHeading>
           <p>
             The Cloudflare API does not support browser-direct requests (CORS), so your tokens are
@@ -1020,16 +1025,6 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
             cross-site tracking.
           </p>
 
-          <ModalSectionHeading>Migration run logging (beta)</ModalSectionHeading>
-          <p>
-            While Twilight Zone is in beta, we log a non-secret, non-PII summary of each completed
-            migration so we can find and fix bugs: resource names, per-resource statuses, error
-            messages (with email addresses and IP addresses removed), and the source/destination
-            zone and account identifiers. We do <strong>not</strong> log your credentials, secrets,
-            or the contents of your DNS/zone configuration. Run logs are retained for 90 days. The
-            landing-page counter is an aggregate count derived from these logs.
-          </p>
-
           <ModalSectionHeading>Worker bundle integrity</ModalSectionHeading>
           <p className="text-xs text-gray-400">
             The deployed Worker is built from the public source tree. Every dependency is pinned in
@@ -1038,6 +1033,22 @@ export function Layout({ children, onLogoClick, headerAside }: LayoutProps) {
             SECURITY.md documents the full SI-2 / NIST 800-53 gap analysis and required API token
             permissions.
           </p>
+
+          <ModalSectionHeading>Time estimates</ModalSectionHeading>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+              <div className="text-lg font-bold text-gray-200 tabular-nums">15–30s</div>
+              <div className="text-xs text-gray-400 mt-0.5">&lt; 50 resources</div>
+            </div>
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+              <div className="text-lg font-bold text-gray-200 tabular-nums">30–60s</div>
+              <div className="text-xs text-gray-400 mt-0.5">50–200 resources</div>
+            </div>
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+              <div className="text-lg font-bold text-gray-200 tabular-nums">1–3 min</div>
+              <div className="text-xs text-gray-400 mt-0.5">200+ resources</div>
+            </div>
+          </div>
         </InfoModal>
 
         <InfoModal
