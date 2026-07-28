@@ -3,7 +3,8 @@
 A Cloudflare Worker that migrates a zone from one Cloudflare account to another.
 It exports DNS, zone settings, rulesets, Workers, load balancers, Access
 policies, and 30+ other resource types from a source zone and recreates them on
-a destination account — through an interactive, auditable wizard.
+a destination account through an interactive, auditable wizard. Live version
+available at https://twilight-zone.ross.gg
 
 ![Twilight Zone migration wizard](media/screenshot-setup.webp)
 
