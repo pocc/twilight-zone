@@ -504,11 +504,36 @@ export function App() {
     } finally {
       setPlansLoading(false);
     }
-  }, [creds, selectedPlan]);
+    // Deps are the specific credential fields read above, NOT the whole `creds`
+    // object (which is a fresh literal every render — depending on it recreated
+    // this callback on every render for no reason). `selectedPlan` was a
+    // spurious dep: this callback only *writes* it via setSelectedPlan, never
+    // reads it, so including it churned the identity without changing behavior.
+    // A stable callback keeps the debounced auto-fetch effect from being
+    // re-armed on unrelated renders. React setters (setSelectedPlan et al.) are
+    // stable and intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    creds.credentials.destAccountId, creds.credentials.domainName,
+    creds.credentials.useApiKey, creds.credentials.destApiKey, creds.credentials.apiKey,
+    creds.credentials.destApiEmail, creds.credentials.apiEmail,
+    creds.credentials.destToken, creds.credentials.sourceToken,
+  ]);
 
   // ── Auto-fetch plans when the destination account changes ─────
   // Every flow (migrations + presets) targets the destination account with
   // destination auth, so the trigger is uniform.
+  //
+  // DEBOUNCED (500ms), mirroring useAccounts' loadAccounts. The account id is
+  // restored from localStorage on load while the token lives in sessionStorage
+  // (cleared on tab close), so `hasDestAuth` flips true the instant the user
+  // types the *first* character of their key/token — with the old un-debounced
+  // effect that meant one immediate POST /api/available-plans per keystroke,
+  // ~40 rejected requests while typing a 40-char token (each an auth failure).
+  // Debouncing collapses that to a single call after the user stops typing, so
+  // plans load against the COMPLETE credential rather than dozens of partial,
+  // guaranteed-to-fail ones.
+  const plansDebounceRef = useRef<number | null>(null);
   useEffect(() => {
     const { credentials } = creds;
     // Gate on auth too: on a fresh load the account id is restored from
@@ -520,9 +545,10 @@ export function App() {
     const hasDestAuth = c.useApiKey
       ? !!((c.destApiKey || c.apiKey) && (c.destApiEmail || c.apiEmail))
       : !!(c.destToken || c.sourceToken);
-    if (c.destAccountId && hasDestAuth) {
-      fetchAvailablePlans();
-    }
+    if (!(c.destAccountId && hasDestAuth)) return;
+    if (plansDebounceRef.current) window.clearTimeout(plansDebounceRef.current);
+    plansDebounceRef.current = window.setTimeout(() => { fetchAvailablePlans(); }, 500);
+    return () => { if (plansDebounceRef.current) window.clearTimeout(plansDebounceRef.current); };
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
     creds.credentials.destAccountId, creds.credentials.sourceAccountId,
     creds.credentials.domainName, sourceMode,

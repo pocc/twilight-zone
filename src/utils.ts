@@ -179,6 +179,40 @@ export function safeError(e: unknown, opts: SafeErrorOptions = {}): { error: str
   return { error: opts.prefix ? `${opts.prefix} ${message}` : message };
 }
 
+/**
+ * Derive the correct HTTP status for a thrown error so a *client* failure
+ * (bad/expired/malformed credentials, an entitlement/"not found" 4xx from the
+ * upstream Cloudflare API) is reported as a 4xx rather than a blanket 500.
+ *
+ * Reporting a rejected token as HTTP 500 is a lie about *whose* fault it is:
+ * the caller sent bad credentials, so the honest status is 401 (per the
+ * debugging-integrity rule — surface the true nature of the error, never mask
+ * a client error as a server error, and vice versa). It also lets the browser
+ * treat these responses as terminal rather than as transient server errors to
+ * hammer on retry.
+ *
+ * The two tagged errors thrown by `cfFetch`/`cfFetchAll` in `src/api.ts` carry
+ * a structural `_tag` discriminant, so we classify without importing `api.ts`
+ * (which would create a runtime import cycle — utils only imports a `type`):
+ *   - AuthError          → 401 (Cloudflare rejected the credentials)
+ *   - EmptyEnvelopeError → its own upstream `.status` when that was a 4xx
+ *     (e.g. 403/404 entitlement gap); otherwise fall through to 500.
+ */
+function hasTag(e: unknown, tag: string): e is { _tag: string; status?: number } {
+  return typeof e === 'object' && e !== null && (e as { _tag?: unknown })._tag === tag;
+}
+
+export function deriveErrorStatus(e: unknown): number {
+  if (hasTag(e, 'AuthError')) return 401;
+  if (hasTag(e, 'EmptyEnvelopeError')) {
+    const status = (e as { status?: number }).status;
+    // Only trust an upstream 4xx; a 5xx (or missing) upstream status stays 500
+    // because it genuinely was a server-side/transient failure.
+    if (typeof status === 'number' && status >= 400 && status < 500) return status;
+  }
+  return 500;
+}
+
 export function sendSafeError(e: unknown, opts: SafeErrorOptions = {}): Response {
-  return Response.json(safeError(e, opts), { status: opts.status ?? 500 });
+  return Response.json(safeError(e, opts), { status: opts.status ?? deriveErrorStatus(e) });
 }

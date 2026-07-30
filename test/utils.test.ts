@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseAuth, isAuthError, isValidCfId, isValidDomain, isValidEmail, isBodySizeValid, validateIds, validateDomains, safeError, isSafePathSegment } from '../src/utils';
+import { parseAuth, isAuthError, isValidCfId, isValidDomain, isValidEmail, isBodySizeValid, validateIds, validateDomains, safeError, sendSafeError, deriveErrorStatus, isSafePathSegment } from '../src/utils';
+import { AuthError, EmptyEnvelopeError } from '../src/api';
 
 describe('utils.ts', () => {
   describe('isSafePathSegment (F-2: rollback path-traversal guard)', () => {
@@ -330,6 +331,56 @@ describe('utils.ts', () => {
       const result = safeError('a raw string', { log: false });
       // 'a raw string' doesn't match any safe pattern → generic
       expect(result.error).toBe('Internal error. Check worker logs.');
+    });
+  });
+
+  // Regression: a rejected/malformed API token was surfacing as HTTP 500 from
+  // /api/available-plans, /api/accounts, /api/zones, etc. A bad credential is a
+  // client error, not a server error — the honest status is 401/4xx.
+  describe('deriveErrorStatus', () => {
+    it('maps AuthError to 401', () => {
+      expect(deriveErrorStatus(new AuthError('Invalid API token: Cloudflare rejected this token.'))).toBe(401);
+    });
+    it('maps an EmptyEnvelopeError carrying a 4xx upstream status to that status', () => {
+      expect(deriveErrorStatus(new EmptyEnvelopeError('/accounts', 403))).toBe(403);
+      expect(deriveErrorStatus(new EmptyEnvelopeError('/zones/x/settings', 404))).toBe(404);
+    });
+    it('keeps 500 for an EmptyEnvelopeError with a 5xx upstream status', () => {
+      expect(deriveErrorStatus(new EmptyEnvelopeError('/x', 503))).toBe(500);
+    });
+    it('keeps 500 for a generic Error', () => {
+      expect(deriveErrorStatus(new Error('TypeError: cannot read foo'))).toBe(500);
+    });
+    it('keeps 500 for a non-Error throw', () => {
+      expect(deriveErrorStatus('boom')).toBe(500);
+    });
+    it('classifies structurally by _tag (no instanceof coupling across module realms)', () => {
+      expect(deriveErrorStatus({ _tag: 'AuthError', message: 'x' })).toBe(401);
+      expect(deriveErrorStatus({ _tag: 'EmptyEnvelopeError', status: 400 })).toBe(400);
+    });
+  });
+
+  describe('sendSafeError status classification', () => {
+    it('returns 401 for an AuthError (client credential failure, not a 500)', () => {
+      const res = sendSafeError(new AuthError('Invalid API token: Cloudflare rejected this token.'), { log: false });
+      expect(res.status).toBe(401);
+    });
+    it('surfaces the humanized auth message in the body', async () => {
+      const res = sendSafeError(new AuthError('Invalid API token: Cloudflare rejected this token.'), { log: false });
+      const body = await res.json() as { error: string };
+      expect(body.error).toMatch(/Invalid API token/);
+    });
+    it('returns 403 for a 403 EmptyEnvelopeError', () => {
+      const res = sendSafeError(new EmptyEnvelopeError('/accounts', 403), { log: false });
+      expect(res.status).toBe(403);
+    });
+    it('still returns 500 for an unclassified error', () => {
+      const res = sendSafeError(new Error('boom'), { log: false });
+      expect(res.status).toBe(500);
+    });
+    it('honors an explicit opts.status override', () => {
+      const res = sendSafeError(new AuthError('x'), { status: 400, log: false });
+      expect(res.status).toBe(400);
     });
   });
 });
