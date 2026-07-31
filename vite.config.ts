@@ -2,6 +2,10 @@ import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 
+if (process.env.OAUTH_E2E_CONFIG) {
+  throw new Error('OAUTH_E2E_CONFIG is test-only; use vite.oauth-local.config.ts');
+}
+
 export default defineConfig({
   // Port is overridable via DEV_PORT so a busy 5173 (e.g. a stale dev server)
   // doesn't block a run — pick a free port and point the harness at it with

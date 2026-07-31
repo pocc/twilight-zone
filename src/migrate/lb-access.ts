@@ -141,6 +141,7 @@ export async function migrateLbAndAccess(
         });
         accessAppIdMap.set(a.id, n.id);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = e instanceof Error ? e.message : String(e);
         // Even after rewriting, an app may reference a hostname the dest
         // account genuinely doesn't control (cross-zone app, SaaS domain,

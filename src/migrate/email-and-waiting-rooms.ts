@@ -109,6 +109,7 @@ export async function migrateEmailAndWaitingRooms(
           await api.enableEmailRouting(destAuth, destZoneId);
           logWithProgress('  ✓ Email Routing enabled');
         } catch (enableErr) {
+          api.throwIfAuthError(enableErr);
           // "Active zone required" is expected when the dest zone is still
           // pending (nameservers not pointed at Cloudflare yet). The rules
           // themselves can still be created (the catch-all PUT and per-rule
@@ -141,10 +142,12 @@ export async function migrateEmailAndWaitingRooms(
           });
           logWithProgress(`  ✓ Email Routing settings applied${ers.support_subaddress ? ' (sub-addressing on)' : ''}`);
         } catch (settingsErr) {
+          api.throwIfAuthError(settingsErr);
           logWithProgress(`  ⚠️ Could not apply Email Routing settings: ${settingsErr instanceof Error ? settingsErr.message : String(settingsErr)}`);
         }
       }
     } catch (e) {
+      api.throwIfAuthError(e);
       logWithProgress(`  ⚠️ Could not check Email Routing settings: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   }
@@ -247,6 +250,7 @@ export async function migrateEmailAndWaitingRooms(
                   }
                   logWithProgress(`    📨 Created destination address: ${email} (verification email sent)`);
                 } catch (createErr) {
+                  api.throwIfAuthError(createErr);
                   logWithProgress(`    ⚠️ Could not create destination address ${email}: ${createErr instanceof Error ? createErr.message : 'Unknown error'}`);
                 }
               }

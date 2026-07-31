@@ -20,7 +20,7 @@
  *   EVIDENCE_DIR                Directory to write screenshots + extracted state
  *
  * Env (optional):
- *   TZ_URL                      Twilight Zone URL (default: https://your-twilight-zone.example.com)
+ *   TZ_URL                      Twilight Zone URL (default: https://twilight-zone.ross.gg)
  *   HEADLESS                    "1" for headless (default), "0" for headed
  */
 
@@ -40,7 +40,7 @@ const DEST_ACCOUNT_ID = env.DEST_ACCOUNT_ID;
 const SRC_ZONE_ID = env.SRC_ZONE_ID;
 const ZONE_NAME = env.ZONE_NAME;
 const EVIDENCE_DIR = env.EVIDENCE_DIR;
-const TZ_URL = env.TZ_URL ?? 'https://your-twilight-zone.example.com';
+const TZ_URL = env.TZ_URL ?? 'https://twilight-zone.ross.gg';
 const HEADLESS = env.HEADLESS !== '0';
 
 const SCREENSHOT_DIR = path.join(EVIDENCE_DIR, 'screenshots');

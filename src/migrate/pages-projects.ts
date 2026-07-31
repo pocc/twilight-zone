@@ -38,6 +38,7 @@ export async function migratePagesProjects(
     try {
       await api.createPagesProject(destAuth, destAccountId, p);
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const msg = (e as Error).message || '';
       if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('name is already taken')) {
         const strategy = await resolveConflict('storage', p.name);
@@ -75,6 +76,7 @@ export async function migratePagesProjects(
         try {
           await api.addPagesProjectDomain(destAuth, destAccountId, p.name, domain);
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const dErr = (e as Error).message || '';
           // Don't fail the project create over a domain conflict.
           if (!dErr.toLowerCase().includes('already')) {

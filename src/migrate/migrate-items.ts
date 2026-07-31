@@ -40,7 +40,7 @@ import type { MigrationError, MigrationReport, ReportSection } from '../types';
 import type { LogFn } from '../migrate';
 import { isManualActionError, isConflictError } from './errors';
 import { analyzeError } from './errors-classification';
-import { batchWithConcurrency } from '../api';
+import { AuthError, batchWithConcurrency } from '../api';
 
 // Max in-flight per-item requests for a single phase. Mirrors KV_COPY_CONCURRENCY
 // (10) and stays well under both the Workers 1000-subrequest/invocation cap and
@@ -96,6 +96,7 @@ export async function migrateItems<T>(
         onItemDone?.();
         return { itemName, status: 'success' as const };
       } catch (e: unknown) {
+        if (e instanceof AuthError) throw e;
         const err = e as Error;
         // Pre-acknowledged errors: the migrator can throw with the prefix
         // `ACKNOWLEDGED:` to signal that the user already accepted this
@@ -114,6 +115,7 @@ export async function migrateItems<T>(
               onItemDone?.();
               return { itemName, status: 'overwritten' as const };
             } catch (oe: unknown) {
+              if (oe instanceof AuthError) throw oe;
               onItemDone?.();
               return { itemName, status: 'failed' as const, error: `Overwrite failed: ${(oe as Error).message}` };
             }
@@ -184,6 +186,7 @@ export async function migrateItems<T>(
         });
       }
     } else {
+      if (result.reason instanceof AuthError) throw result.reason;
       // Promise itself rejected (shouldn't happen with our try/catch)
       section.failed++;
       section.items.push({ name: 'unknown', status: 'failed', error: result.reason?.message || 'Unknown error' });

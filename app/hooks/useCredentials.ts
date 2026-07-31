@@ -4,7 +4,8 @@ import type { Credentials } from '../lib/api';
 
 // [C13] Sensitive tokens use sessionStorage (auto-clears on tab close).
 // Non-sensitive values (account IDs, domain name) stay in localStorage for convenience.
-const SENSITIVE_KEYS = new Set<string>([
+const SESSION_KEYS = new Set<string>([
+  STORAGE_KEYS.authMode,
   STORAGE_KEYS.apiKey,
   STORAGE_KEYS.destApiKey,
   STORAGE_KEYS.sourceToken,
@@ -12,14 +13,14 @@ const SENSITIVE_KEYS = new Set<string>([
 ]);
 
 function load(key: string): string {
-  if (SENSITIVE_KEYS.has(key)) {
+  if (SESSION_KEYS.has(key)) {
     return sessionStorage.getItem(key) || '';
   }
   return localStorage.getItem(key) || '';
 }
 
 function save(key: string, value: string) {
-  const storage = SENSITIVE_KEYS.has(key) ? sessionStorage : localStorage;
+  const storage = SESSION_KEYS.has(key) ? sessionStorage : localStorage;
   if (value) storage.setItem(key, value);
   else storage.removeItem(key);
 }
@@ -34,12 +35,13 @@ type Action =
   | { type: 'clear' };
 
 const FIELDS: Field[] = [
-  'useApiKey', 'apiKey', 'apiEmail', 'destApiKey', 'destApiEmail',
+  'authMode', 'useApiKey', 'apiKey', 'apiEmail', 'destApiKey', 'destApiEmail',
   'sourceToken', 'destToken', 'sourceAccountId', 'sourceZoneId',
   'destAccountId', 'domainName',
 ];
 
 const FIELD_TO_STORAGE_KEY: Record<Field, string> = {
+  authMode: STORAGE_KEYS.authMode,
   useApiKey: STORAGE_KEYS.useApiKey,
   apiKey: STORAGE_KEYS.apiKey,
   apiEmail: STORAGE_KEYS.apiEmail,
@@ -54,6 +56,7 @@ const FIELD_TO_STORAGE_KEY: Record<Field, string> = {
 };
 
 const EMPTY_CREDENTIALS: Credentials = {
+  authMode: 'manual',
   useApiKey: false,
   apiKey: '',
   apiEmail: '',
@@ -69,6 +72,9 @@ const EMPTY_CREDENTIALS: Credentials = {
 
 function initFromStorage(): Credentials {
   return {
+    authMode: typeof location !== 'undefined' && new URLSearchParams(location.search).has('oauth_result')
+      ? 'oauth'
+      : load(STORAGE_KEYS.authMode) === 'oauth' ? 'oauth' : 'manual',
     useApiKey: load(STORAGE_KEYS.useApiKey) === 'true',
     apiKey: load(STORAGE_KEYS.apiKey),
     apiEmail: load(STORAGE_KEYS.apiEmail),
@@ -104,11 +110,13 @@ export function useCredentials() {
     const prev = prevRef.current;
     for (const field of FIELDS) {
       if (prev[field] === credentials[field]) continue;
+      if (field === 'authMode') continue;
       const value = credentials[field];
       save(FIELD_TO_STORAGE_KEY[field], typeof value === 'boolean' ? String(value) : value);
     }
     prevRef.current = credentials;
   }, [credentials]);
+  useEffect(() => save(STORAGE_KEYS.authMode, credentials.authMode), [credentials.authMode]);
 
   const setField = useCallback(<F extends Field>(field: F, value: Credentials[F]) => {
     dispatch({ type: 'set', field, value: value as string | boolean });
@@ -126,6 +134,7 @@ export function useCredentials() {
   // API. Memoized so component re-renders triggered by parent state don't
   // cause Step 1 / Step 2 to re-bind every input on every render.
   const setters = useMemo(() => ({
+    setAuthMode: (v: Credentials['authMode']) => setField('authMode', v),
     setUseApiKey: (v: boolean) => setField('useApiKey', v),
     setApiKey: (v: string) => setField('apiKey', v),
     setApiEmail: (v: string) => setField('apiEmail', v),
@@ -139,9 +148,11 @@ export function useCredentials() {
     setDomainName: (v: string) => setField('domainName', v),
   }), [setField]);
 
-  const hasAuth = credentials.useApiKey
-    ? !!(credentials.apiKey && credentials.apiEmail)
-    : !!credentials.sourceToken;
+  const hasAuth = credentials.authMode === 'oauth'
+    ? false
+    : credentials.useApiKey
+      ? !!(credentials.apiKey && credentials.apiEmail)
+      : !!credentials.sourceToken;
 
   return {
     credentials,

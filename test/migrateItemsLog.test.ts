@@ -12,10 +12,25 @@
 // acknowledged count.
 
 import { describe, it, expect } from 'vitest';
+import { AuthError } from '../src/api';
 import { migrateItems } from '../src/migrate/migrate-items';
 import type { MigrationError } from '../src/types';
 
 describe('migrateItems summary log line', () => {
+  it('rethrows authentication failures instead of recording ordinary failed items', async () => {
+    const errors: MigrationError[] = [];
+
+    await expect(migrateItems(
+      'DNS Records',
+      [{ id: 'record-1' }],
+      async () => { throw new AuthError('Invalid access token', 'expired-token'); },
+      (item) => item.id,
+      errors,
+      () => undefined,
+    )).rejects.toBeInstanceOf(AuthError);
+    expect(errors).toHaveLength(0);
+  });
+
   it('surfaces acknowledged items in the summary line (no silent drop)', async () => {
     const lines: string[] = [];
     const log = (m: string) => lines.push(m);

@@ -260,18 +260,22 @@ export async function generateDiff(
     // [W14] Fetch destination data — log warnings instead of silently returning empty arrays
     const [destDns, destSettings, destPageRules, destRoutes] = await Promise.all([
       api.listDNSRecords(destAuth, destZoneId).catch((e) => {
+        api.throwIfAuthError(e);
         warnings.push(`Failed to fetch destination DNS records: ${(e as Error).message}`);
         return [] as CFDNSRecord[];
       }),
       api.listZoneSettings(destAuth, destZoneId).catch((e) => {
+        api.throwIfAuthError(e);
         warnings.push(`Failed to fetch destination zone settings: ${(e as Error).message}`);
         return [] as CFZoneSetting[];
       }),
       api.listPageRules(destAuth, destZoneId).catch((e) => {
+        api.throwIfAuthError(e);
         warnings.push(`Failed to fetch destination page rules: ${(e as Error).message}`);
         return [] as CFPageRule[];
       }),
       api.listWorkerRoutes(destAuth, destZoneId).catch((e) => {
+        api.throwIfAuthError(e);
         warnings.push(`Failed to fetch destination worker routes: ${(e as Error).message}`);
         return [] as CFWorkerRoute[];
       }),
@@ -313,6 +317,7 @@ export async function generateDiff(
     }
     
   } catch (e) {
+    api.throwIfAuthError(e);
     warnings.push(`Could not fetch destination zone data: ${(e as Error).message}`);
     // Fall back to treating everything as create
     for (const record of sourceExport.dnsRecords) {

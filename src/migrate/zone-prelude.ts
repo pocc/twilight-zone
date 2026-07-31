@@ -78,6 +78,7 @@ export async function createOrFindDestZone(
     report.createdResources!.zoneId = newZone.id;
     log(`✓ Zone created: ${newZone.id}`);
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = e as Error;
     // Try to find an existing zone on creation failure (rate-limiting, subdomain
     // restrictions, race with another tool, "already exists", etc.). We must ONLY
@@ -91,7 +92,8 @@ export async function createOrFindDestZone(
     try {
       const zones = await api.listZones(destAuth, zoneName);
       destZones = zones.filter(z => z.account?.id === destAccountId && z.name === zoneName);
-    } catch {
+    } catch (lookupError) {
+      api.throwIfAuthError(lookupError);
       // If listing also fails, surface the original creation error.
       throw e;
     }
@@ -225,6 +227,7 @@ export async function assignZonePlan(
       log(`⚠ ${msg}`);
     }
   } catch (e) {
+    api.throwIfAuthError(e);
     const err = e as Error;
     // The API often returns "unknown or deprecated rate plan: '<uuid>'"
     // when the destination account doesn't have entitlement for the
@@ -270,7 +273,8 @@ export async function probeCapabilitiesAndPopulateSkipFields(
   let capabilities: api.AccountCapabilities | null = null;
   try {
     capabilities = await api.checkAccountCapabilities(destAuth, destAccountId);
-  } catch {
+  } catch (e) {
+    api.throwIfAuthError(e);
     log('  ⚠ Could not check capabilities — proceeding with all resources');
   }
 
@@ -431,6 +435,7 @@ export async function probeAcm(
       await api.updateZoneSetting(destAuth, destZoneId, 'ciphers', []);
       // Succeeded — ACM is available (we just wrote the default, harmless)
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = e as Error;
       if (err.message.toLowerCase().includes('certificate manager')) {
         acmAvailable = false;
@@ -467,8 +472,8 @@ export async function prefetchDestForOverwrite(
   }
   log('🔍 Pre-fetching destination resources for overwrite...');
   const [destDnsRecords, destWorkerRoutes] = await Promise.all([
-    api.listDNSRecords(destAuth, destZoneId).catch(() => []),
-    api.listWorkerRoutes(destAuth, destZoneId).catch(() => []),
+    api.listDNSRecords(destAuth, destZoneId).catch((e) => { api.throwIfAuthError(e); return []; }),
+    api.listWorkerRoutes(destAuth, destZoneId).catch((e) => { api.throwIfAuthError(e); return []; }),
   ]);
   log(`  ✓ Found ${destDnsRecords.length} DNS records, ${destWorkerRoutes.length} worker routes on destination`);
   return { destDnsRecords, destWorkerRoutes };

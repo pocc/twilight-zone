@@ -188,6 +188,7 @@ export async function validateMigration(
       log(`  GET ${label}: ${result.length} found`);
       return result;
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const msg = (e as Error)?.message || 'failed';
       log(`  ⚠ GET ${label}: ${msg} — rows in this section will be reported as UNVERIFIED, not missing`);
       return FETCH_FAILED as unknown as T[];
@@ -283,7 +284,7 @@ export async function validateMigration(
       if (found) return found;
       if (!dedicatedIds.has(settingId)) return undefined;
       try { return await api.getZoneSetting(destAuth, destZoneId, dedicatedEndpointId(settingId)); }
-      catch { return undefined; }
+      catch (e) { api.throwIfAuthError(e); return undefined; }
     };
     const settingItems: ValidationItem[] = [];
     let verified = 0, missing = 0, mismatched = 0, unverified = 0;
@@ -345,7 +346,7 @@ export async function validateMigration(
           // Add both the name and the phase so the fuzzy matcher can find it
           verifiedRulesetNames.push(full.name || full.phase || full.id);
         }
-      } catch { /* skip rulesets we can't fetch */ }
+      } catch (e) { api.throwIfAuthError(e); /* skip rulesets we can't fetch */ }
     }
     // Migration names are "Name (phase)" — match against dest name, phase, or name substring
     sections.push(validateSection('Rulesets', migratedRulesets, verifiedRulesetNames,

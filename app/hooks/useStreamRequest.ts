@@ -1,12 +1,34 @@
 import { useState, useCallback, useRef } from 'react';
 import { streamRequest } from '../lib/api';
 import type { StreamPrompt } from '../lib/api';
+import type { BrowserAuthMode, OAuthRole } from '../lib/oauth';
+import { browserPromptResponse } from '../lib/request';
 
 export interface LogLine {
   message: string;
   type: 'success' | 'error' | 'warning' | 'info' | 'prompt' | 'default';
   timestamp: number;
   prompt?: StreamPrompt;
+}
+
+export function applyPromptResponseResult(
+  lines: LogLine[],
+  promptId: string,
+  answer: string,
+  accepted: boolean,
+): LogLine[] {
+  if (!accepted) {
+    return lines.concat({
+      message: 'ERROR: Prompt response was not accepted. Retry the response before the prompt times out.',
+      type: 'error',
+      timestamp: Date.now(),
+    });
+  }
+  return lines.map(line =>
+    line.prompt?.promptId === promptId
+      ? { ...line, type: 'info' as const, message: `❓ ${line.prompt.question} → ${answer}`, prompt: undefined }
+      : line
+  );
 }
 
 function classifyLine(message: string): LogLine['type'] {
@@ -17,7 +39,10 @@ function classifyLine(message: string): LogLine['type'] {
   return 'default';
 }
 
-export function useStreamRequest() {
+export function useStreamRequest(
+  authMode: BrowserAuthMode = 'manual',
+  onReauthorizationRequired?: (role: OAuthRole) => void,
+) {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [progress, setProgress] = useState({ current: 0, total: 100 });
@@ -92,6 +117,19 @@ export function useStreamRequest() {
           });
           flushLogs();
         },
+        onReauthorizationRequired: (role) => {
+          flushLogs();
+          logBufferRef.current.push({
+            message: `Authorization expired for the ${role} account. Reconnect to continue.`,
+            type: 'error',
+            timestamp: Date.now(),
+          });
+          flushLogs();
+          setLoading(false);
+          setStartTime(null);
+          onReauthorizationRequired?.(role);
+          resolve(null);
+        },
         onDone: (data) => {
           // Flush any remaining buffered logs before completing
           flushLogs();
@@ -108,9 +146,9 @@ export function useStreamRequest() {
           setStartTime(null);
           resolve(null);
         },
-      }, abortRef.current!.signal);
+      }, abortRef.current!.signal, authMode);
     });
-  }, [reset]);
+  }, [reset, authMode, onReauthorizationRequired]);
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
@@ -118,24 +156,20 @@ export function useStreamRequest() {
     setStartTime(null);
   }, []);
 
-  const respondToPrompt = useCallback(async (promptId: string, answer: string) => {
-    // Update the prompt log line to show the selected answer
-    setLogs(prev => prev.map(line =>
-      line.prompt?.promptId === promptId
-        ? { ...line, type: 'info' as const, message: `❓ ${line.prompt!.question} → ${answer}`, prompt: undefined }
-        : line
-    ));
-    // POST the answer back to the server
-    try {
-      await fetch('/api/migrate/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ promptId, answer }),
-      });
-    } catch {
-      // If the respond fails, the server will timeout and use default
-    }
-  }, []);
+  const respondToPrompt = useCallback(async (
+    promptId: string,
+    answer: string,
+    migrationId?: string,
+  ) => {
+    const accepted = await browserPromptResponse({
+      promptId, answer, migrationId,
+    }, { authMode }, onReauthorizationRequired);
+    setLogs(prev => {
+      const next = applyPromptResponseResult(prev, promptId, answer, accepted);
+      logsRef.current = next;
+      return next;
+    });
+  }, [authMode, onReauthorizationRequired]);
 
   return { loading, logs, progress, loadingText, startTime, start, cancel, reset, setLoadingText, respondToPrompt, getLogs };
 }

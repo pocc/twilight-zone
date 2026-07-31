@@ -19,6 +19,7 @@
 
 import type { MigrationReport } from '../types';
 import type { LogFn } from '../migrate';
+import { throwIfAuthError } from '../api';
 import { isAcknowledgeableSingletonError } from './errors';
 
 export interface SingletonDeps {
@@ -58,6 +59,7 @@ export async function migrateSingleton(
       items: [{ name, status: 'success' }],
     });
   } catch (e: unknown) {
+    throwIfAuthError(e);
     const err = e as Error;
     if (isAcknowledgeableSingletonError(err.message)) {
       log(`  🟡 ${name} acknowledged: ${err.message}`);

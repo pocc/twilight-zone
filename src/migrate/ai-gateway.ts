@@ -47,6 +47,7 @@ async function resolveDefaultSecretsStoreId(
     const first = stores[0];
     return first?.id ?? null;
   } catch (e) {
+    api.throwIfAuthError(e);
     log(`    ⚠ Could not list Secrets Stores on dest account: ${(e as Error).message}. Falling back to manual-action prompt for AI Gateway API keys.`);
     return null;
   }
@@ -65,6 +66,7 @@ export async function migrateAiGateways(
       try {
         await api.createAiGateway(destAuth, destAccountId, g);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
           const strategy = await resolveConflict('storage', g.id);
@@ -100,6 +102,7 @@ export async function migrateAiGateways(
       try {
         await api.createAiGatewayCustomProvider(destAuth, destAccountId, p);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
           const strategy = await resolveConflict('storage', p.slug);
@@ -133,6 +136,7 @@ export async function migrateAiGateways(
           });
           log(`    ✓ Stored API key for "${p.slug}" in Secrets Store (scope: ai_gateway)`);
         } catch (e) {
+          api.throwIfAuthError(e);
           // Secret-creation failure is logged but doesn't fail the
           // provider migration — the provider itself is fine, the
           // user just has to re-add the key manually.

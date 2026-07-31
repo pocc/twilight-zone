@@ -5,6 +5,8 @@ import {
 import * as api from '../lib/api';
 import type { Credentials } from '../lib/api';
 import type { ZoneExport, CFEmailRoutingRule } from '../../src/types';
+import { routeOAuthReauthorization } from '../lib/request';
+import type { OAuthRole } from '../lib/oauth';
 
 /**
  * Per-address verification state. Lives in App.tsx so it survives back-nav.
@@ -46,9 +48,10 @@ interface Props {
   creds: Partial<Credentials>;
   destAccountId: string;
   destAccountName?: string;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
 }
 
-export function EmailAddressVerificationCard({ states, setStates, creds, destAccountId, destAccountName }: Props) {
+export function EmailAddressVerificationCard({ states, setStates, creds, destAccountId, destAccountName, onReauthorizationRequired }: Props) {
   const entries = useMemo(() => Object.values(states), [states]);
   const blocking = useMemo(
     () => entries.filter(e => e.status !== 'verified' && e.status !== 'skipped'),
@@ -92,6 +95,7 @@ export function EmailAddressVerificationCard({ states, setStates, creds, destAcc
             creds={creds}
             destAccountId={destAccountId}
             setStates={setStates}
+            onReauthorizationRequired={onReauthorizationRequired}
           />
         ))}
       </div>
@@ -104,9 +108,10 @@ interface RowProps {
   creds: Partial<Credentials>;
   destAccountId: string;
   setStates: React.Dispatch<React.SetStateAction<Record<string, EmailAddressState>>>;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
 }
 
-function AddressRow({ state, creds, destAccountId, setStates }: RowProps) {
+function AddressRow({ state, creds, destAccountId, setStates, onReauthorizationRequired }: RowProps) {
   const update = useCallback(
     (patch: Partial<EmailAddressState>) => {
       setStates(prev => ({
@@ -127,9 +132,13 @@ function AddressRow({ state, creds, destAccountId, setStates }: RowProps) {
         update({ status: 'sent' });
       }
     } catch (e) {
+      if (routeOAuthReauthorization(e, onReauthorizationRequired)) {
+        update({ status: 'unverified' });
+        return;
+      }
       update({ status: 'error', error: (e as Error).message });
     }
-  }, [creds, destAccountId, state.email, update]);
+  }, [creds, destAccountId, state.email, update, onReauthorizationRequired]);
 
   const check = useCallback(async () => {
     update({ status: 'checking', error: undefined });
@@ -141,9 +150,13 @@ function AddressRow({ state, creds, destAccountId, setStates }: RowProps) {
         update({ status: 'sent' });
       }
     } catch (e) {
+      if (routeOAuthReauthorization(e, onReauthorizationRequired)) {
+        update({ status: 'sent' });
+        return;
+      }
       update({ status: 'error', error: (e as Error).message });
     }
-  }, [creds, destAccountId, state.email, update]);
+  }, [creds, destAccountId, state.email, update, onReauthorizationRequired]);
 
   const skip = useCallback(() => {
     update({ status: 'skipped', error: undefined });

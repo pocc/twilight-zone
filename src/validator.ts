@@ -148,6 +148,7 @@ export async function validateDryRun(
       });
     }
   } catch (e) {
+    api.throwIfAuthError(e);
     // Zone doesn't exist, which is fine
   }
 
@@ -176,6 +177,7 @@ export async function validateDryRun(
       destPlanLevel = 0;
     }
   } catch (e) {
+    api.throwIfAuthError(e);
     warnings.push({
       type: 'feature_limited',
       message: 'Could not determine destination account plan. Some features may fail.',

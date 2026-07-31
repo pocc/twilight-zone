@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useUptimeMonitor, type UptimeMonitor } from './useUptimeMonitor';
 import type { Credentials } from '../lib/api';
+import type { OAuthRole } from '../lib/oauth';
 
 const MonitorContext = createContext<UptimeMonitor | null>(null);
 
@@ -14,6 +15,7 @@ interface MonitorProviderProps {
   zoneName: string;
   /** Whether monitoring is applicable in the current mode (api source only). */
   enabled: boolean;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
   children: ReactNode;
 }
 

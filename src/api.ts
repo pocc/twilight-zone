@@ -315,6 +315,9 @@ export async function batchWithConcurrency<T, R>(
     const batchResults = await Promise.allSettled(
       batch.map((item, j) => fn(item, i + j))
     );
+    for (const result of batchResults) {
+      if (result.status === 'rejected') throwIfAuthError(result.reason);
+    }
     results.push(...batchResults);
   }
   
@@ -352,10 +355,59 @@ export class EmptyEnvelopeError extends Error {
  */
 export class AuthError extends Error {
   readonly _tag = 'AuthError' as const;
-  constructor(message: string) {
+  readonly #rejectedToken?: string;
+
+  constructor(message: string, rejectedToken?: string) {
     super(message);
     this.name = 'AuthError';
+    this.#rejectedToken = rejectedToken;
   }
+
+  matchesBearer(token: string | undefined): boolean {
+    return !!token && this.#rejectedToken === token;
+  }
+}
+
+function cloudflareAuthError(
+  auth: ApiAuth,
+  status: number,
+  errors?: CFApiError[],
+): AuthError | null {
+  const message = humanizeAuthError(errors, auth.type);
+  if (!message && status !== 401) return null;
+
+  const fallback = auth.type === 'token'
+    ? 'Invalid API token: Cloudflare rejected this token. It may be incorrect, expired, or revoked.'
+    : 'Invalid API key or email: Cloudflare rejected these credentials.';
+  return new AuthError(message || fallback, auth.type === 'token' ? auth.token : undefined);
+}
+
+/** Classify credential rejection before raw-response callers consume or tolerate the body. */
+export async function throwIfCloudflareAuthResponse(
+  response: Response,
+  auth: ApiAuth | string,
+): Promise<void> {
+  const authObj: ApiAuth = typeof auth === 'string' ? { type: 'token', token: auth } : auth;
+  let errors: CFApiError[] | undefined;
+
+  const contentType = response.headers?.get?.('content-type')?.toLowerCase() || '';
+  if (typeof response.clone === 'function' && (!response.ok || contentType.includes('json'))) {
+    try {
+      const body = await response.clone().json() as { errors?: CFApiError[] };
+      if (Array.isArray(body.errors)) errors = body.errors;
+    } catch {
+      // Raw success bodies and status-only failures are not necessarily JSON.
+    }
+  }
+
+  const error = cloudflareAuthError(authObj, response.status, errors);
+  if (error) throw error;
+}
+
+/** Preserve credential rejection across callers that intentionally tolerate
+ * entitlement, not-configured, or best-effort API failures. */
+export function throwIfAuthError(error: unknown): void {
+  if (error instanceof AuthError) throw error;
 }
 
 async function cfFetch<T>(auth: ApiAuth | string, path: string, options: RequestInit = {}, ctx?: RequestContext): Promise<T> {
@@ -391,8 +443,10 @@ async function cfFetch<T>(auth: ApiAuth | string, path: string, options: Request
           ...options.headers,
         },
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
     } catch (fetchErr) {
       clearTimeout(timeout);
+      if (fetchErr instanceof AuthError) throw fetchErr;
       const err = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
       if (err.name === 'AbortError') {
         lastError = new Error(`Request timed out after ${CF_FETCH_TIMEOUT_MS}ms: ${method} ${path}`);
@@ -482,7 +536,7 @@ async function cfFetch<T>(auth: ApiAuth | string, path: string, options: Request
     // from retry-exhaustion. Otherwise a plain Error with the real message.
     const errorMessage = errParts.length > 0 ? errParts.join(' — ') : 'API request failed';
     lastError = authMessage
-      ? new AuthError(errorMessage)
+      ? new AuthError(errorMessage, authObj.type === 'token' ? authObj.token : undefined)
       : errParts.length > 0 ? new Error(errorMessage) : new EmptyEnvelopeError(path, res.status);
 
     if (!isRetryableError(res.status, errorMessage) || attempt === MAX_RETRIES) {
@@ -530,6 +584,7 @@ async function cfFetchAll<T>(auth: ApiAuth | string, path: string): Promise<T[]>
           'Content-Type': 'application/json',
         },
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
 
       // Track rate limits from paginated responses too
       updateRateLimitFromHeaders(res.headers);
@@ -543,7 +598,7 @@ async function cfFetchAll<T>(auth: ApiAuth | string, path: string): Promise<T[]>
 
       const authMessage = humanizeAuthError(data.errors, authObj.type);
       const errorMessage = authMessage || data.errors?.[0]?.message || 'API request failed';
-      lastError = authMessage ? new AuthError(errorMessage) : new Error(errorMessage);
+      lastError = authMessage ? new AuthError(errorMessage, authObj.type === 'token' ? authObj.token : undefined) : new Error(errorMessage);
 
       if (!isRetryableError(res.status, errorMessage) || attempt === MAX_RETRIES) {
         console.log(`[CF-API] ✗ GET ${path} page ${page} → ${res.status} "${errorMessage}"`);
@@ -631,6 +686,7 @@ export async function checkPermissions(auth: ApiAuth | string, zoneId: string, a
     await cfFetch<CFZone>(auth, `/zones/${zoneId}`);
     checks.push({ permission: 'Zone:Read', ok: true });
   } catch (e) {
+    throwIfAuthError(e);
     const detail = e instanceof Error ? e.message : String(e);
     checks.push({ permission: 'Zone:Read', ok: false });
     missing.push(`Zone:Read (${detail})`);
@@ -641,6 +697,7 @@ export async function checkPermissions(auth: ApiAuth | string, zoneId: string, a
     await cfFetch<CFDNSRecord[]>(auth, `/zones/${zoneId}/dns_records?per_page=1`);
     checks.push({ permission: 'DNS:Read', ok: true });
   } catch (e) {
+    throwIfAuthError(e);
     const detail = e instanceof Error ? e.message : String(e);
     checks.push({ permission: 'DNS:Read', ok: false });
     missing.push(`DNS:Read (${detail})`);
@@ -653,6 +710,7 @@ export async function checkPermissions(auth: ApiAuth | string, zoneId: string, a
       await cfFetch<CFZoneSetting[]>(auth, `/zones/${zoneId}/settings`);
       checks.push({ permission: 'Zone Settings:Read', ok: true });
     } catch (e) {
+      throwIfAuthError(e);
       const detail = e instanceof Error ? e.message : String(e);
       checks.push({ permission: 'Zone Settings:Read', ok: false });
       missing.push(`Zone Settings:Read (${detail})`);
@@ -663,6 +721,7 @@ export async function checkPermissions(auth: ApiAuth | string, zoneId: string, a
       await cfFetch<CFWorkerScript[]>(auth, `/accounts/${accountId}/workers/scripts?per_page=1`);
       checks.push({ permission: 'Account Workers:Read', ok: true });
     } catch (e) {
+      throwIfAuthError(e);
       const detail = e instanceof Error ? e.message : String(e);
       checks.push({ permission: 'Account Workers:Read', ok: false });
       missing.push(`Account Workers:Read (${detail})`);
@@ -679,6 +738,7 @@ export async function checkPermissions(auth: ApiAuth | string, zoneId: string, a
         missing.push('Account:Write (account not accessible)');
       }
     } catch (e) {
+      throwIfAuthError(e);
       const detail = e instanceof Error ? e.message : String(e);
       checks.push({ permission: 'Account:Write', ok: false });
       missing.push(`Account:Write (${detail})`);
@@ -734,6 +794,7 @@ export async function checkMigrationBlockers(
       });
     }
   } catch (e) {
+    throwIfAuthError(e);
     const err = e as Error;
     const isAuth = e instanceof AuthError;
     blockers.push({
@@ -752,6 +813,7 @@ export async function checkMigrationBlockers(
   try {
     await cfFetch<{ id: string }[]>(destAuth, '/accounts');
   } catch (e) {
+    throwIfAuthError(e);
     const err = e as Error;
     const isAuth = e instanceof AuthError;
     blockers.push({
@@ -780,6 +842,7 @@ export async function checkMigrationBlockers(
         });
       }
     } catch (e) {
+      throwIfAuthError(e);
       // [W6] Log warning instead of silently swallowing
       blockers.push({
         type: 'warning',
@@ -805,6 +868,7 @@ export async function checkMigrationBlockers(
       });
     }
   } catch (e) {
+    throwIfAuthError(e);
     // [W6] Log warning instead of silently swallowing
     blockers.push({
       type: 'warning',
@@ -868,17 +932,18 @@ export async function checkZoneConflicts(token: string, zoneId: string): Promise
     // [W13] Log which resource type failed instead of silently catching
     const [dns, pageRules, workerRoutes] = await Promise.all([
       cfFetch<CFDNSRecord[]>(token, `/zones/${zoneId}/dns_records?per_page=1`)
-        .catch((e) => { warnings.push(`DNS Records check failed: ${(e as Error).message}`); return []; }),
+        .catch((e) => { throwIfAuthError(e); warnings.push(`DNS Records check failed: ${(e as Error).message}`); return []; }),
       cfFetch<CFPageRule[]>(token, `/zones/${zoneId}/pagerules?per_page=1`)
-        .catch((e) => { warnings.push(`Page Rules check failed: ${(e as Error).message}`); return []; }),
+        .catch((e) => { throwIfAuthError(e); warnings.push(`Page Rules check failed: ${(e as Error).message}`); return []; }),
       cfFetch<CFWorkerRoute[]>(token, `/zones/${zoneId}/workers/routes`)
-        .catch((e) => { warnings.push(`Worker Routes check failed: ${(e as Error).message}`); return []; }),
+        .catch((e) => { throwIfAuthError(e); warnings.push(`Worker Routes check failed: ${(e as Error).message}`); return []; }),
     ]);
     
     if (Array.isArray(dns) && dns.length > 0) conflicts.push({ resource: 'DNS Records', count: dns.length });
     if (Array.isArray(pageRules) && pageRules.length > 0) conflicts.push({ resource: 'Page Rules', count: pageRules.length });
     if (Array.isArray(workerRoutes) && workerRoutes.length > 0) conflicts.push({ resource: 'Worker Routes', count: workerRoutes.length });
   } catch (e) {
+    throwIfAuthError(e);
     // [W9] Only expected when zone doesn't exist yet; log for other cases
     console.log(`[CF-API] Zone conflict check failed for ${zoneId}: ${(e as Error).message}`);
   }
@@ -981,6 +1046,7 @@ export async function createZoneWithDelegation(
         delegated = true;
       }
     } catch (e: unknown) {
+      throwIfAuthError(e);
       delegationError = e instanceof Error ? e.message : String(e);
     }
   }
@@ -1089,6 +1155,7 @@ export async function getArgoSmartRouting(auth: ApiAuth | string, zoneId: string
   try {
     return await cfFetch<ArgoSetting>(auth, `/zones/${zoneId}/argo/smart_routing`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not authorized')) return null;
     throw e;
@@ -1108,6 +1175,7 @@ export async function getArgoTieredCaching(auth: ApiAuth | string, zoneId: strin
   try {
     return await cfFetch<ArgoSetting>(auth, `/zones/${zoneId}/argo/tiered_caching`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not authorized')) return null;
     throw e;
@@ -1142,6 +1210,7 @@ export async function getBotManagement(auth: ApiAuth | string, zoneId: string): 
   try {
     return await cfFetch<BotManagementConfig>(auth, `/zones/${zoneId}/bot_management`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not authorized')) return null;
     throw e;
@@ -1203,6 +1272,7 @@ export async function listAccountRulesets(auth: ApiAuth | string, accountId: str
   try {
     return await cfFetch<CFRuleset[]>(auth, `/accounts/${accountId}/rulesets`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -1241,6 +1311,7 @@ export async function getAccountPhaseEntrypoint(
   try {
     return await cfFetch<CFRuleset>(auth, `/accounts/${accountId}/rulesets/phases/${phase}/entrypoint`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (m.includes('not found') || m.includes('404')) return null;
     if (isExportTolerable(m)) return null;
@@ -1315,6 +1386,7 @@ export async function listNotificationPolicies(auth: ApiAuth | string, accountId
   try {
     return await cfFetch<NotificationPolicy[]>(auth, `/accounts/${accountId}/alerting/v3/policies`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -1332,6 +1404,7 @@ export async function listNotificationWebhooks(auth: ApiAuth | string, accountId
   try {
     return await cfFetch<NotificationWebhook[]>(auth, `/accounts/${accountId}/alerting/v3/destinations/webhooks`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -1349,6 +1422,7 @@ export async function listNotificationPagerDuty(auth: ApiAuth | string, accountI
   try {
     return await cfFetch<NotificationPagerDuty[]>(auth, `/accounts/${accountId}/alerting/v3/destinations/pagerduty`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -1495,8 +1569,10 @@ export async function getWorkerScriptBundle(auth: ApiAuth | string, accountId: s
           'Accept': 'application/javascript, text/javascript, */*',
         },
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
     } catch (fetchErr) {
       clearTimeout(timeout);
+      if (fetchErr instanceof AuthError) throw fetchErr;
       lastError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
       if (lastError.name === 'AbortError') {
         lastError = new Error(`Worker script fetch timed out after ${CF_FETCH_TIMEOUT_MS}ms: ${scriptName}`);
@@ -1678,8 +1754,10 @@ export async function uploadWorkerScript(
         headers: getAuthHeaders(authObj),
         body: buildFormData(doMigration),
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
     } catch (fetchErr) {
       clearTimeout(timeout);
+      if (fetchErr instanceof AuthError) throw fetchErr;
       lastUploadError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
       if (attempt === MAX_RETRIES) throw lastUploadError;
       continue;
@@ -1815,7 +1893,7 @@ export async function listLoadBalancerMonitorGroups(
   auth: ApiAuth | string, accountId: string,
 ): Promise<LoadBalancerMonitorGroup[]> {
   try { return await cfFetch<LoadBalancerMonitorGroup[]>(auth, `/accounts/${accountId}/load_balancers/monitor_groups`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createLoadBalancerMonitorGroup(
   auth: ApiAuth | string, accountId: string, group: LoadBalancerMonitorGroup,
@@ -1864,7 +1942,7 @@ export async function listHyperdriveConfigs(
   auth: ApiAuth | string, accountId: string,
 ): Promise<HyperdriveConfig[]> {
   try { return await cfFetch<HyperdriveConfig[]>(auth, `/accounts/${accountId}/hyperdrive/configs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createHyperdriveConfig(
   auth: ApiAuth | string, accountId: string, config: HyperdriveConfig,
@@ -2020,6 +2098,7 @@ export async function getEmailRoutingSettings(auth: ApiAuth | string, zoneId: st
   try {
     return await cfFetch<EmailRoutingSettings>(auth, `/zones/${zoneId}/email/routing`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not enabled')) return null;
     throw e;
@@ -2105,7 +2184,7 @@ export async function listEmailSendingSubdomains(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<EmailSendingSubdomain[]> {
   try { return await cfFetch<EmailSendingSubdomain[]>(auth, `/zones/${zoneId}/email/sending/subdomains`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createEmailSendingSubdomain(
   auth: ApiAuth | string, zoneId: string, subdomain: EmailSendingSubdomain,
@@ -2136,6 +2215,7 @@ export async function getZarazConfig(auth: ApiAuth | string, zoneId: string): Pr
   try {
     return await cfFetch<CFZarazConfig>(auth, `/zones/${zoneId}/settings/zaraz/config`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not enabled') || msg.includes('not authorized') || msg.includes('could not route')) return null;
     throw e;
@@ -2156,6 +2236,7 @@ export async function getGoogleTagGatewayConfig(auth: ApiAuth | string, zoneId: 
   try {
     return await cfFetch<Record<string, unknown>>(auth, `/zones/${zoneId}/settings/google-tag-gateway/config`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return null;
     throw e;
@@ -2175,6 +2256,7 @@ export async function getSmartShield(auth: ApiAuth | string, zoneId: string): Pr
   try {
     return await cfFetch<Record<string, unknown>>(auth, `/zones/${zoneId}/smart_shield`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return null;
     throw e;
@@ -2191,6 +2273,7 @@ export async function listSmartShieldHealthchecks(auth: ApiAuth | string, zoneId
     const res = await cfFetch<Record<string, unknown>[]>(auth, `/zones/${zoneId}/smart_shield/healthchecks`);
     return Array.isArray(res) ? res : [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return [];
     throw e;
@@ -2272,6 +2355,7 @@ export async function listKVKeys(
       const res = await fetch(url, {
         headers: { ...getAuthHeaders(authObj), 'Content-Type': 'application/json' },
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
       updateRateLimitFromHeaders(res.headers);
       data = await res.json() as KVKeysResponse;
 
@@ -2321,7 +2405,7 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: nu
 }
 
 // KV value operations with retry + timeout to prevent hangs
-async function kvFetchWithRetry(url: string, options: RequestInit, label: string): Promise<Response> {
+async function kvFetchWithRetry(auth: ApiAuth, url: string, options: RequestInit, label: string): Promise<Response> {
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) {
@@ -2331,6 +2415,7 @@ async function kvFetchWithRetry(url: string, options: RequestInit, label: string
     }
     try {
       const res = await fetchWithTimeout(url, options);
+      await throwIfCloudflareAuthResponse(res, auth);
       if (res.status === 429 || (res.status >= 500 && res.status < 600)) {
         lastError = new Error(`KV ${label}: HTTP ${res.status}`);
         if (attempt === MAX_RETRIES) throw lastError;
@@ -2338,6 +2423,7 @@ async function kvFetchWithRetry(url: string, options: RequestInit, label: string
       }
       return res;
     } catch (err) {
+      if (err instanceof AuthError) throw err;
       lastError = err instanceof Error ? err : new Error(String(err));
       if (lastError.name === 'AbortError') {
         lastError = new Error(`KV ${label}: timed out after ${KV_TIMEOUT_MS}ms`);
@@ -2351,7 +2437,7 @@ async function kvFetchWithRetry(url: string, options: RequestInit, label: string
 export async function getKVValue(auth: ApiAuth | string, accountId: string, namespaceId: string, key: string): Promise<string> {
   const authObj: ApiAuth = typeof auth === 'string' ? { type: 'token', token: auth } : auth;
   const url = `${CF_API}/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/${encodeURIComponent(key)}`;
-  const res = await kvFetchWithRetry(url, { headers: getAuthHeaders(authObj) }, `GET "${key}"`);
+  const res = await kvFetchWithRetry(authObj, url, { headers: getAuthHeaders(authObj) }, `GET "${key}"`);
   if (!res.ok) {
     throw new Error(`Failed to get KV value "${key}": ${res.status}`);
   }
@@ -2370,7 +2456,7 @@ export async function putKVValue(auth: ApiAuth | string, accountId: string, name
     headers['CF-KV-Metadata'] = JSON.stringify(metadata);
   }
   
-  const res = await kvFetchWithRetry(url, { method: 'PUT', headers, body: value }, `PUT "${key}"`);
+  const res = await kvFetchWithRetry(authObj, url, { method: 'PUT', headers, body: value }, `PUT "${key}"`);
   
   if (!res.ok) {
     const err = await res.text();
@@ -2416,6 +2502,7 @@ export async function listR2BucketCors(
     if (Array.isArray(resp)) return resp;
     return resp?.rules || [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return [];
     throw e;
@@ -2451,6 +2538,7 @@ export async function listR2BucketLifecycle(
     if (Array.isArray(resp)) return resp;
     return resp?.rules || [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return [];
     throw e;
@@ -2485,6 +2573,7 @@ export async function getR2BucketManagedDomain(
       `/accounts/${accountId}/r2/buckets/${encodeURIComponent(bucketName)}/domains/managed`,
     );
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return null;
     throw e;
@@ -2521,6 +2610,7 @@ export async function listR2BucketCustomDomains(
     );
     return Array.isArray(res?.domains) ? res.domains : [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return [];
     throw e;
@@ -2580,6 +2670,7 @@ export async function getR2BucketLock(
       `/accounts/${accountId}/r2/buckets/${encodeURIComponent(bucketName)}/lock`,
     );
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m) || m.includes('not found') || m.includes('404')) return null;
     throw e;
@@ -2622,6 +2713,7 @@ export async function listPagesProjects(
     // ?page=&per_page=). Bug found via e2e export against a live account.
     return (await cfFetch<CFPagesProject[]>(auth, `/accounts/${accountId}/pages/projects`)) ?? [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -2679,6 +2771,7 @@ export async function listAiGateways(
   try {
     return await cfFetchAll<CFAiGateway>(auth, `/accounts/${accountId}/ai-gateway/gateways`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -2710,6 +2803,7 @@ export async function listAiGatewayCustomProviders(
       `/accounts/${accountId}/ai-gateway/custom-providers`,
     );
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -2768,6 +2862,7 @@ export async function listOriginCaCertificates(
       `/certificates?zone_id=${zoneId}`,
     );
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -2950,6 +3045,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/access/apps`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not_enabled') || errMsg.includes('not enabled') || errMsg.includes('access is not enabled')) {
       capabilities.zeroTrust = {
@@ -2964,6 +3060,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/r2/buckets`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('enable r2') || errMsg.includes('r2 is not enabled') || errMsg.includes('not enabled')) {
       capabilities.r2 = {
@@ -3006,6 +3103,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
     // monitor with empty expected_codes should never actually be created,
     // but just in case, we don't mark it unavailable.
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message : '';
     const classification = classifyLoadBalancingProbeError(errMsg);
     if (classification) capabilities.loadBalancing = classification;
@@ -3017,6 +3115,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/workers/scripts`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not enabled') || errMsg.includes('subscription')) {
       capabilities.workers = {
@@ -3036,6 +3135,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
       body: 'SELECT 1',
     });
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('enable analytics engine') || errMsg.includes('analytics engine') ||
         errMsg.includes('10089') || errMsg.includes('not enabled')) {
@@ -3055,6 +3155,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
     // List existing rate limits — if account lacks entitlement, this returns an error
     await cfFetch(auth, `/accounts/${accountId}/rate_limits`, { method: 'GET' });
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not_entitled') || errMsg.includes('not entitled') ||
         errMsg.includes('ratelimit') || errMsg.includes('rate_limit')) {
@@ -3072,6 +3173,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/queues`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not enabled') || errMsg.includes('subscription') || errMsg.includes('not available') || errMsg.includes('11002')) {
       capabilities.queues = {
@@ -3086,6 +3188,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/d1/database`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not enabled') || errMsg.includes('subscription') || errMsg.includes('not available')) {
       capabilities.d1 = {
@@ -3100,6 +3203,7 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
   try {
     await cfFetch(auth, `/accounts/${accountId}/vectorize/v2/indexes`);
   } catch (error) {
+    throwIfAuthError(error);
     const errMsg = error instanceof Error ? error.message.toLowerCase() : '';
     if (errMsg.includes('not enabled') || errMsg.includes('subscription') || errMsg.includes('not available')) {
       capabilities.vectorize = {
@@ -3126,7 +3230,8 @@ export async function checkAccountCapabilities(auth: ApiAuth | string, accountId
         tag: a.tag,
       })),
     };
-  } catch {
+  } catch (e) {
+    throwIfAuthError(e);
     // Account may not have email routing at all yet — that's fine, list is empty
     capabilities.emailRouting = { destinationAddresses: [] };
   }
@@ -3147,6 +3252,7 @@ export async function getManagedHeaders(auth: ApiAuth | string, zoneId: string):
   try {
     return await cfFetch<ManagedHeadersConfig>(auth, `/zones/${zoneId}/managed_headers`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('forbidden')) return null;
     throw e;
@@ -3174,6 +3280,7 @@ export async function getCloudConnectorRules(auth: ApiAuth | string, zoneId: str
   try {
     return await cfFetch<CloudConnectorRule[]>(auth, `/zones/${zoneId}/cloud_connector/rules`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(msg)) return [];
     throw e;
@@ -3195,6 +3302,7 @@ export async function getUrlNormalization(auth: ApiAuth | string, zoneId: string
   try {
     return await cfFetch<UrlNormalizationConfig>(auth, `/zones/${zoneId}/url_normalization`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('forbidden')) return null;
     throw e;
@@ -3317,6 +3425,7 @@ export async function getPrecursor(auth: ApiAuth | string, zoneId: string): Prom
   try {
     return await cfFetch<PrecursorConfig>(auth, `/zones/${zoneId}/precursor`);
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return null;
     throw e;
@@ -3363,6 +3472,7 @@ export async function getCacheReserve(auth: ApiAuth | string, zoneId: string): P
   try {
     return await cfFetch<CacheReserveSetting>(auth, `/zones/${zoneId}/cache/cache_reserve`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('forbidden') || msg.includes('not available')) return null;
     throw e;
@@ -3401,6 +3511,7 @@ export async function listSnippets(auth: ApiAuth | string, zoneId: string): Prom
     // Normalize to an empty array so callers can treat as Snippet[].
     return Array.isArray(result) ? result : [];
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(msg)) return [];
     throw e;
@@ -3410,6 +3521,7 @@ export async function getSnippetContent(auth: ApiAuth | string, zoneId: string, 
   // The content endpoint returns the raw module source, NOT wrapped in the CF envelope.
   const headers = getAuthHeaders(typeof auth === 'string' ? createAuth(auth) : auth);
   const res = await fetch(`${CF_API}/zones/${zoneId}/snippets/${snippetName}/content`, { headers });
+  await throwIfCloudflareAuthResponse(res, auth);
   if (!res.ok) return null;
   return res.text();
 }
@@ -3427,6 +3539,7 @@ export async function createSnippet(auth: ApiAuth | string, zoneId: string, snip
     headers,
     body: fd,
   });
+  await throwIfCloudflareAuthResponse(res, auth);
   const j = await res.json() as CfApiEnvelope<Snippet>;
   if (!res.ok || !j.success) {
     throw new Error(j.errors?.[0]?.message || `Snippet PUT failed: ${res.status}`);
@@ -3440,6 +3553,7 @@ export async function listSnippetRules(auth: ApiAuth | string, zoneId: string): 
     if (!result || !Array.isArray(result.rules)) return { rules: [] };
     return result;
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(msg)) return { rules: [] };
     throw e;
@@ -3480,6 +3594,7 @@ export async function listHealthchecks(auth: ApiAuth | string, zoneId: string): 
   try {
     return await cfFetch<Healthcheck[]>(auth, `/zones/${zoneId}/healthchecks`);
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('forbidden')) return [];
     throw e;
@@ -3508,7 +3623,7 @@ export interface DnsSettings {
 }
 export async function getDnsSettings(auth: ApiAuth | string, zoneId: string): Promise<DnsSettings | null> {
   try { return await cfFetch<DnsSettings>(auth, `/zones/${zoneId}/dns_settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateDnsSettings(auth: ApiAuth | string, zoneId: string, settings: DnsSettings): Promise<DnsSettings> {
   // Strip fields that the destination zone won't accept:
@@ -3542,7 +3657,7 @@ export interface DnssecStatus {
 }
 export async function getDnssec(auth: ApiAuth | string, zoneId: string): Promise<DnssecStatus | null> {
   try { return await cfFetch<DnssecStatus>(auth, `/zones/${zoneId}/dnssec`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function enableDnssec(auth: ApiAuth | string, zoneId: string): Promise<DnssecStatus> {
   return cfFetch<DnssecStatus>(auth, `/zones/${zoneId}/dnssec`, { method: 'PATCH', body: JSON.stringify({ status: 'active' }) });
@@ -3558,7 +3673,7 @@ export async function listRegionalHostnames(auth: ApiAuth | string, zoneId: stri
   try {
     const result = await cfFetch<RegionalHostname[] | null>(auth, `/zones/${zoneId}/addressing/regional_hostnames`);
     return Array.isArray(result) ? result : [];
-  } catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  } catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createRegionalHostname(auth: ApiAuth | string, zoneId: string, rh: RegionalHostname): Promise<RegionalHostname> {
   return cfFetch<RegionalHostname>(auth, `/zones/${zoneId}/addressing/regional_hostnames`, { method: 'POST', body: JSON.stringify(rh) });
@@ -3573,7 +3688,7 @@ export interface ApiGatewayOperation {
 }
 export async function listApiGatewayOperations(auth: ApiAuth | string, zoneId: string): Promise<ApiGatewayOperation[]> {
   try { return await cfFetch<ApiGatewayOperation[]>(auth, `/zones/${zoneId}/api_gateway/operations`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createApiGatewayOperation(auth: ApiAuth | string, zoneId: string, ops: ApiGatewayOperation[]): Promise<ApiGatewayOperation[]> {
   return cfFetch<ApiGatewayOperation[]>(auth, `/zones/${zoneId}/api_gateway/operations`, { method: 'POST', body: JSON.stringify(ops) });
@@ -3587,7 +3702,7 @@ export interface ApiGatewaySchema {
 }
 export async function listApiGatewaySchemas(auth: ApiAuth | string, zoneId: string): Promise<ApiGatewaySchema[]> {
   try { return await cfFetch<ApiGatewaySchema[]>(auth, `/zones/${zoneId}/api_gateway/user_schemas`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createApiGatewaySchema(auth: ApiAuth | string, zoneId: string, schema: ApiGatewaySchema): Promise<ApiGatewaySchema> {
   return cfFetch<ApiGatewaySchema>(auth, `/zones/${zoneId}/api_gateway/user_schemas`, { method: 'POST', body: JSON.stringify(schema) });
@@ -3596,7 +3711,7 @@ export async function createApiGatewaySchema(auth: ApiAuth | string, zoneId: str
 // Cache: regional tiered, variants, origin post-quantum
 export async function getRegionalTieredCache(auth: ApiAuth | string, zoneId: string): Promise<{ value: 'on' | 'off' } | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/cache/regional_tiered_cache`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (m.includes('not found') || m.includes('forbidden') || m.includes('not available')) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (m.includes('not found') || m.includes('forbidden') || m.includes('not available')) return null; throw e; }
 }
 export async function updateRegionalTieredCache(auth: ApiAuth | string, zoneId: string, value: 'on' | 'off'): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/cache/regional_tiered_cache`, { method: 'PATCH', body: JSON.stringify({ value }) });
@@ -3616,14 +3731,14 @@ export interface CacheVariants {
 }
 export async function getCacheVariants(auth: ApiAuth | string, zoneId: string): Promise<{ value: CacheVariants } | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/cache/variants`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateCacheVariants(auth: ApiAuth | string, zoneId: string, value: CacheVariants): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/cache/variants`, { method: 'PATCH', body: JSON.stringify({ value }) });
 }
 export async function getOriginPostQuantum(auth: ApiAuth | string, zoneId: string): Promise<{ value: 'preferred' | 'supported' | 'off' } | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/cache/origin_post_quantum_encryption`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateOriginPostQuantum(auth: ApiAuth | string, zoneId: string, value: 'preferred' | 'supported' | 'off'): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/cache/origin_post_quantum_encryption`, { method: 'PUT', body: JSON.stringify({ value }) });
@@ -3643,7 +3758,7 @@ export interface ClientCertificate {
 }
 export async function listClientCertificates(auth: ApiAuth | string, zoneId: string): Promise<ClientCertificate[]> {
   try { return await cfFetch<ClientCertificate[]>(auth, `/zones/${zoneId}/client_certificates`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 
 // Custom Nameservers: the zone-level state is a singleton `{enabled, ns_set}`
@@ -3656,7 +3771,7 @@ export async function listClientCertificates(auth: ApiAuth | string, zoneId: str
 export interface FraudDetectionSettings { [key: string]: unknown }
 export async function getFraudDetectionSettings(auth: ApiAuth | string, zoneId: string): Promise<FraudDetectionSettings | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/fraud_detection/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateFraudDetectionSettings(auth: ApiAuth | string, zoneId: string, settings: FraudDetectionSettings): Promise<unknown> {
   // PATCH returns 405 method_not_allowed; PUT is the correct verb.
@@ -3672,7 +3787,7 @@ export interface AccessRule {
 }
 export async function listAccessRules(auth: ApiAuth | string, zoneId: string): Promise<AccessRule[]> {
   try { return await cfFetch<AccessRule[]>(auth, `/zones/${zoneId}/firewall/access_rules/rules`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccessRule(auth: ApiAuth | string, zoneId: string, rule: AccessRule): Promise<AccessRule> {
   return cfFetch<AccessRule>(auth, `/zones/${zoneId}/firewall/access_rules/rules`, { method: 'POST', body: JSON.stringify(rule) });
@@ -3688,7 +3803,7 @@ export interface FirewallLockdown {
 }
 export async function listFirewallLockdowns(auth: ApiAuth | string, zoneId: string): Promise<FirewallLockdown[]> {
   try { return await cfFetch<FirewallLockdown[]>(auth, `/zones/${zoneId}/firewall/lockdowns`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createFirewallLockdown(auth: ApiAuth | string, zoneId: string, lock: FirewallLockdown): Promise<FirewallLockdown> {
   return cfFetch<FirewallLockdown>(auth, `/zones/${zoneId}/firewall/lockdowns`, { method: 'POST', body: JSON.stringify(lock) });
@@ -3704,7 +3819,7 @@ export interface UaRule {
 }
 export async function listUaRules(auth: ApiAuth | string, zoneId: string): Promise<UaRule[]> {
   try { return await cfFetch<UaRule[]>(auth, `/zones/${zoneId}/firewall/ua_rules`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createUaRule(auth: ApiAuth | string, zoneId: string, rule: UaRule): Promise<UaRule> {
   return cfFetch<UaRule>(auth, `/zones/${zoneId}/firewall/ua_rules`, { method: 'POST', body: JSON.stringify(rule) });
@@ -3726,14 +3841,14 @@ export interface PageShieldPolicy {
 }
 export async function getPageShieldSettings(auth: ApiAuth | string, zoneId: string): Promise<PageShieldSettings | null> {
   try { return await cfFetch<PageShieldSettings>(auth, `/zones/${zoneId}/page_shield`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updatePageShieldSettings(auth: ApiAuth | string, zoneId: string, settings: PageShieldSettings): Promise<PageShieldSettings> {
   return cfFetch<PageShieldSettings>(auth, `/zones/${zoneId}/page_shield`, { method: 'PUT', body: JSON.stringify(normalizePageShieldSettings(settings)) });
 }
 export async function listPageShieldPolicies(auth: ApiAuth | string, zoneId: string): Promise<PageShieldPolicy[]> {
   try { return await cfFetch<PageShieldPolicy[]>(auth, `/zones/${zoneId}/page_shield/policies`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createPageShieldPolicy(auth: ApiAuth | string, zoneId: string, policy: PageShieldPolicy): Promise<PageShieldPolicy> {
   return cfFetch<PageShieldPolicy>(auth, `/zones/${zoneId}/page_shield/policies`, { method: 'POST', body: JSON.stringify(policy) });
@@ -3758,7 +3873,7 @@ export interface LogpushJob {
 }
 export async function listLogpushJobs(auth: ApiAuth | string, zoneId: string): Promise<LogpushJob[]> {
   try { return await cfFetch<LogpushJob[]>(auth, `/zones/${zoneId}/logpush/jobs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createLogpushJob(auth: ApiAuth | string, zoneId: string, job: Partial<LogpushJob>): Promise<LogpushJob> {
   return cfFetch<LogpushJob>(auth, `/zones/${zoneId}/logpush/jobs`, { method: 'POST', body: JSON.stringify(job) });
@@ -3772,7 +3887,7 @@ export async function createLogpushJob(auth: ApiAuth | string, zoneId: string, j
 // subset that includes the source zone.
 export async function listAccountLogpushJobs(auth: ApiAuth | string, accountId: string): Promise<LogpushJob[]> {
   try { return await cfFetch<LogpushJob[]>(auth, `/accounts/${accountId}/logpush/jobs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccountLogpushJob(auth: ApiAuth | string, accountId: string, job: Partial<LogpushJob>): Promise<LogpushJob> {
   return cfFetch<LogpushJob>(auth, `/accounts/${accountId}/logpush/jobs`, { method: 'POST', body: JSON.stringify(job) });
@@ -3792,14 +3907,14 @@ export interface SchemaValidationSettings {
 }
 export async function listSchemaValidationSchemas(auth: ApiAuth | string, zoneId: string): Promise<SchemaValidationSchema[]> {
   try { return await cfFetch<SchemaValidationSchema[]>(auth, `/zones/${zoneId}/schema_validation/schemas`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createSchemaValidationSchema(auth: ApiAuth | string, zoneId: string, schema: SchemaValidationSchema): Promise<SchemaValidationSchema> {
   return cfFetch<SchemaValidationSchema>(auth, `/zones/${zoneId}/schema_validation/schemas`, { method: 'POST', body: JSON.stringify(schema) });
 }
 export async function getSchemaValidationSettings(auth: ApiAuth | string, zoneId: string): Promise<SchemaValidationSettings | null> {
   try { return await cfFetch<SchemaValidationSettings>(auth, `/zones/${zoneId}/schema_validation/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateSchemaValidationSettings(auth: ApiAuth | string, zoneId: string, settings: SchemaValidationSettings): Promise<SchemaValidationSettings> {
   return cfFetch<SchemaValidationSettings>(auth, `/zones/${zoneId}/schema_validation/settings`, { method: 'PUT', body: JSON.stringify(normalizeSchemaValidationSettings(settings)) });
@@ -3821,14 +3936,14 @@ export interface TokenValidationRule {
 }
 export async function listTokenValidationConfigs(auth: ApiAuth | string, zoneId: string): Promise<TokenValidationConfig[]> {
   try { return await cfFetch<TokenValidationConfig[]>(auth, `/zones/${zoneId}/token_validation/config`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createTokenValidationConfig(auth: ApiAuth | string, zoneId: string, cfg: TokenValidationConfig): Promise<TokenValidationConfig> {
   return cfFetch<TokenValidationConfig>(auth, `/zones/${zoneId}/token_validation/config`, { method: 'POST', body: JSON.stringify(cfg) });
 }
 export async function listTokenValidationRules(auth: ApiAuth | string, zoneId: string): Promise<TokenValidationRule[]> {
   try { return await cfFetch<TokenValidationRule[]>(auth, `/zones/${zoneId}/token_validation/rules`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createTokenValidationRule(auth: ApiAuth | string, zoneId: string, rule: TokenValidationRule): Promise<TokenValidationRule> {
   return cfFetch<TokenValidationRule>(auth, `/zones/${zoneId}/token_validation/rules`, { method: 'POST', body: JSON.stringify(rule) });
@@ -3856,7 +3971,7 @@ export async function getApiGatewayConfiguration(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<ApiGatewayConfiguration | null> {
   try { return await cfFetch<ApiGatewayConfiguration>(auth, `/zones/${zoneId}/api_gateway/configuration`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateApiGatewayConfiguration(
   auth: ApiAuth | string, zoneId: string, config: ApiGatewayConfiguration,
@@ -3899,6 +4014,7 @@ export async function listApiGatewayUserLabels(
       .filter(l => l && l.name && !l.managed && l.source !== 'managed' && !/^cf-/i.test(l.name))
       .map(l => ({ label_id: l.label_id, name: l.name, description: l.description, metadata: l.metadata }));
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -3931,7 +4047,7 @@ export async function getApiGatewayOperationSchemaValidation(
   auth: ApiAuth | string, zoneId: string, operationId: string,
 ): Promise<{ mitigation_action?: string | null } | null> {
   try { return await cfFetch<{ mitigation_action?: string | null }>(auth, `/zones/${zoneId}/api_gateway/operations/${operationId}/schema_validation`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 /** Bulk-set per-operation schema-validation mitigation. Body is a map
  *  of `{ operationId: { mitigation_action } }`. */
@@ -3956,7 +4072,7 @@ export interface CertificatePack {
 }
 export async function listCertificatePacks(auth: ApiAuth | string, zoneId: string): Promise<CertificatePack[]> {
   try { return await cfFetch<CertificatePack[]>(auth, `/zones/${zoneId}/ssl/certificate_packs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 /**
  * Detect transient errors from the Cloudflare certificate service backend.
@@ -4027,7 +4143,7 @@ export async function createCertificatePack(auth: ApiAuth | string, zoneId: stri
 // ACM Total TLS toggle
 export async function getAcmTotalTls(auth: ApiAuth | string, zoneId: string): Promise<{ enabled: boolean; certificate_authority?: string } | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/acm/total_tls`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateAcmTotalTls(auth: ApiAuth | string, zoneId: string, body: { enabled: boolean; certificate_authority?: string }): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/acm/total_tls`, { method: 'POST', body: JSON.stringify(normalizeAcmTotalTls(body)) });
@@ -4053,7 +4169,7 @@ export interface WaitingRoomEvent {
 }
 export async function listWaitingRoomEvents(auth: ApiAuth | string, zoneId: string, roomId: string): Promise<WaitingRoomEvent[]> {
   try { return await cfFetch<WaitingRoomEvent[]>(auth, `/zones/${zoneId}/waiting_rooms/${roomId}/events`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createWaitingRoomEvent(auth: ApiAuth | string, zoneId: string, roomId: string, event: WaitingRoomEvent): Promise<WaitingRoomEvent> {
   return cfFetch<WaitingRoomEvent>(auth, `/zones/${zoneId}/waiting_rooms/${roomId}/events`, { method: 'POST', body: JSON.stringify(event) });
@@ -4067,7 +4183,7 @@ export interface HostnameSetting {
 }
 export async function listHostnameSettings(auth: ApiAuth | string, zoneId: string, settingId: string): Promise<HostnameSetting[]> {
   try { return await cfFetch<HostnameSetting[]>(auth, `/zones/${zoneId}/hostnames/settings/${settingId}`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function setHostnameSetting(auth: ApiAuth | string, zoneId: string, settingId: string, hostname: string, value: unknown): Promise<HostnameSetting> {
   return cfFetch<HostnameSetting>(auth, `/zones/${zoneId}/hostnames/settings/${settingId}/${hostname}`, { method: 'PUT', body: JSON.stringify({ value }) });
@@ -4082,14 +4198,14 @@ export interface OriginTlsHostnameCert {
 }
 export async function getOriginTlsSettings(auth: ApiAuth | string, zoneId: string): Promise<{ enabled?: boolean } | null> {
   try { return await cfFetch(auth, `/zones/${zoneId}/origin_tls_client_auth/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateOriginTlsSettings(auth: ApiAuth | string, zoneId: string, body: { enabled: boolean }): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/origin_tls_client_auth/settings`, { method: 'PUT', body: JSON.stringify(body) });
 }
 export async function listOriginTlsHostnames(auth: ApiAuth | string, zoneId: string): Promise<OriginTlsHostnameCert[]> {
   try { return await cfFetch<OriginTlsHostnameCert[]>(auth, `/zones/${zoneId}/origin_tls_client_auth/hostnames/certificates`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 
 // Certificate Authorities hostname associations (for mTLS)
@@ -4099,7 +4215,7 @@ export interface HostnameAssociation {
 }
 export async function getHostnameAssociations(auth: ApiAuth | string, zoneId: string): Promise<HostnameAssociation | null> {
   try { return await cfFetch<HostnameAssociation>(auth, `/zones/${zoneId}/certificate_authorities/hostname_associations`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateHostnameAssociations(auth: ApiAuth | string, zoneId: string, assoc: HostnameAssociation): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/certificate_authorities/hostname_associations`, { method: 'PUT', body: JSON.stringify(assoc) });
@@ -4136,7 +4252,7 @@ export interface SecretsStoreSecret {
 }
 export async function listSecretsStoreStores(auth: ApiAuth | string, accountId: string): Promise<SecretsStoreStore[]> {
   try { return await cfFetch<SecretsStoreStore[]>(auth, `/accounts/${accountId}/secrets_store/stores`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 /** Create a new Secrets Store on the destination account. Only `name`
  *  is settable; the API rejects readonly fields. The store ID is
@@ -4188,7 +4304,7 @@ export interface MtlsCertificate {
 }
 export async function listMtlsCertificates(auth: ApiAuth | string, accountId: string): Promise<MtlsCertificate[]> {
   try { return await cfFetch<MtlsCertificate[]>(auth, `/accounts/${accountId}/mtls_certificates`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function uploadMtlsCertificate(
   auth: ApiAuth | string,
@@ -4211,7 +4327,7 @@ export interface AccessGroup {
 }
 export async function listAccessGroups(auth: ApiAuth | string, accountId: string): Promise<AccessGroup[]> {
   try { return await cfFetch<AccessGroup[]>(auth, `/accounts/${accountId}/access/groups`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccessGroup(auth: ApiAuth | string, accountId: string, group: AccessGroup): Promise<AccessGroup> {
   return cfFetch<AccessGroup>(auth, `/accounts/${accountId}/access/groups`, { method: 'POST', body: JSON.stringify(group) });
@@ -4225,7 +4341,7 @@ export interface AccessServiceToken {
 }
 export async function listAccessServiceTokens(auth: ApiAuth | string, accountId: string): Promise<AccessServiceToken[]> {
   try { return await cfFetch<AccessServiceToken[]>(auth, `/accounts/${accountId}/access/service_tokens`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccessServiceToken(auth: ApiAuth | string, accountId: string, token: AccessServiceToken): Promise<AccessServiceToken> {
   return cfFetch<AccessServiceToken>(auth, `/accounts/${accountId}/access/service_tokens`, { method: 'POST', body: JSON.stringify(token) });
@@ -4238,7 +4354,7 @@ export interface IdentityProvider {
 }
 export async function listIdentityProviders(auth: ApiAuth | string, accountId: string): Promise<IdentityProvider[]> {
   try { return await cfFetch<IdentityProvider[]>(auth, `/accounts/${accountId}/access/identity_providers`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createIdentityProvider(auth: ApiAuth | string, accountId: string, idp: IdentityProvider): Promise<IdentityProvider> {
   return cfFetch<IdentityProvider>(auth, `/accounts/${accountId}/access/identity_providers`, { method: 'POST', body: JSON.stringify(idp) });
@@ -4278,6 +4394,7 @@ export async function getAccessOrganization(
     }
     return result;
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     // Account has no Access org yet — common for fresh accounts
     // that haven't visited the Zero Trust dashboard. Not an error.
@@ -4299,7 +4416,7 @@ export interface AccessTag {
 }
 export async function listAccessTags(auth: ApiAuth | string, accountId: string): Promise<AccessTag[]> {
   try { return await cfFetch<AccessTag[]>(auth, `/accounts/${accountId}/access/tags`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccessTag(auth: ApiAuth | string, accountId: string, tag: { name: string }): Promise<AccessTag> {
   return cfFetch<AccessTag>(auth, `/accounts/${accountId}/access/tags`, { method: 'POST', body: JSON.stringify(tag) });
@@ -4314,7 +4431,7 @@ export interface AccessBookmark {
 }
 export async function listAccessBookmarks(auth: ApiAuth | string, accountId: string): Promise<AccessBookmark[]> {
   try { return await cfFetch<AccessBookmark[]>(auth, `/accounts/${accountId}/access/bookmarks`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAccessBookmark(auth: ApiAuth | string, accountId: string, bookmark: Partial<AccessBookmark>): Promise<AccessBookmark> {
   return cfFetch<AccessBookmark>(auth, `/accounts/${accountId}/access/bookmarks`, { method: 'POST', body: JSON.stringify(bookmark) });
@@ -4329,7 +4446,7 @@ export interface AccessCustomPage {
 }
 export async function listAccessCustomPages(auth: ApiAuth | string, accountId: string): Promise<AccessCustomPage[]> {
   try { return await cfFetch<AccessCustomPage[]>(auth, `/accounts/${accountId}/access/custom_pages`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function getAccessCustomPage(auth: ApiAuth | string, accountId: string, uid: string): Promise<AccessCustomPage> {
   return cfFetch<AccessCustomPage>(auth, `/accounts/${accountId}/access/custom_pages/${uid}`);
@@ -4348,7 +4465,7 @@ export interface CustomList {
 }
 export async function listCustomLists(auth: ApiAuth | string, accountId: string): Promise<CustomList[]> {
   try { return await cfFetch<CustomList[]>(auth, `/accounts/${accountId}/rules/lists`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createCustomList(auth: ApiAuth | string, accountId: string, list: CustomList): Promise<CustomList> {
   // /rules/lists rejects `id`, `num_items`, and other read-only fields with
@@ -4373,7 +4490,7 @@ export interface CustomListItem {
 }
 export async function listCustomListItems(auth: ApiAuth | string, accountId: string, listId: string): Promise<CustomListItem[]> {
   try { return await cfFetch<CustomListItem[]>(auth, `/accounts/${accountId}/rules/lists/${listId}/items`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function appendCustomListItems(auth: ApiAuth | string, accountId: string, listId: string, items: CustomListItem[]): Promise<unknown> {
   // /rules/lists/{id}/items rejects unknown fields (`id`, `created_on`,
@@ -4405,7 +4522,7 @@ export interface QueueConsumer {
 }
 export async function listQueueConsumers(auth: ApiAuth | string, accountId: string, queueId: string): Promise<QueueConsumer[]> {
   try { return await cfFetch<QueueConsumer[]>(auth, `/accounts/${accountId}/queues/${queueId}/consumers`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createQueueConsumer(auth: ApiAuth | string, accountId: string, queueId: string, consumer: QueueConsumer): Promise<QueueConsumer> {
   return cfFetch<QueueConsumer>(auth, `/accounts/${accountId}/queues/${queueId}/consumers`, { method: 'POST', body: JSON.stringify(consumer) });
@@ -4433,7 +4550,7 @@ export async function getCustomHostnameFallbackOrigin(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<CustomHostnameFallbackOrigin | null> {
   try { return await cfFetch<CustomHostnameFallbackOrigin>(auth, `/zones/${zoneId}/custom_hostnames/fallback_origin`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateCustomHostnameFallbackOrigin(
   auth: ApiAuth | string, zoneId: string, origin: CustomHostnameFallbackOrigin,
@@ -4452,7 +4569,7 @@ export async function getAiSecuritySettings(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<AiSecuritySettings | null> {
   try { return await cfFetch<AiSecuritySettings>(auth, `/zones/${zoneId}/ai-security/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateAiSecuritySettings(
   auth: ApiAuth | string, zoneId: string, settings: AiSecuritySettings,
@@ -4464,7 +4581,7 @@ export async function getAiSecurityCustomTopics(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<AiSecurityCustomTopics | null> {
   try { return await cfFetch<AiSecurityCustomTopics>(auth, `/zones/${zoneId}/ai-security/custom-topics`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateAiSecurityCustomTopics(
   auth: ApiAuth | string, zoneId: string, topics: AiSecurityCustomTopics,
@@ -4499,7 +4616,7 @@ export async function listWorkersObservabilityDestinations(
   auth: ApiAuth | string, accountId: string,
 ): Promise<WorkersObservabilityDestination[]> {
   try { return await cfFetch<WorkersObservabilityDestination[]>(auth, `/accounts/${accountId}/workers/observability/destinations`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createWorkersObservabilityDestination(
   auth: ApiAuth | string, accountId: string, dest: WorkersObservabilityDestination,
@@ -4516,7 +4633,7 @@ export async function listWorkersObservabilityQueries(
   auth: ApiAuth | string, accountId: string,
 ): Promise<WorkersObservabilityQuery[]> {
   try { return await cfFetch<WorkersObservabilityQuery[]>(auth, `/accounts/${accountId}/workers/observability/queries`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createWorkersObservabilityQuery(
   auth: ApiAuth | string, accountId: string, query: WorkersObservabilityQuery,
@@ -4542,7 +4659,7 @@ export async function listVectorizeIndexes(
   auth: ApiAuth | string, accountId: string,
 ): Promise<VectorizeIndex[]> {
   try { return await cfFetch<VectorizeIndex[]>(auth, `/accounts/${accountId}/vectorize/v2/indexes`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createVectorizeIndex(
   auth: ApiAuth | string, accountId: string, index: VectorizeIndex,
@@ -4564,7 +4681,7 @@ export async function getWaitingRoomSettings(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<WaitingRoomSettings | null> {
   try { return await cfFetch<WaitingRoomSettings>(auth, `/zones/${zoneId}/waiting_rooms/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateWaitingRoomSettings(
   auth: ApiAuth | string, zoneId: string, settings: WaitingRoomSettings,
@@ -4582,7 +4699,7 @@ export async function getContentUploadScanSettings(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<ContentUploadScanSettings | null> {
   try { return await cfFetch<ContentUploadScanSettings>(auth, `/zones/${zoneId}/content-upload-scan/settings`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateContentUploadScanSettings(
   auth: ApiAuth | string, zoneId: string, settings: ContentUploadScanSettings,
@@ -4630,7 +4747,7 @@ export function normalizeCtAlerting(sub: unknown): CtAlertingSubscription {
 }
 export async function getCtAlerting(auth: ApiAuth | string, zoneId: string): Promise<CtAlertingSubscription | null> {
   try { return await cfFetch<CtAlertingSubscription>(auth, `/zones/${zoneId}/ct/alerting`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateCtAlerting(auth: ApiAuth | string, zoneId: string, sub: CtAlertingSubscription): Promise<unknown> {
   return cfFetch(auth, `/zones/${zoneId}/ct/alerting`, { method: 'PATCH', body: JSON.stringify(normalizeCtAlerting(sub)) });
@@ -4645,6 +4762,7 @@ export async function getAutoOriginTlsKex(auth: ApiAuth | string, zoneId: string
     const r = await cfFetch<{ enabled?: boolean }>(auth, `/zones/${zoneId}/settings/auto_origin_tls_kex`);
     return { enabled: r?.enabled === true };
   } catch (e) {
+    throwIfAuthError(e);
     const msg = (e as Error).message?.toLowerCase() || '';
     if (msg.includes('not found') || msg.includes('not_found') || msg.includes('forbidden') || msg.includes('not available') || msg.includes('not enabled')) return null;
     throw e;
@@ -4688,6 +4806,7 @@ export async function listCacheOriginCloudRegions(
     // (`ip` instead of `origin-ip`).
     return raw.map(m => ({ ip: m['origin-ip'], region: m.region, vendor: m.vendor }));
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -4741,7 +4860,7 @@ export async function getLeakedCredentialChecksStatus(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<LeakedCredentialChecksStatus | null> {
   try { return await cfFetch<LeakedCredentialChecksStatus>(auth, `/zones/${zoneId}/leaked-credential-checks`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function setLeakedCredentialChecksStatus(
   auth: ApiAuth | string, zoneId: string, status: LeakedCredentialChecksStatus,
@@ -4753,7 +4872,7 @@ export async function listLeakedCredentialCustomDetections(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<LeakedCredentialCustomDetection[]> {
   try { return await cfFetch<LeakedCredentialCustomDetection[]>(auth, `/zones/${zoneId}/leaked-credential-checks/detections`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createLeakedCredentialCustomDetection(
   auth: ApiAuth | string, zoneId: string, detection: LeakedCredentialCustomDetection,
@@ -4791,7 +4910,7 @@ export async function listWeb3Hostnames(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<Web3Hostname[]> {
   try { return await cfFetch<Web3Hostname[]>(auth, `/zones/${zoneId}/web3/hostnames`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createWeb3Hostname(
   auth: ApiAuth | string, zoneId: string, hostname: Web3Hostname,
@@ -4810,7 +4929,7 @@ export async function getWeb3ContentList(
   auth: ApiAuth | string, zoneId: string, hostnameId: string,
 ): Promise<Web3ContentList | null> {
   try { return await cfFetch<Web3ContentList>(auth, `/zones/${zoneId}/web3/hostnames/${hostnameId}/ipfs_universal_path/content_list`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 /** List individual entries — needed at export time because the
  *  /content_list GET only returns the action, not the entries. */
@@ -4823,6 +4942,7 @@ export async function listWeb3ContentListEntries(
     const env = await cfFetch<{ entries?: Web3ContentList['entries'] }>(auth, `/zones/${zoneId}/web3/hostnames/${hostnameId}/ipfs_universal_path/content_list/entries`);
     return Array.isArray(env?.entries) ? env.entries : [];
   } catch (e) {
+    throwIfAuthError(e);
     const m = (e as Error).message?.toLowerCase() || '';
     if (isExportTolerable(m)) return [];
     throw e;
@@ -4873,19 +4993,19 @@ export async function listSecondaryDnsAcls(
   auth: ApiAuth | string, accountId: string,
 ): Promise<SecondaryDnsAcl[]> {
   try { return await cfFetch<SecondaryDnsAcl[]>(auth, `/accounts/${accountId}/secondary_dns/acls`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function listSecondaryDnsPeers(
   auth: ApiAuth | string, accountId: string,
 ): Promise<SecondaryDnsPeer[]> {
   try { return await cfFetch<SecondaryDnsPeer[]>(auth, `/accounts/${accountId}/secondary_dns/peers`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function listSecondaryDnsTsigs(
   auth: ApiAuth | string, accountId: string,
 ): Promise<SecondaryDnsTsig[]> {
   try { return await cfFetch<SecondaryDnsTsig[]>(auth, `/accounts/${accountId}/secondary_dns/tsigs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 
 // Account-scoped writes
@@ -4921,13 +5041,13 @@ export async function getSecondaryDnsIncoming(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<SecondaryDnsIncoming | null> {
   try { return await cfFetch<SecondaryDnsIncoming>(auth, `/zones/${zoneId}/secondary_dns/incoming`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function getSecondaryDnsOutgoing(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<SecondaryDnsOutgoing | null> {
   try { return await cfFetch<SecondaryDnsOutgoing>(auth, `/zones/${zoneId}/secondary_dns/outgoing`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 
 // Zone-scoped writes
@@ -4959,7 +5079,7 @@ export async function getCustomNameserversMetadata(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<CustomNameserversMetadata | null> {
   try { return await cfFetch<CustomNameserversMetadata>(auth, `/zones/${zoneId}/custom_ns`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function updateCustomNameserversMetadata(
   auth: ApiAuth | string, zoneId: string, meta: CustomNameserversMetadata,
@@ -4983,7 +5103,7 @@ export async function getPayPerCrawlConfiguration(
   auth: ApiAuth | string, zoneId: string,
 ): Promise<PayPerCrawlConfiguration | null> {
   try { return await cfFetch<PayPerCrawlConfiguration>(auth, `/zones/${zoneId}/pay-per-crawl/configuration`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return null; throw e; }
 }
 export async function createPayPerCrawlConfiguration(
   auth: ApiAuth | string, zoneId: string, cfg: PayPerCrawlConfiguration,
@@ -5011,7 +5131,7 @@ export async function listWaitingRoomRules(
   auth: ApiAuth | string, zoneId: string, roomId: string,
 ): Promise<WaitingRoomRule[]> {
   try { return await cfFetch<WaitingRoomRule[]>(auth, `/zones/${zoneId}/waiting_rooms/${roomId}/rules`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function replaceWaitingRoomRules(
   auth: ApiAuth | string, zoneId: string, roomId: string, rules: WaitingRoomRule[],
@@ -5046,7 +5166,7 @@ export async function listAiGatewayCustomProviderCosts(
   auth: ApiAuth | string, accountId: string,
 ): Promise<AiGatewayCustomProviderCost[]> {
   try { return await cfFetch<AiGatewayCustomProviderCost[]>(auth, `/accounts/${accountId}/ai-gateway/custom-providers/costs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 export async function createAiGatewayCustomProviderCost(
   auth: ApiAuth | string, accountId: string, cost: AiGatewayCustomProviderCost,
@@ -5096,7 +5216,7 @@ export async function listAiGatewayProviderConfigs(
   auth: ApiAuth | string, accountId: string, gatewayId: string,
 ): Promise<AiGatewayProviderConfig[]> {
   try { return await cfFetch<AiGatewayProviderConfig[]>(auth, `/accounts/${accountId}/ai-gateway/gateways/${gatewayId}/provider_configs`); }
-  catch (e) { const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
+  catch (e) { throwIfAuthError(e); const m = (e as Error).message?.toLowerCase() || ''; if (isExportTolerable(m)) return []; throw e; }
 }
 /**
  * NOTE: the migrate engine intentionally does NOT call this. BYOK provider
@@ -5202,8 +5322,10 @@ export async function cfRequestEnvelope<T = unknown>(
           ...options.headers,
         },
       });
+      await throwIfCloudflareAuthResponse(res, authObj);
     } catch (fetchErr) {
       clearTimeout(timeout);
+      if (fetchErr instanceof AuthError) throw fetchErr;
       const err = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
       lastError = err.name === 'AbortError'
         ? new Error(`Request timed out after ${CF_FETCH_TIMEOUT_MS}ms: ${method} ${path}`)

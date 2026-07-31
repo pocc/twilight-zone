@@ -36,7 +36,10 @@ export async function migrateTurnstileWidgets(
 
   log('⏳ Turnstile Widgets...');
   // Check for existing widgets (duplicate detection)
-  const existingWidgets = await api.listTurnstileWidgets(destAuth, destAccountId).catch(() => [] as Array<{ name?: string }>);
+  const existingWidgets = await api.listTurnstileWidgets(destAuth, destAccountId).catch((e) => {
+    api.throwIfAuthError(e);
+    return [] as Array<{ name?: string }>;
+  });
   const existingNames = new Set(existingWidgets.map((w) => (w.name || '').toLowerCase()));
   const newWidgets = exportData.turnstileWidgets.filter(w => !existingNames.has((w.name || '').toLowerCase()));
   const dups = exportData.turnstileWidgets.filter(w => existingNames.has((w.name || '').toLowerCase()));

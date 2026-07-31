@@ -1,8 +1,11 @@
 // Client-side fetch wrappers for /api/* endpoints
 
 import type { MigrationStats } from '../../src/types';
+import { browserJsonRequest, browserStreamRequest } from './request';
+import type { BrowserAuthMode } from './oauth';
 
 export interface Credentials {
+  authMode: BrowserAuthMode;
   useApiKey: boolean;
   apiKey: string;
   apiEmail: string;
@@ -35,21 +38,12 @@ function destAuthBody(creds: Partial<Credentials>): Record<string, unknown> {
   return { token: creds.destToken || creds.sourceToken };
 }
 
-async function post<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  // [W15] Always throw on !res.ok, even if response doesn't have an .error field
-  if (!res.ok) {
-    const errorMsg = (data as Record<string, string>).error
-      || (data as Record<string, string>).message
-      || `HTTP ${res.status}`;
-    throw new Error(errorMsg);
-  }
-  return data as T;
+async function post<T = unknown>(
+  url: string,
+  body: Record<string, unknown>,
+  authMode: BrowserAuthMode = 'manual',
+): Promise<T> {
+  return browserJsonRequest<T>(url, body, { authMode });
 }
 
 /** Which credential context an account/zone listing should authenticate with.
@@ -63,13 +57,18 @@ const authBodyFor = (creds: Partial<Credentials>, mode: AuthMode) =>
   mode === 'dest' ? destAuthBody(creds) : authBody(creds);
 
 export async function listAccounts(creds: Partial<Credentials>, authMode: AuthMode = 'source') {
-  return post<{ accounts: Array<{ id: string; name: string }> }>('/api/accounts', authBodyFor(creds, authMode));
+  return post<{ accounts: Array<{ id: string; name: string }> }>(
+    '/api/accounts',
+    { ...authBodyFor(creds, authMode), oauthRole: authMode === 'dest' ? 'destination' : 'source' },
+    creds.authMode,
+  );
 }
 
 export async function listZones(creds: Partial<Credentials>, accountId: string, authMode: AuthMode = 'source') {
   return post<{ zones: Array<{ id: string; name: string; status: string }> }>(
     '/api/zones',
-    { ...authBodyFor(creds, authMode), accountId },
+    { ...authBodyFor(creds, authMode), accountId, oauthRole: authMode === 'dest' ? 'destination' : 'source' },
+    creds.authMode,
   );
 }
 
@@ -97,6 +96,7 @@ export async function createZone(
   }>(
     '/api/zones/create',
     { ...authBodyFor(creds, authMode), accountId, name, ...(parentZoneId ? { parentZoneId } : {}) },
+    creds.authMode,
   );
 }
 
@@ -109,7 +109,7 @@ export async function monitorPing(
   sourceZoneId: string,
   req: { url: string; method?: string; headers?: Record<string, string>; requestBody?: string; expectedStatus?: number },
 ) {
-  return post<MonitorPingResult>('/api/monitor/ping', { ...authBody(creds), sourceZoneId, ...req });
+  return post<MonitorPingResult>('/api/monitor/ping', { ...authBody(creds), sourceZoneId, ...req }, creds.authMode);
 }
 
 export async function validateToken(creds: Partial<Credentials>) {
@@ -118,6 +118,7 @@ export async function validateToken(creds: Partial<Credentials>) {
     creds.useApiKey
       ? { useApiKey: true, apiKey: creds.apiKey, apiEmail: creds.apiEmail }
       : { token: creds.sourceToken || creds.destToken },
+    'manual',
   );
 }
 
@@ -145,6 +146,7 @@ export async function validateMigration(
   return post<ValidateMigrationResult>(
     '/api/validate',
     { ...authBody(creds), sourceZoneId, sourceAccountId, destAccountId, domainName },
+    creds.authMode,
   );
 }
 
@@ -154,6 +156,7 @@ export async function checkBlockers(creds: Partial<Credentials>, sourceZoneId: s
   return post<{ blockers?: Array<{ type: string; message: string; details?: string }>; warnings?: Array<{ type: string; message: string; details?: string }> }>(
     '/api/check-blockers',
     { ...authBody(creds), destApiKey: dest.apiKey, destApiEmail: dest.apiEmail, destToken: dest.token, sourceZoneId, sourceAccountId, destAccountId, domainName },
+    creds.authMode,
   );
 }
 
@@ -184,6 +187,7 @@ export async function checkCapabilities(creds: Partial<Credentials>, destAccount
   return post<{ capabilities: AccountCapabilities; existingTurnstileWidgets?: string[] }>(
     '/api/check-capabilities',
     { ...destAuthBody(creds), destAccountId },
+    creds.authMode,
   );
 }
 
@@ -205,6 +209,7 @@ export async function sendEmailRoutingVerification(
   return post<{ ok: boolean; email: string; verified: boolean; tag?: string; note?: string }>(
     '/api/email-routing/send-verification',
     { ...destAuthBody(creds), destAccountId, email },
+    creds.authMode,
   );
 }
 
@@ -216,6 +221,7 @@ export async function checkEmailRoutingVerification(
   return post<{ email: string; exists: boolean; verified: boolean; verifiedAt?: string | null; tag?: string }>(
     '/api/email-routing/check-verification',
     { ...destAuthBody(creds), destAccountId, email },
+    creds.authMode,
   );
 }
 
@@ -233,6 +239,7 @@ export async function getAvailablePlans(creds: Partial<Credentials>, destAccount
   return post<{ plans: AvailablePlan[]; planCounts: Record<string, number> }>(
     '/api/available-plans',
     { ...destAuthBody(creds), destAccountId, ...(domainName ? { domainName } : {}) },
+    creds.authMode,
   );
 }
 
@@ -248,11 +255,13 @@ export async function rollback(creds: Partial<Credentials>, destAccountId: strin
   return post<{ success: boolean; deleted: string[]; failed: string[] }>(
     '/api/rollback',
     { ...destAuthBody(creds), destAccountId, createdResources },
+    creds.authMode,
   );
 }
 
 // SSE stream helper
 export interface StreamPrompt {
+  migrationId?: string;
   promptId: string;
   question: string;
   options: { value: string; label: string }[];
@@ -263,6 +272,7 @@ export interface StreamCallbacks {
   onDone: (data: Record<string, unknown>) => void;
   onError: (error: string) => void;
   onPrompt?: (prompt: StreamPrompt) => void;
+  onReauthorizationRequired?: (role: 'source' | 'destination', reason: string) => void;
 }
 
 export function streamRequest(
@@ -270,74 +280,9 @@ export function streamRequest(
   body: Record<string, unknown>,
   callbacks: StreamCallbacks,
   signal?: AbortSignal,
+  authMode: BrowserAuthMode = 'manual',
 ): Promise<void> {
-  return fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const data = await response.json() as Record<string, string>;
-      callbacks.onError(data.error || `HTTP ${response.status}`);
-      return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) { callbacks.onError('No response body'); return; }
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    // [W29] Note: SSE reconnection would require server-side message IDs (Last-Event-ID)
-    // which the server doesn't support. Full reconnection is left as a future enhancement.
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.type === 'log') {
-            callbacks.onLog(data.message, data.progress);
-          } else if (data.type === 'prompt') {
-            callbacks.onPrompt?.({ promptId: data.promptId, question: data.question, options: data.options });
-          } else if (data.type === 'done') {
-            callbacks.onDone(data);
-          } else if (data.type === 'error') {
-            callbacks.onError(data.error);
-          }
-        } catch {
-          // skip malformed SSE lines
-        }
-      }
-    }
-    // [W30] Process any remaining buffer content after stream ends
-    if (buffer.trim()) {
-      const remainingLines = buffer.split('\n');
-      for (const line of remainingLines) {
-        if (!line.startsWith('data: ')) continue;
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.type === 'log') {
-            callbacks.onLog(data.message, data.progress);
-          } else if (data.type === 'prompt') {
-            callbacks.onPrompt?.({ promptId: data.promptId, question: data.question, options: data.options });
-          } else if (data.type === 'done') {
-            callbacks.onDone(data);
-          } else if (data.type === 'error') {
-            callbacks.onError(data.error);
-          }
-        } catch {
-          // skip malformed SSE lines
-        }
-      }
-    }
-  }).catch((err) => {
-    if (signal?.aborted) return;
-    callbacks.onError(err.message || 'Stream connection failed');
-  });
+  return browserStreamRequest(url, body, callbacks, { authMode, signal });
 }
 
 // ── Source-zone analytics export (spike/analytics-export) ──────────────
@@ -369,6 +314,7 @@ export function startAnalyticsExport(
     },
     callbacks,
     signal,
+    creds.authMode,
   );
 }
 
@@ -390,6 +336,7 @@ export function startAnalyticsProbe(
     },
     callbacks,
     signal,
+    creds.authMode,
   );
 }
 

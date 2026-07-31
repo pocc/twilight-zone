@@ -2,13 +2,25 @@ name = "twilight-zone"
 main = "src/worker/index.ts"
 # Keep current. Bump at minimum once per release; see
 # https://developers.cloudflare.com/workers/configuration/compatibility-dates/
-compatibility_date = "2026-05-01"
+compatibility_date = "2026-07-31"
 compatibility_flags = ["nodejs_compat"]
 # Account ID is read from the CLOUDFLARE_ACCOUNT_ID environment variable.
 # Remove this line prior to release
 
 # Built React SPA — served via the ASSETS binding.
-assets = { directory = "dist", not_found_handling = "single-page-application" }
+assets = { directory = "dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+
+# Browser OAuth is opt-in. Replace every placeholder before setting this to
+# "true". OAUTH_COOKIE_KEY is intentionally absent: configure it with
+# `npx wrangler secret put OAUTH_COOKIE_KEY`, never as a plaintext variable.
+[vars]
+OAUTH_ENABLED = "false"
+OAUTH_CLIENT_ID = "replace-with-oauth-client-id"
+OAUTH_COOKIE_KEY_ID = "replace-with-key-id"
+OAUTH_ALLOWED_ORIGIN = "https://your-deployment.example.com"
+OAUTH_REDIRECT_URI = "https://your-deployment.example.com/api/oauth/callback"
+OAUTH_SOURCE_SCOPES = "[\"replace-with-source-scope\"]"
+OAUTH_DESTINATION_SCOPES = "[\"replace-with-destination-scope\"]"
 
 # Surfaces worker logs and tail events in the dashboard.
 [observability]

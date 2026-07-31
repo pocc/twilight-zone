@@ -111,6 +111,7 @@ export async function exportZoneTroubleshooting(
       log(`  ✓ ${method} ${path} (${Date.now() - start}ms)`);
       return res;
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       endpoints.push({ method, path, ok: false, error: normalizeError(e) });
       log(`  ⚠ ${method} ${path}: ${normalizeError(e)}`);
       return null;

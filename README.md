@@ -6,6 +6,8 @@ policies, and 30+ other resource types from a source zone and recreates them on
 a destination account through an interactive, auditable wizard. Live version
 available at https://twilight-zone.ross.gg
 
+A live instance is deployed at **[twilight-zone.ross.gg](https://twilight-zone.ross.gg)**.
+
 ![Twilight Zone migration wizard](media/screenshot-setup.webp)
 
 ## Deploy your own
@@ -13,8 +15,9 @@ available at https://twilight-zone.ross.gg
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pocc/twilight-zone)
 
 One click clones this repo into your GitHub/GitLab account, provisions the
-`RUN_LOG` KV namespace, and deploys the Worker to your account. Or run it
-locally:
+`RUN_LOG` KV namespace, and deploys the Worker to your account. This is the same
+button surfaced on the tool's landing page; the canonical build is deployed at
+[twilight-zone.ross.gg](https://twilight-zone.ross.gg). Or run it locally:
 
 ```bash
 npm install
@@ -28,6 +31,157 @@ pin it in `wrangler.toml`:
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=your-account-id
 ```
+
+### Optional browser OAuth
+
+OAuth is disabled by default, so deployments continue to use manual API tokens
+or API Key + Email. **Do not set `OAUTH_ENABLED=true` until the complete live
+validation gate below has been executed against the deployment's real private
+client and the sanitized results have been recorded.** Mocked tests, local
+development, placeholder replacement, and a successful deployment do not
+satisfy this gate.
+
+No real OAuth client has been validated by this repository's automated test
+suite. Register an OAuth 2.0 authorization-code client with PKCE and configure
+these exact provider endpoints:
+
+- Authorization: `https://dash.cloudflare.com/oauth2/auth`
+- Token exchange: `https://dash.cloudflare.com/oauth2/token`
+- Revocation: `https://dash.cloudflare.com/oauth2/revoke`
+- Redirect URI: `https://your-deployment.example.com/api/oauth/callback`
+
+Set the non-secret Worker variables in `wrangler.toml`:
+
+| Variable | Value |
+|---|---|
+| `OAUTH_ENABLED` | Must remain `false` until every item in the live validation gate below is recorded as passing. |
+| `OAUTH_CLIENT_ID` | Public client identifier issued for this deployment. |
+| `OAUTH_COOKIE_KEY_ID` | Operator-chosen identifier for the active cookie-encryption key. |
+| `OAUTH_ALLOWED_ORIGIN` | Exact deployment origin, with no path or trailing slash. HTTP is accepted only for `localhost` or `127.0.0.1`. |
+| `OAUTH_REDIRECT_URI` | Exact allowed origin plus `/api/oauth/callback`; no query or fragment. |
+| `OAUTH_SOURCE_SCOPES` | JSON array of the exact read scopes provisioned for the source role. |
+| `OAUTH_DESTINATION_SCOPES` | JSON array of the exact read/write scopes provisioned for the destination role. |
+
+Do not put `OAUTH_COOKIE_KEY` in `[vars]`. Generate a 32-byte base64url key and
+store it as a Worker secret:
+
+```bash
+openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'
+npx wrangler secret put OAUTH_COOKIE_KEY
+```
+
+For local development, place the same variables and `OAUTH_COOKIE_KEY` in the
+gitignored `.dev.vars` file, use `http://localhost:5173` as
+`OAUTH_ALLOWED_ORIGIN`, and register
+`http://localhost:5173/api/oauth/callback` as the local redirect URI.
+
+#### Required live validation gate
+
+`OAUTH_ENABLED=true` is forbidden until a sanitized validation record contains
+evidence for every item below. If any item fails or lacks evidence, leave OAuth
+disabled and continue using manual authentication.
+
+- **Scopes:** Record the exact source and destination scopes returned by the
+  provider. Confirm the source allowlist contains only required read scopes and
+  the destination allowlist contains the required destination read/write
+  scopes. Confirm no returned scope falls outside its configured role allowlist.
+- **Callback registration:** Record the provider-registered callback and confirm
+  it exactly equals `OAUTH_REDIRECT_URI`, including scheme, hostname, path, and
+  absence of a query or fragment.
+- **Callback query logging:** Complete successful and failed callbacks, then
+  inspect application, Worker, edge, and provider-visible logs available to the
+  operator. Record that authorization codes, state, PKCE values, callback query
+  strings, access tokens, and cookie values were not logged.
+- **Token lifetime:** Measure the provider's real `expires_in` and effective
+  expiry. Record that the UI's 35-minute migration gate and 20-minute phase-two
+  gate leave sufficient time for the measured token lifetime.
+- **Cookie sizes:** Measure UTF-8 bytes for every OAuth `Set-Cookie` header and
+  the combined incoming OAuth `Cookie` header. Record that each `Set-Cookie` is
+  at most 3800 bytes and the combined OAuth cookies are at most 12000 bytes.
+- **Revocation:** Revoke each real role grant, attempt to reuse it, and record
+  that the provider rejects reuse and Twilight Zone clears local role state.
+- **Source reads and write denial:** Record successful source account/zone
+  listing and source export. Attempt an isolated destination-style write with
+  source authority and record that it is denied without changing the resource.
+- **Destination reads and writes:** Record successful destination account/zone
+  reads, a successful `/api/check-capabilities` probe, and one isolated,
+  reversible destination write using destination authority, including
+  verification and cleanup of the test resource.
+- **Expiry and reauthorization:** Exercise preflight expiry and a controlled
+  mid-stream rejection. Record role-specific reconnect UI, affected-cookie
+  clearing, no weaker-credential fallback, and successful continuation only
+  after a new authorization.
+- **Logout and revocation failure:** Record both normal logout and an induced
+  provider revocation failure. Confirm both role cookies and the tab nonce clear
+  locally in either case, while the revocation failure remains visible in the
+  validation evidence.
+
+##### Sanitized evidence template
+
+Create one record using this structure. Include measured values, timestamps,
+HTTP status codes, and pass/fail outcomes, but never include an authorization
+code, state, PKCE verifier, PKCE challenge, access token, nonce, cookie values,
+cookie headers, secrets, or callback query strings.
+
+```text
+Deployment origin:
+Validation date/time (UTC):
+OAuth client identifier:
+Source scopes returned:
+Destination scopes returned:
+Registered callback URI:
+Callback query logging review (systems checked and result):
+Token expires_in and measured effective lifetime:
+Set-Cookie UTF-8 byte measurements (one size per header):
+Combined OAuth Cookie UTF-8 byte measurement:
+Revocation and rejected-reuse result:
+Source account/zone reads and export result:
+Source-authority write-denial result and unchanged-resource verification:
+Destination account/zone reads result:
+/api/check-capabilities result:
+Destination reversible write, verification, and cleanup result:
+Preflight-expiry result:
+Mid-stream rejection, reconnect UI, cookie clearing, and retry result:
+Normal logout result:
+Induced revocation-failure result and local-cleanup verification:
+Overall gate: PASS or FAIL
+Operator notes (sanitized):
+```
+
+The local acceptance criteria are documented in
+[`docs/plans/oauth-worker-session/stories/013-live-production-gate.md`](docs/plans/oauth-worker-session/stories/013-live-production-gate.md),
+but the checklist above is the enablement authority and is intentionally
+self-contained.
+
+The browser-facing Worker routes are:
+
+| Method | Route | Purpose |
+|---|---|---|
+| `POST` | `/api/oauth/config` | Report whether OAuth is enabled. |
+| `POST` | `/api/oauth/start` | Start source or destination authorization. |
+| `GET` | `/api/oauth/callback` | Validate state/PKCE and establish the role grant. |
+| `POST` | `/api/oauth/status` | Read source and destination connection status. |
+| `POST` | `/api/oauth/clear` | Revoke and clear one role. |
+| `POST` | `/api/oauth/logout` | Revoke both roles and clear all OAuth state. |
+| `POST` | `/api/migrate/respond` | Answer an in-flight migration prompt using opaque prompt identifiers. |
+
+Access tokens are encrypted in host-only, `Secure`, `HttpOnly`, `SameSite=Lax`
+session cookies; they are not returned to JavaScript or persisted in KV. The
+provider's `expires_in` controls grant expiry. Protected operations reject a
+grant unless its remaining lifetime covers the route's execution budget plus a
+five-minute safety margin, at which point the UI requires role-specific
+reauthorization. OAuth transaction cookies expire after five minutes.
+
+`/api/oauth/clear` and `/api/oauth/logout` attempt provider revocation, but local
+cookie deletion still completes if revocation is unavailable. Key rotation is
+intentionally session-invalidating: generate and install a new
+`OAUTH_COOKIE_KEY`, change `OAUTH_COOKIE_KEY_ID`, deploy both changes together,
+and require every connected user to authorize again. The application does not
+retain an old decryption key.
+
+Browser OAuth is deliberately isolated from `/api/v1`. Programmatic `/api/v1`
+routes ignore OAuth cookies and continue to require manual credentials in each
+request body.
 
 ## Features
 
@@ -156,7 +310,7 @@ src/
 | [EXPORTS.md](docs/EXPORTS.md) | Export formats (JSON, Terraform, OpenAPI) |
 | [SPEC_DRIFT_MONITOR.md](docs/SPEC_DRIFT_MONITOR.md) | Hourly spec-drift monitor + new-endpoint runbook |
 | [TESTING.md](docs/TESTING.md) | Running the unit (vitest) + E2E (Playwright) suites |
-| [ROADMAP.md](docs/ROADMAP.md) | Potential future features (e.g. "Sign in with Cloudflare" OAuth) |
+| [ROADMAP.md](docs/ROADMAP.md) | Potential future features |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Completed-work history |
 
 ## License

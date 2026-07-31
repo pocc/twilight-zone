@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseCurl } from '../lib/parseCurl';
 import { monitorPing, type Credentials, type MonitorPingResult } from '../lib/api';
 import { validatePingTarget } from '../../src/monitor';
+import { routeOAuthReauthorization } from '../lib/request';
+import type { OAuthRole } from '../lib/oauth';
 
 export function headersToText(h: Record<string, string>): string {
   return Object.entries(h).map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -25,6 +27,7 @@ interface UseUptimeMonitorArgs {
   zoneName: string;
   /** Whether monitoring is applicable in the current mode (api source only). */
   enabled: boolean;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
 }
 
 /**
@@ -38,7 +41,7 @@ interface UseUptimeMonitorArgs {
  * `validatePingTarget` mirrors that lock client-side so the UI can only start an
  * on-zone target. Credentials are sent per-ping and never persisted.
  */
-export function useUptimeMonitor({ creds, hasAuth, sourceZoneId, zoneName, enabled }: UseUptimeMonitorArgs) {
+export function useUptimeMonitor({ creds, hasAuth, sourceZoneId, zoneName, enabled, onReauthorizationRequired }: UseUptimeMonitorArgs) {
   const [curl, setCurl] = useState('');
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('GET');
@@ -76,6 +79,10 @@ export function useUptimeMonitor({ creds, hasAuth, sourceZoneId, zoneName, enabl
       setLast(res);
       setHistory(prev => [...prev.slice(-29), res.ok]);
     } catch (e: unknown) {
+      if (routeOAuthReauthorization(e, onReauthorizationRequired)) {
+        setRunning(false);
+        return;
+      }
       const res: MonitorPingResult = { status: 0, ok: false, latencyMs: 0, error: (e as Error)?.message || 'request failed' };
       setLast(res);
       setHistory(prev => [...prev.slice(-29), false]);
@@ -83,7 +90,7 @@ export function useUptimeMonitor({ creds, hasAuth, sourceZoneId, zoneName, enabl
       inFlight.current = false;
       setBeat(b => b + 1);
     }
-  }, [creds, sourceZoneId, url, method, headersText, requestBody, expectedStatus]);
+  }, [creds, sourceZoneId, url, method, headersText, requestBody, expectedStatus, onReauthorizationRequired]);
 
   useEffect(() => {
     if (!running) return;

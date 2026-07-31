@@ -47,6 +47,7 @@ import { useCredentials } from './hooks/useCredentials';
 import { useAccounts } from './hooks/useAccounts';
 import { useBlockerCheck } from './hooks/useBlockerCheck';
 import { useStreamRequest } from './hooks/useStreamRequest';
+import { useOAuthSession } from './hooks/useOAuthSession';
 import type { LogLine } from './hooks/useStreamRequest';
 import type { ZoneExport, MigrationReport, CFWorkerBinding, AnalyticsExport } from '../src/types';
 // Leaf import (types-only deps) so we don't pull the whole migrate engine into
@@ -66,21 +67,32 @@ import { buildMaxConfigPreview } from '../src/maxconfig-preview';
 import { summarizePresetReports, type PresetReportLike } from '../src/fuzz';
 import { useDestDiff } from './hooks/useDestDiff';
 import { loadWizardState, saveWizardState, clearWizardState, resolveInitialStep, stepUrl } from './lib/wizardPersistence';
+import { oauthReadiness, runPresetApplyIfAuthorized, type OAuthRole } from './lib/oauth';
+import { routeOAuthReauthorization } from './lib/request';
 
 export function App() {
   // ── Core state ────────────────────────────────────────────────
   const creds = useCredentials();
-  const accounts = useAccounts(creds.credentials, creds.hasAuth);
+  const oauth = useOAuthSession();
+  const [reauthorizationRole, setReauthorizationRole] = useState<OAuthRole | null>(null);
+  const handleReauthorizationRequired = useCallback((role: OAuthRole) => {
+    setReauthorizationRole(role);
+    void oauth.clearRole(role);
+  }, [oauth.clearRole]);
+  const hasSourceAuth = creds.authMode === 'oauth' ? oauth.roles.source.connected : creds.hasAuth;
+  const accounts = useAccounts(creds.credentials, hasSourceAuth, 'source', handleReauthorizationRequired);
   // Destination-context auth presence (mirrors lib/api destAuthBody selection):
   // API key → dest key/email or primary fallback; token → dest token or source
   // fallback. Drives the destination account list, which every flow's target
   // dropdown (migration dest AND the JSON/Terraform/preset target) reads from.
-  const hasDestAuth = creds.useApiKey
+  const hasDestAuth = creds.authMode === 'oauth'
+    ? oauth.roles.destination.connected
+    : creds.useApiKey
     ? !!((creds.destApiKey || creds.apiKey) && (creds.destApiEmail || creds.apiEmail))
     : !!(creds.destToken || creds.sourceToken);
-  const destAccounts = useAccounts(creds.credentials, hasDestAuth, 'dest');
-  const blockerCheck = useBlockerCheck(creds.credentials, creds.hasAuth);
-  const stream = useStreamRequest();
+  const destAccounts = useAccounts(creds.credentials, hasDestAuth, 'dest', handleReauthorizationRequired);
+  const blockerCheck = useBlockerCheck(creds.credentials, hasSourceAuth && hasDestAuth, handleReauthorizationRequired);
+  const stream = useStreamRequest(creds.authMode, handleReauthorizationRequired);
 
   // Refresh-recovery snapshot, loaded ONCE at mount (see
   // app/lib/wizardPersistence.ts). Seeds the wizard state below via lazy
@@ -437,17 +449,18 @@ export function App() {
     if (!credentials.destAccountId) return null;
     try {
       const destAuth = credentials.destToken || credentials.sourceToken;
-      if (!destAuth && !credentials.useApiKey) return null;
+      if (credentials.authMode !== 'oauth' && !destAuth && !credentials.useApiKey) return null;
       const result = await api.checkCapabilities(credentials, credentials.destAccountId);
       const caps = result.capabilities;
       const turnstileWidgets = result.existingTurnstileWidgets || [];
       setCapabilities(caps);
       setExistingTurnstileWidgets(turnstileWidgets);
       return { caps, turnstileWidgets };
-    } catch {
+    } catch (error) {
+      routeOAuthReauthorization(error, handleReauthorizationRequired);
       return null; // Non-fatal: assume all features available if check fails
     }
-  }, [creds]);
+  }, [creds, handleReauthorizationRequired]);
 
   // Re-check capabilities (user may have enabled features on destination)
   const handleRecheckCapabilities = useCallback(async () => {
@@ -456,16 +469,18 @@ export function App() {
       const isPreset = sourceMode === 'maxconfig' || sourceMode === 'minconfig';
       if (isPreset) {
         const { credentials } = creds;
-        const result = await api.checkCapabilities(credentials, credentials.sourceAccountId);
+        const result = await api.checkCapabilities(credentials, credentials.destAccountId);
         setCapabilities(result.capabilities);
         setExistingTurnstileWidgets(result.existingTurnstileWidgets || []);
       } else {
         await fetchCapabilities();
       }
+    } catch (error) {
+      routeOAuthReauthorization(error, handleReauthorizationRequired);
     } finally {
       setRecheckingCapabilities(false);
     }
-  }, [creds, sourceMode, fetchCapabilities]);
+  }, [creds, sourceMode, fetchCapabilities, handleReauthorizationRequired]);
 
   // ── Fetch available plans for destination zone ─────────────────
   const fetchAvailablePlans = useCallback(async () => {
@@ -478,9 +493,9 @@ export function App() {
     // (cleared on tab close), so on a fresh load the account id can be truthy
     // while auth is empty — which would 400 on the server's parseAuth. Mirror
     // destAuthBody's credential selection.
-    const hasAuth = credentials.useApiKey
+    const hasAuth = credentials.authMode === 'oauth' || (credentials.useApiKey
       ? !!((credentials.destApiKey || credentials.apiKey) && (credentials.destApiEmail || credentials.apiEmail))
-      : !!(credentials.destToken || credentials.sourceToken);
+      : !!(credentials.destToken || credentials.sourceToken));
     if (!hasAuth) return;
     setPlansLoading(true);
     try {
@@ -498,7 +513,8 @@ export function App() {
           break;
         }
       }
-    } catch {
+    } catch (error) {
+      routeOAuthReauthorization(error, handleReauthorizationRequired);
       setAvailablePlans([]);
       setPlanCounts({});
     } finally {
@@ -515,9 +531,11 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     creds.credentials.destAccountId, creds.credentials.domainName,
+    creds.credentials.authMode,
     creds.credentials.useApiKey, creds.credentials.destApiKey, creds.credentials.apiKey,
     creds.credentials.destApiEmail, creds.credentials.apiEmail,
     creds.credentials.destToken, creds.credentials.sourceToken,
+    handleReauthorizationRequired,
   ]);
 
   // ── Auto-fetch plans when the destination account changes ─────
@@ -542,9 +560,9 @@ export function App() {
     // without a 400 in the meantime. fetchAvailablePlans guards on the same
     // condition; this just avoids a wasted call.
     const c = credentials;
-    const hasDestAuth = c.useApiKey
+    const hasDestAuth = c.authMode === 'oauth' || (c.useApiKey
       ? !!((c.destApiKey || c.apiKey) && (c.destApiEmail || c.apiEmail))
-      : !!(c.destToken || c.sourceToken);
+      : !!(c.destToken || c.sourceToken));
     if (!(c.destAccountId && hasDestAuth)) return;
     if (plansDebounceRef.current) window.clearTimeout(plansDebounceRef.current);
     plansDebounceRef.current = window.setTimeout(() => { fetchAvailablePlans(); }, 500);
@@ -555,6 +573,7 @@ export function App() {
     creds.credentials.useApiKey, creds.credentials.destToken, creds.credentials.sourceToken,
     creds.credentials.destApiKey, creds.credentials.apiKey,
     creds.credentials.destApiEmail, creds.credentials.apiEmail,
+    creds.credentials.authMode, handleReauthorizationRequired,
   ]);
 
   // ── Reconcile email-address verification state when export or caps change ─
@@ -582,6 +601,7 @@ export function App() {
   // matches their credentials.
   const sourceSignature = [
     sourceMode,
+    creds.credentials.authMode,
     importedData ? 'imported' : 'none',
     creds.credentials.useApiKey ? 'key' : 'token',
     creds.credentials.sourceToken,
@@ -646,6 +666,7 @@ export function App() {
 
     // Presets target the destination account, so the capability probe + every
     // subsequent call use the destination account + destination auth.
+    const capabilityReauthorizationRequired = 'reauthorization_required' as const;
     const capsPromise = isPreset ? (async () => {
       const { credentials } = creds;
       try {
@@ -655,11 +676,17 @@ export function App() {
         setCapabilities(caps);
         setExistingTurnstileWidgets(turnstileWidgets);
         return { caps, turnstileWidgets };
-      } catch { return null; }
+      } catch (error) {
+        if (routeOAuthReauthorization(error, handleReauthorizationRequired)) {
+          return capabilityReauthorizationRequired;
+        }
+        return null;
+      }
     })() : fetchCapabilities();
 
     if ((sourceMode === 'json' || sourceMode === 'terraform') && importedData) {
       const result = await capsPromise;
+      if (result === capabilityReauthorizationRequired) return;
       setExportData(importedData);
       setExportTimestamp(Date.now()); // [C6]
       initDefaultSelections(importedData, result?.caps, result?.turnstileWidgets);
@@ -683,6 +710,7 @@ export function App() {
     // acknowledge things we already know won't happen.
     if (sourceMode === 'maxconfig') {
       const result = await capsPromise;
+      if (result === capabilityReauthorizationRequired) return;
       const zoneName = destAccounts.zones.find(z => z.id === effectiveZoneId)?.name || credentials.domainName || 'zone';
       const accountName = destAccounts.accounts.find(a => a.id === credentials.destAccountId)?.name || credentials.destAccountId;
       const preview = buildMaxConfigPreview(effectiveZoneId, zoneName, credentials.destAccountId, accountName, result?.caps ?? undefined);
@@ -727,6 +755,7 @@ export function App() {
     // /api/export/stream with a missing zoneId.
     if (sourceMode === 'minconfig' && creatingNewZone) {
       const result = await capsPromise;
+      if (result === capabilityReauthorizationRequired) return;
       const accountName = destAccounts.accounts.find(a => a.id === credentials.destAccountId)?.name || credentials.destAccountId;
       const preview = {
         zone: {
@@ -754,10 +783,12 @@ export function App() {
     const body: Record<string, any> = isPreset
       ? {
           ...destAuthBody(credentials),
+          oauthRole: 'destination',
           sourceZoneId: effectiveZoneId,
           sourceAccountId: credentials.destAccountId,
         }
       : {
+          oauthRole: 'source',
           sourceToken: credentials.sourceToken,
           sourceZoneId: effectiveZoneId,
           sourceAccountId: credentials.sourceAccountId,
@@ -769,7 +800,9 @@ export function App() {
     // Stash caps result as it resolves so the synchronous beforeDone callback can read it.
     // capsPromise was kicked off above and runs concurrently with the stream.
     let capsResult: { caps: AccountCapabilities; turnstileWidgets: string[] } | null = null;
-    capsPromise.then(c => { capsResult = c; });
+    capsPromise.then(c => {
+      if (c !== capabilityReauthorizationRequired) capsResult = c;
+    });
 
     setIsExporting(true);
     // Advance immediately so the export stream runs on the review step with its
@@ -795,6 +828,7 @@ export function App() {
   const handleExportZone = useCallback(async () => {
     const { credentials } = creds;
     const body: Record<string, any> = {
+      oauthRole: 'source',
       sourceToken: credentials.sourceToken,
       sourceZoneId: credentials.sourceZoneId,
       sourceAccountId: credentials.sourceAccountId,
@@ -945,6 +979,11 @@ export function App() {
           setToast({ message: 'Source analytics captured - download it on the Results step', type: 'success' });
         },
         onError: (e) => { setAnalyticsError(e); setAnalyticsStatus('error'); },
+        onReauthorizationRequired: (role, reason) => {
+          setAnalyticsError(reason);
+          setAnalyticsStatus('error');
+          handleReauthorizationRequired(role);
+        },
       },
       controller.signal,
       datasets,
@@ -954,7 +993,7 @@ export function App() {
       setAnalyticsError(e instanceof Error ? e.message : String(e));
       setAnalyticsStatus('error');
     });
-  }, [creds]);
+  }, [creds, handleReauthorizationRequired]);
 
   // ── Step 3 (Apply) actions ────────────────────────────────────
   // The migration runs from the Apply step now (both flows). The Account and
@@ -966,6 +1005,8 @@ export function App() {
   const buildMigrateBody = useCallback((dryRun: boolean): Record<string, any> => {
     const { credentials } = creds;
     return {
+      sourceMode,
+      ...((sourceMode === 'json' || sourceMode === 'terraform') && exportData ? { exportData } : {}),
       sourceToken: credentials.sourceToken,
       destToken: credentials.destToken,
       sourceZoneId: credentials.sourceZoneId,
@@ -1037,7 +1078,7 @@ export function App() {
         .map(s => s.email),
       r2Credentials: (r2Credentials.source.accessKeyId && r2Credentials.dest.accessKeyId)
         ? r2Credentials : undefined,
-      doMigration: Object.entries(doConfigs)
+      doMigration: creds.authMode === 'oauth' ? undefined : Object.entries(doConfigs)
         .filter(([, c]) => c.enabled && c.objectNames.trim())
         .map(([workerName, c]) => {
           // Find worker in export data to get class names
@@ -1055,7 +1096,7 @@ export function App() {
         })
         .filter((d) => d.objectNames.length > 0) || undefined,
     };
-  }, [creds, selections, workerSecrets, certificates, originCaCsrs, notificationWebhookSecrets, identityProviderSecrets, aopMtlsBundles, aiGatewayProviderApiKeys, selectedPlan, conflictStrategy, acknowledgments, emailAddressStates, r2Credentials, doConfigs, exportData]);
+  }, [creds, sourceMode, selections, workerSecrets, certificates, originCaCsrs, notificationWebhookSecrets, identityProviderSecrets, aopMtlsBundles, aiGatewayProviderApiKeys, selectedPlan, conflictStrategy, acknowledgments, emailAddressStates, r2Credentials, doConfigs, exportData]);
 
   // Reset any analytics capture from a PRIOR run so Results can never show a
   // stale capture against this migration. Re-armed by startAnalyticsCapture.
@@ -1070,8 +1111,15 @@ export function App() {
   // ── Preset (maxconfig/minconfig) apply — runs from the preset Apply step ──
   const handleApplyPreset = useCallback(async () => {
     if (stream.loading || isExporting || isMigrating || !exportData) return;
-    const { credentials } = creds;
-    resetStaleAnalytics();
+    await runPresetApplyIfAuthorized({
+      authMode: creds.authMode,
+      sourceMode,
+      roles: oauth.roles,
+      now: Date.now(),
+      onReauthorizationRequired: handleReauthorizationRequired,
+    }, async () => {
+      const { credentials } = creds;
+      resetStaleAnalytics();
 
     // ── Provision the new zone here, in the APPLY phase (breaking change) ──
     // The preview carried the resolved target zone id on exportData.zone.id (the
@@ -1102,6 +1150,7 @@ export function App() {
         }
       } catch (e) {
         setIsMigrating(false);
+        if (routeOAuthReauthorization(e, handleReauthorizationRequired)) return;
         setToast({ message: `Failed to create zone: ${(e as Error).message}`, type: 'error' });
         return;
       }
@@ -1128,10 +1177,10 @@ export function App() {
     };
 
     setIsMigrating(true);
-    await stream.start(
-      endpoint, body,
-      sourceMode === 'maxconfig' ? 'Applying Maximum Config...' : 'Applying Minimum Config...',
-      (result) => {
+      await stream.start(
+        endpoint, body,
+        sourceMode === 'maxconfig' ? 'Applying Maximum Config...' : 'Applying Minimum Config...',
+        (result) => {
         // maxconfig returns { settingsReport, rulesReport, apiReport, auditLog }
         // minconfig returns { report, auditLog }
         // These shapes don't conform to MigrationReport. Fold their per-phase
@@ -1160,9 +1209,10 @@ export function App() {
         setApiCalls(null);
         setIsMigrating(false);
         setStep(4); // preset Apply → Results
-      },
-    );
-  }, [creds, sourceMode, selectedPlan, includeUnsafeAccountWideTrafficSettings, stream.loading, stream.start, isExporting, isMigrating, exportData, resetStaleAnalytics, destAccounts.zones, destAccounts.loadZones]);
+        },
+      );
+    });
+  }, [creds, sourceMode, oauth.roles, handleReauthorizationRequired, selectedPlan, includeUnsafeAccountWideTrafficSettings, stream.loading, stream.start, isExporting, isMigrating, exportData, resetStaleAnalytics, destAccounts.zones, destAccounts.loadZones]);
 
   // ── Normal migration — account-resources phase, then zone phase ──
   // Both phases run back-to-back from the Apply step (the Account/Zone steps no
@@ -1171,6 +1221,13 @@ export function App() {
   // can show both. Analytics capture (api mode) fires once, in parallel.
   const handleRunMigration = useCallback(async () => {
     if (stream.loading || isExporting || isMigrating || !exportData) return;
+    if (creds.authMode === 'oauth') {
+      const readiness = oauthReadiness(sourceMode, oauth.roles, Date.now(), 'migration');
+      if (!readiness.ready) {
+        setReauthorizationRole(readiness.reconnectRoles[0] ?? null);
+        return;
+      }
+    }
     resetStaleAnalytics();
     const body = buildMigrateBody(false);
     setIsMigrating(true);
@@ -1197,6 +1254,14 @@ export function App() {
     // stop — don't create the zone on top of a failed account-resource deploy.
     if (!acctRes) { setIsMigrating(false); return; }
     setAccountMigrationLogs(stream.getLogs());
+    if (creds.authMode === 'oauth') {
+      const readiness = oauthReadiness(sourceMode, oauth.roles, Date.now(), 'phase-two');
+      if (!readiness.ready) {
+        setIsMigrating(false);
+        setReauthorizationRole(readiness.reconnectRoles[0] ?? null);
+        return;
+      }
+    }
 
     // ── Zone phase: create the dest zone + migrate zone-scoped resources,
     //    skipping the account resources already deployed. Merge the two phase
@@ -1219,7 +1284,7 @@ export function App() {
     setIsMigrating(false);
     // Stay on the Apply step (3): with `report` now set, Step3Apply switches
     // from its review/run view to the post-migration checklist.
-  }, [stream.loading, stream.start, stream.getLogs, isExporting, isMigrating, exportData, resetStaleAnalytics, buildMigrateBody, sourceMode, captureAnalytics, startAnalyticsCapture, analyticsLookbackDays, analyticsDatasets]);
+  }, [stream.loading, stream.start, stream.getLogs, isExporting, isMigrating, exportData, resetStaleAnalytics, buildMigrateBody, sourceMode, captureAnalytics, startAnalyticsCapture, analyticsLookbackDays, analyticsDatasets, creds.authMode, oauth.roles]);
 
   const handleCancel = useCallback(async () => {
     stream.cancel();
@@ -1232,11 +1297,12 @@ export function App() {
       try {
         await api.rollback(creds.credentials, creds.credentials.destAccountId, createdResources);
         setToast({ message: 'Migration cancelled and rolled back', type: 'success' });
-      } catch {
+      } catch (error) {
+        if (routeOAuthReauthorization(error, handleReauthorizationRequired)) return;
         setToast({ message: 'Cancellation succeeded but rollback may be incomplete', type: 'error' });
       }
     }
-  }, [stream, createdResources, creds]);
+  }, [stream, createdResources, creds, handleReauthorizationRequired]);
 
   // ── Verification (post-migration) ─────────────────────────────
   const handleVerifyMigration = useCallback(async () => {
@@ -1252,6 +1318,7 @@ export function App() {
 
     // Export from destination zone - use dest-specific auth if available
     const body: Record<string, any> = {
+      oauthRole: 'destination',
       sourceToken: credentials.destToken || credentials.sourceToken,
       sourceZoneId: destZoneId,
       sourceAccountId: credentials.destAccountId,
@@ -1314,6 +1381,7 @@ export function App() {
     destAccountId: creds.destAccountId,
     zoneName: exportData?.zone?.name ?? '',
     sourceExport: exportData,
+    onReauthorizationRequired: handleReauthorizationRequired,
   });
 
   // ── Wizard render helpers ─────────────────────────────────────
@@ -1329,7 +1397,7 @@ export function App() {
   // zoneName is resolved from the authenticated account's zone list (never stale
   // persisted state) so the server-side host-lock claim is provably truthful.
   const monitorZoneName = accounts.zones.find(z => z.id === creds.sourceZoneId)?.name || '';
-  const monitorAvailable = sourceMode === 'api' && creds.hasAuth && !!monitorZoneName;
+  const monitorAvailable = sourceMode === 'api' && hasSourceAuth && !!monitorZoneName;
   // The monitor's once-per-second state lives in <MonitorProvider> (wrapping the
   // return below), NOT here — so beats re-render only the heartbeat/card consumers,
   // not App and the active wizard step. See app/hooks/MonitorContext.tsx.
@@ -1345,6 +1413,7 @@ export function App() {
       progress={stream.progress}
       startTime={stream.startTime}
       onCancel={handleCancel}
+      onPromptResponse={stream.respondToPrompt}
     />
   );
   // Shared scope render. Account (step 1) and Zone (step 2) are two step
@@ -1374,6 +1443,7 @@ export function App() {
       r2Credentials,
       setR2Credentials,
       isPreset: sourceMode === 'maxconfig' || sourceMode === 'minconfig',
+      oauthMode: creds.authMode === 'oauth',
       destAccountName: effectiveDestAccountName,
       destAccountId: effectiveDestAccountId,
       // Zone tag is only known when the destination zone already exists. For
@@ -1397,6 +1467,7 @@ export function App() {
         sourceAccountId: isPresetMode ? effectiveDestAccountId : creds.sourceAccountId,
         destAccountId: effectiveDestAccountId,
         domainName: creds.domainName,
+        sourceMode,
       } : undefined,
       analytics: phase !== 'zone' && sourceMode === 'api' ? {
         creds: creds.credentials,
@@ -1409,6 +1480,7 @@ export function App() {
         setLookbackDays: setAnalyticsLookbackDays,
         selectedDatasets: analyticsDatasets,
         setSelectedDatasets: setAnalyticsDatasets,
+        onReauthorizationRequired: handleReauthorizationRequired,
       } : undefined,
       onRecheckCapabilities: handleRecheckCapabilities,
       recheckingCapabilities,
@@ -1417,6 +1489,7 @@ export function App() {
       creds: creds.credentials,
       emailAddressStates,
       setEmailAddressStates,
+      onReauthorizationRequired: handleReauthorizationRequired,
       onBack,
       onNext,
       // The migration runs from the Apply step now, so the Account/Zone steps
@@ -1472,10 +1545,11 @@ export function App() {
   return (
     <MonitorProvider
       creds={creds.credentials}
-      hasAuth={creds.hasAuth}
+      hasAuth={hasSourceAuth}
       sourceZoneId={creds.sourceZoneId}
       zoneName={monitorZoneName}
       enabled={monitorAvailable}
+      onReauthorizationRequired={handleReauthorizationRequired}
     >
     <Layout
       onLogoClick={goToLanding}
@@ -1509,6 +1583,17 @@ export function App() {
           maintainer signal, not a user-actionable alarm); this only renders for
           a genuine monitor error. Top of content. */}
       <SpecDriftBanner />
+      {reauthorizationRole && (
+        <div className="mb-4 flex flex-col gap-3 rounded-lg border border-yellow-700/60 bg-yellow-900/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-yellow-300">{reauthorizationRole === 'source' ? 'Source' : 'Destination'} authorization expired</div>
+            <p className="text-xs text-yellow-200/70">Reconnect this role before continuing. Twilight Zone will not retry with manual or weaker credentials.</p>
+          </div>
+          <button type="button" onClick={() => { setReauthorizationRole(null); void oauth.connect(reauthorizationRole); }} className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 sm:w-auto">
+            Reconnect {reauthorizationRole}
+          </button>
+        </div>
+      )}
       {/* Catch lazy-chunk load failures (e.g. stale chunk hashes after a new
           deploy) and step render errors so they surface as an actionable
           Reload card instead of a black screen. Keyed by `step` so navigating
@@ -1519,7 +1604,9 @@ export function App() {
       {step === 0 && (
         <Suspense fallback={<StepFallback />}>
         <Step0Credentials
-          credentials={creds.credentials}
+           credentials={creds.credentials}
+           authMode={creds.authMode} setAuthMode={creds.setAuthMode}
+           oauth={{ enabled: oauth.enabled, reason: oauth.reason, roles: oauth.roles, connect: oauth.connect, clearRole: oauth.clearRole, logout: oauth.logout }}
           useApiKey={creds.useApiKey} setUseApiKey={creds.setUseApiKey}
           apiKey={creds.apiKey} setApiKey={creds.setApiKey}
           apiEmail={creds.apiEmail} setApiEmail={creds.setApiEmail}
@@ -1563,7 +1650,8 @@ export function App() {
             importedData={importedData}
           onImportJson={setImportedData}
           onClearImport={() => setImportedData(null)}
-          showToast={showToast}
+           showToast={showToast}
+           onReauthorizationRequired={handleReauthorizationRequired}
         />
         </Suspense>
       )}

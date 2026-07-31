@@ -100,6 +100,7 @@ export async function migrateStorage(
         report.createdResources!.kvNamespaces.push(newId);
         log(`    ✓ Created "${kv.title}" (${newId.slice(0, 8)}...)`);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists')) {
           const strategy = await resolveConflict('storage', kv.title);
@@ -128,6 +129,9 @@ export async function migrateStorage(
           const value = await api.getKVValue(sourceAuth, sourceAccountId, kv.id, key.name);
           await api.putKVValue(destAuth, destAccountId, newId, key.name, value, key.metadata);
         }));
+        for (const result of results) {
+          if (result.status === 'rejected') api.throwIfAuthError(result.reason);
+        }
         for (const r of results) r.status === 'fulfilled' ? copied++ : failed++;
       }
       log(`    ✓ Copied ${copied}/${keys.length} keys${failed > 0 ? ` (${failed} failed)` : ''} in ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
@@ -144,6 +148,7 @@ export async function migrateStorage(
         report.createdResources!.r2Buckets.push(b.name);
         r2BucketsReady.push(b.name);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists')) {
           const strategy = await resolveConflict('storage', b.name);
@@ -207,6 +212,7 @@ export async function migrateStorage(
               sec.success++;
               sec.items.push({ name: `${cfg.bucketName} (cors)`, status: 'success' });
             } catch (e: unknown) {
+              api.throwIfAuthError(e);
               const err = (e as Error).message || String(e);
               sec.failed++;
               sec.items.push({ name: `${cfg.bucketName} (cors)`, status: 'failed', error: err });
@@ -220,6 +226,7 @@ export async function migrateStorage(
               sec.success++;
               sec.items.push({ name: `${cfg.bucketName} (lifecycle)`, status: 'success' });
             } catch (e: unknown) {
+              api.throwIfAuthError(e);
               const err = (e as Error).message || String(e);
               sec.failed++;
               sec.items.push({ name: `${cfg.bucketName} (lifecycle)`, status: 'failed', error: err });
@@ -233,6 +240,7 @@ export async function migrateStorage(
               sec.success++;
               sec.items.push({ name: `${cfg.bucketName} (managed-domain enabled)`, status: 'success' });
             } catch (e: unknown) {
+              api.throwIfAuthError(e);
               const err = (e as Error).message || String(e);
               sec.failed++;
               sec.items.push({ name: `${cfg.bucketName} (managed-domain)`, status: 'failed', error: err });
@@ -253,6 +261,7 @@ export async function migrateStorage(
                 sec.success++;
                 sec.items.push({ name: `${cfg.bucketName} → ${cd.domain} (custom domain)`, status: 'success' });
               } catch (e: unknown) {
+                api.throwIfAuthError(e);
                 const err = (e as Error).message || String(e);
                 if (err.toLowerCase().includes('already exists') || err.toLowerCase().includes('duplicate')) {
                   sec.success++;
@@ -273,6 +282,7 @@ export async function migrateStorage(
               sec.success++;
               sec.items.push({ name: `${cfg.bucketName} (object lock: ${cfg.lock.rules.length} rule${cfg.lock.rules.length !== 1 ? 's' : ''})`, status: 'success' });
             } catch (e: unknown) {
+              api.throwIfAuthError(e);
               const err = (e as Error).message || String(e);
               sec.failed++;
               sec.items.push({ name: `${cfg.bucketName} (object lock)`, status: 'failed', error: err });
@@ -296,6 +306,7 @@ export async function migrateStorage(
         newId = n.uuid;
         report.createdResources!.d1Databases.push(newId);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists')) {
           const strategy = await resolveConflict('storage', db.name);
@@ -320,6 +331,7 @@ export async function migrateStorage(
         const n = await api.createQueue(destAuth, destAccountId, q.queue_name);
         report.createdResources!.queues.push(n.queue_id);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already taken')) {
           const strategy = await resolveConflict('storage', q.queue_name);
@@ -387,7 +399,8 @@ export async function migrateStorage(
     let existingDestStores: api.SecretsStoreStore[] = [];
     try {
       existingDestStores = await api.listSecretsStoreStores(destAuth, destAccountId);
-    } catch {
+    } catch (e) {
+      api.throwIfAuthError(e);
       existingDestStores = [];
     }
     const sec = await migrateItems('Secrets Store Stores', exportData.secretsStoreStores, async (s) => {
@@ -396,6 +409,7 @@ export async function migrateStorage(
         if (s.id && created.id) secretsStoreIdMap.set(s.id, created.id);
         if (created.id) existingDestStores.push(created);
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         const lower = msg.toLowerCase();
         if (lower.includes('maximum_stores_exceeded') || lower.includes('maximum number of stores') || isConflictError(msg)) {

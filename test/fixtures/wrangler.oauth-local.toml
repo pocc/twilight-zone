@@ -1,0 +1,18 @@
+name = "twilight-zone-oauth-local"
+main = "../../src/worker/index.ts"
+compatibility_date = "2026-07-31"
+compatibility_flags = ["nodejs_compat"]
+assets = { directory = "../../dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+
+[vars]
+OAUTH_ENABLED = "true"
+OAUTH_CLIENT_ID = "twilight-zone-local"
+OAUTH_COOKIE_KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
+OAUTH_COOKIE_KEY_ID = "local_key_1"
+OAUTH_ALLOWED_ORIGIN = "http://localhost:5173"
+OAUTH_REDIRECT_URI = "http://localhost:5173/api/oauth/callback"
+OAUTH_SOURCE_SCOPES = "[\"account:read\",\"zone:read\"]"
+OAUTH_DESTINATION_SCOPES = "[\"account:read\",\"zone:edit\"]"
+OAUTH_AUTHORIZATION_ENDPOINT = "http://127.0.0.1:4174/oauth2/auth"
+OAUTH_TOKEN_ENDPOINT = "http://127.0.0.1:4174/oauth2/token"
+OAUTH_REVOCATION_ENDPOINT = "http://127.0.0.1:4174/oauth2/revoke"

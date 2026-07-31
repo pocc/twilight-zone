@@ -7,7 +7,7 @@
  *   node scripts/api-test.mjs
  *
  *   # Test against production
- *   node scripts/api-test.mjs --base-url https://your-twilight-zone.example.com
+ *   node scripts/api-test.mjs --base-url https://twilight-zone.ross.gg
  *
  *   # Run specific test suites
  *   node scripts/api-test.mjs --only auth,export

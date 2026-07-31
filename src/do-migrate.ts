@@ -567,6 +567,7 @@ export async function migrateDurableObjects(
     if (result.status === 'fulfilled') {
       destNamespaceMap.set(className, result.value);
     } else {
+      api.throwIfAuthError(result.reason);
       const errMsg = result.reason instanceof Error ? result.reason.message : String(result.reason);
       log(`   ❌ Failed to create namespace for ${className}: ${errMsg}`);
       results.push({

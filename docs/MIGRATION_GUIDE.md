@@ -122,7 +122,7 @@ re-onboarding.
    as "Moved" (the activation grace window).
 2. Open a Cloudflare support request to mark the source zone as "Moved"
    *(this internal flip is needed because of how CNAME-setup activation
-   interacts with TXT records - see internal ticket APIOPS-2425)*.
+   interacts with TXT records)*.
 3. Create the duplicate zone in the destination account and request
    conversion to CNAME setup (requires support/CSM/SE unless the
    `allow cname setup` flag is enabled on the account).
@@ -1182,7 +1182,7 @@ wrangler secret put $NAME --name $SCRIPT --account-id $DEST_ACCOUNT_ID
 rclone copy source-r2:$BUCKET dest-r2:$BUCKET --transfers 16 --checkers 32
 
 # ─── Twilight Zone in export-only mode (discovery aid) ───────────
-# Open https://your-twilight-zone.example.com - Step 2 shows every
+# Open https://twilight-zone.ross.gg - Step 2 shows every
 # resource the tool can see, even if you don't run the migrate step.
 # Use as a cross-check against cf-terraforming output.
 ```

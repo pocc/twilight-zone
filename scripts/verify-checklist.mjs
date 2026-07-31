@@ -1529,7 +1529,7 @@ md.push('');
 md.push(`> **Generated:** ${new Date().toISOString()}`);
 md.push(`> **Source:** ${srcZone?.name ?? '?'} (\`${srcZone?.id ?? '?'}\`) in **${srcZone?.account?.name ?? '?'}**`);
 md.push(`> **Destination:** ${dstZone?.name ?? '?'} (\`${dstZone?.id ?? '?'}\`) in **${dstZone?.account?.name ?? '?'}** [${dstZone?.status ?? '?'}]`);
-md.push(`> **Tool:** ${process.env.TZ_URL ?? 'https://your-twilight-zone.example.com'}`);
+md.push(`> **Tool:** ${process.env.TZ_URL ?? 'https://twilight-zone.ross.gg'}`);
 md.push(`> **Migration outcome:** ${runJson?.outcome === 'step4' ? '✅ Completed' : '❌ ' + runJson?.outcome}`);
 md.push(`> **Migration duration:** ${runJson ? (runJson.elapsedMs / 1000).toFixed(1) + 's' : '?'}`);
 md.push('');

@@ -19,6 +19,7 @@
 // Open that module for the API calls; this file is the playbook.
 
 import type { MigrationConfig, MigrationReport, ZoneExport } from './types';
+import { throwIfAuthError } from './api';
 
 import { getSourceAuth, getDestAuth } from './migrate/auth';
 import {
@@ -352,6 +353,7 @@ export async function migrateZone(
         exportData.zone.name, zoneName,
       );
     } catch (e: unknown) {
+      throwIfAuthError(e);
       logWithProgress(`⚠ Validation failed: ${(e as Error)?.message || String(e)}`);
     }
   }

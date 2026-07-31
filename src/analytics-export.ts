@@ -20,7 +20,7 @@
 // is captured per-item ({ error }) instead of aborting the whole export —
 // the same tolerance posture as isExportTolerable() in src/api.ts.
 
-import { CF_API, getAuthHeaders, createAuth, type ApiAuth } from './api';
+import { AuthError, CF_API, getAuthHeaders, createAuth, throwIfCloudflareAuthResponse, type ApiAuth } from './api';
 import type {
   AnalyticsExport, AnalyticsDatasetResult, AnalyticsRestResult,
   AnalyticsDatasetAvailability, AnalyticsProbeResult,
@@ -90,6 +90,7 @@ async function cfGraphQL(
       headers: { ...getAuthHeaders(auth), 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),
     });
+    await throwIfCloudflareAuthResponse(res, auth);
     let json: GraphQLResponse;
     try {
       json = (await res.json()) as GraphQLResponse;
@@ -98,7 +99,8 @@ async function cfGraphQL(
       throw new Error(`Non-JSON GraphQL response (HTTP ${res.status}): ${snippet}`);
     }
     if ((!json.data || Object.keys(json.data).length === 0) && json.errors?.length) {
-      throw new Error(json.errors.map(e => e.message).join('; '));
+      const message = json.errors.map(e => e.message).join('; ');
+      throw new Error(message);
     }
     return json;
   } finally {
@@ -115,9 +117,11 @@ async function cfRestGet<T = unknown>(auth: ApiAuth, path: string): Promise<T> {
       headers: { ...getAuthHeaders(auth), 'Content-Type': 'application/json' },
       signal: controller.signal,
     });
+    await throwIfCloudflareAuthResponse(res, auth);
     const data = (await res.json()) as { success: boolean; result: T; errors?: { message: string }[] };
     if (!data.success) {
-      throw new Error((data.errors || []).map(e => e.message).join('; ') || `HTTP ${res.status}`);
+      const message = (data.errors || []).map(e => e.message).join('; ') || `HTTP ${res.status}`;
+      throw new Error(message);
     }
     return data.result;
   } finally {
@@ -372,6 +376,7 @@ async function runGenericDataset(
       if (res.errors?.length) result.warning = res.errors.map(e => e.message).join('; ');
       return result;
     } catch (e) {
+      if (e instanceof AuthError) throw e;
       const msg = (e as Error).message;
       lastError = msg;
       const fieldM = msg.match(/access to the field '([^']+)'/);
@@ -428,6 +433,7 @@ export async function exportZoneAnalytics(
     availableZoneDatasets = zoneDatasetFields(schemaMap).map(f => f.name).sort();
     log(`GraphQL schema exposes ${availableZoneDatasets.length} zone analytics dataset(s).`);
   } catch (e) {
+    if (e instanceof AuthError) throw e;
     log(`Schema introspection failed (falling back to curated set only): ${(e as Error).message}`);
   }
 
@@ -446,6 +452,7 @@ export async function exportZoneAnalytics(
       if (res.errors?.length) result.warning = res.errors.map(e => e.message).join('; ');
       return result;
     } catch (e) {
+      if (e instanceof AuthError) throw e;
       return { dataset: spec.dataset, scope: 'zone', rowCount: 0, error: (e as Error).message };
     }
   };
@@ -491,6 +498,7 @@ export async function exportZoneAnalytics(
       const data = await cfRestGet(auth, path);
       rest.push({ endpoint: spec.label, ok: true, data });
     } catch (e) {
+      if (e instanceof AuthError) throw e;
       rest.push({ endpoint: spec.label, ok: false, error: (e as Error).message });
       log(`  ${spec.label}: skipped — ${(e as Error).message}`);
     }
@@ -555,6 +563,7 @@ export async function probeZoneAnalytics(
     schemaMap = await fetchSchemaMap(auth);
     fields = zoneDatasetFields(schemaMap).sort((a, b) => a.name.localeCompare(b.name));
   } catch (e) {
+    if (e instanceof AuthError) throw e;
     log(`Schema introspection failed: ${(e as Error).message}`);
     return { meta, datasets: [] };
   }

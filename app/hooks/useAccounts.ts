@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from '../lib/api';
 import type { Credentials } from '../lib/api';
+import type { OAuthRole } from '../lib/oauth';
+import { routeOAuthReauthorization } from '../lib/request';
 
 interface Account { id: string; name: string; }
 interface Zone { id: string; name: string; status: string; }
@@ -20,6 +22,7 @@ export function useAccounts(
   credentials: Credentials,
   hasAuth: boolean,
   authMode: api.AuthMode = 'source',
+  onReauthorizationRequired?: (role: OAuthRole) => void,
 ) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -41,6 +44,7 @@ export function useAccounts(
       const result = await api.listAccounts(credentials, authMode);
       setAccounts(result.accounts || []);
     } catch (err) {
+      routeOAuthReauthorization(err, onReauthorizationRequired);
       setAccountsError((err as Error).message);
       setAccounts([]);
     } finally {
@@ -51,7 +55,7 @@ export function useAccounts(
   }, [
     credentials.useApiKey, credentials.apiKey, credentials.apiEmail, credentials.sourceToken,
     credentials.destApiKey, credentials.destApiEmail, credentials.destToken,
-    authMode, hasAuth,
+    credentials.authMode, authMode, hasAuth, onReauthorizationRequired,
   ]);
 
   // Debounced auto-load
@@ -69,7 +73,8 @@ export function useAccounts(
     try {
       const result = await api.listZones(credentials, accountId, authMode);
       setZones(result.zones || []);
-    } catch {
+    } catch (error) {
+      routeOAuthReauthorization(error, onReauthorizationRequired);
       setZones([]);
     } finally {
       setZonesLoading(false);
@@ -77,7 +82,7 @@ export function useAccounts(
   }, [
     credentials.useApiKey, credentials.apiKey, credentials.apiEmail, credentials.sourceToken,
     credentials.destApiKey, credentials.destApiEmail, credentials.destToken,
-    authMode, hasAuth,
+    credentials.authMode, authMode, hasAuth, onReauthorizationRequired,
   ]);
 
   // Auto-load zones when accounts finish loading and this context's account is

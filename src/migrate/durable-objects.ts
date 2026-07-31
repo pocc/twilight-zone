@@ -23,7 +23,7 @@
 
 import type { MigrationConfig, MigrationReport, ZoneExport } from '../types';
 import type { LogFn } from '../migrate';
-import type * as api from '../api';
+import * as api from '../api';
 import * as doMigrate from '../do-migrate';
 
 export async function migrateDurableObjects(
@@ -65,6 +65,7 @@ export async function migrateDurableObjects(
           }
         }
       } catch (error) {
+        api.throwIfAuthError(error);
         const errMsg = error instanceof Error ? error.message : String(error);
         log(`  ❌ DO migration failed for ${doConfig.scriptName}: ${errMsg}`);
         report.errors.push({

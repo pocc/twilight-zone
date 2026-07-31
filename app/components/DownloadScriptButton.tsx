@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { validateMigration, type Credentials, type PlannedApiCall } from '../lib/api';
 import { generateApiCode, getCodeFileExtension } from '../lib/codegen';
+import type { SourceMode } from './steps/step0/operationMode';
+import { routeOAuthReauthorization } from '../lib/request';
+import type { OAuthRole } from '../lib/oauth';
 
 const CODE_FORMATS = [
   { value: 'typescript', label: 'TypeScript' },
@@ -27,7 +30,19 @@ interface DownloadScriptButtonProps {
   domainName?: string;
   /** Same gate as the deploy action — disabled until blockers are resolved. */
   disabled?: boolean;
+  sourceMode: SourceMode;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
 }
+
+export const downloadScriptAvailability = (sourceMode: SourceMode): { enabled: boolean; reason?: string } =>
+  sourceMode === 'api'
+    ? { enabled: true }
+    : {
+        enabled: false,
+        reason: sourceMode === 'json' || sourceMode === 'terraform'
+          ? 'Download Script is unavailable for imported configurations because validation requires a live source zone.'
+          : 'Download Script is unavailable for presets because they do not have a live source migration plan.',
+      };
 
 /**
  * #19 Part D — "Download planned API calls as a script". Fetches the planned
@@ -39,12 +54,15 @@ interface DownloadScriptButtonProps {
  * fetch so switching languages doesn't re-export the zone.
  */
 export function DownloadScriptButton({
-  creds, sourceZoneId, sourceAccountId, destAccountId, domainName, disabled,
+  creds, sourceZoneId, sourceAccountId, destAccountId, domainName, disabled, sourceMode, onReauthorizationRequired,
 }: DownloadScriptButtonProps) {
   const [format, setFormat] = useState('typescript');
   const [calls, setCalls] = useState<PlannedApiCall[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const availability = downloadScriptAvailability(sourceMode);
+  const unavailable = !availability.enabled;
+  const isDisabled = disabled || unavailable;
 
   const handleDownload = useCallback(async () => {
     setError('');
@@ -61,11 +79,12 @@ export function DownloadScriptButton({
       const code = generateApiCode(format, planned, '', destAccountId);
       download(code, `migration-api-calls${getCodeFileExtension(format)}`);
     } catch (e: unknown) {
+      if (routeOAuthReauthorization(e, onReauthorizationRequired)) return;
       setError((e as Error)?.message || 'Failed to generate script');
     } finally {
       setLoading(false);
     }
-  }, [calls, creds, sourceZoneId, sourceAccountId, destAccountId, domainName, format]);
+  }, [calls, creds, sourceZoneId, sourceAccountId, destAccountId, domainName, format, onReauthorizationRequired]);
 
   return (
     <div className="space-y-1.5">
@@ -77,7 +96,7 @@ export function DownloadScriptButton({
           id="download-script-format"
           value={format}
           onChange={(e) => setFormat(e.target.value)}
-          disabled={disabled || loading}
+          disabled={isDisabled || loading}
           className="bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-xs text-gray-100 focus:border-orange-500 focus:outline-none disabled:opacity-50"
         >
           {CODE_FORMATS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -85,10 +104,10 @@ export function DownloadScriptButton({
         <button
           type="button"
           onClick={handleDownload}
-          disabled={disabled || loading}
-          title="Download the planned migration as a runnable script (no credentials embedded)"
+          disabled={isDisabled || loading}
+          title={availability.reason ?? 'Download the planned migration as a runnable script (no credentials embedded)'}
           className={`px-3 py-1.5 rounded text-xs font-medium transition ${
-            disabled || loading
+            isDisabled || loading
               ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
               : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
           }`}
@@ -96,6 +115,7 @@ export function DownloadScriptButton({
           {loading ? 'Generating…' : 'Download'}
         </button>
       </div>
+      {availability.reason && <p className="text-xs text-gray-500">{availability.reason}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );

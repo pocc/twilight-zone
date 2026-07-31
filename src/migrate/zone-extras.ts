@@ -142,7 +142,8 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
     let destCatalog: api.ManagedHeadersConfig | null = null;
     try {
       destCatalog = await api.getManagedHeaders(destAuth, destZoneId);
-    } catch {
+    } catch (e) {
+      api.throwIfAuthError(e);
       destCatalog = null;
     }
 
@@ -182,6 +183,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
           }
           logWithProgress(`  ✓ Managed Headers: ${section.success} applied, ${dropped.length} unavailable on dest`);
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const msg = e instanceof Error ? e.message : String(e);
           // The intersection PATCH still failed — classify rather than
           // hard-fail the whole section.
@@ -582,6 +584,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
         if (o.operation_id) destOpIdByKey.set(opKey(o), o.operation_id);
       }
     } catch (e) {
+      api.throwIfAuthError(e);
       listError = e instanceof Error ? e.message : String(e);
     }
 
@@ -601,6 +604,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
         try {
           await api.bulkSetApiGatewayOperationSchemaValidation(destAuth, destZoneId, byOperationId);
         } catch (e) {
+          api.throwIfAuthError(e);
           patchError = e instanceof Error ? e.message : String(e);
         }
       }
@@ -647,7 +651,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
     try {
       const destRooms = await api.listWaitingRooms(destAuth, destZoneId);
       destRoomMap = new Map(destRooms.map(r => [r.name, r.id!]));
-    } catch {/* skip */}
+    } catch (e) { api.throwIfAuthError(e); /* skip */ }
 
     const flatEvents = exportData.waitingRoomEvents.flatMap(per => per.events.map(e => ({ ...e, _roomName: per.roomName })));
     if (flatEvents.length > 0) {
@@ -716,6 +720,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
             bundleFailedCount++;
           }
         } catch (err) {
+          api.throwIfAuthError(err);
           const msg = (err as Error).message || String(err);
           // Spike quirk: the API may return a JSON decode error
           // (code 1400) while the cert was actually created. Verify
@@ -738,7 +743,8 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
               if (!destCertId) destCertId = match.id;
               recovered = true;
             }
-          } catch {
+          } catch (listError) {
+            api.throwIfAuthError(listError);
             // List failed too — treat the original error as
             // authoritative.
           }
@@ -1167,6 +1173,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
           };
           report.sections.push(section);
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const msg = e instanceof Error ? e.message : String(e);
           // Acknowledge ONLY a real entitlement signal: a known entitlement
           // string, OR the bare empty-envelope response (tagged
@@ -1259,7 +1266,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
     // and-waiting-rooms phase; their IDs differ from source).
     let destRooms: { id?: string; name?: string }[] = [];
     try { destRooms = await api.listWaitingRooms(destAuth, destZoneId); }
-    catch { /* ignore — rules section will skip */ }
+    catch (e) { api.throwIfAuthError(e); /* ignore — rules section will skip */ }
     const destRoomByName = new Map(destRooms.filter(r => r.id && r.name).map(r => [r.name!, r.id!]));
     for (const r of exportData.waitingRoomRules) {
       const destRoomId = destRoomByName.get(r.roomName);
@@ -1351,6 +1358,7 @@ export async function migrateZoneExtras(deps: ZoneExtrasDeps): Promise<void> {
           () => api.prioritizeCustomCertificates(destAuth, destZoneId, remapped));
       }
     } catch (e) {
+      api.throwIfAuthError(e);
       // listCertificatePacks may fail on free zones — skip silently.
       logWithProgress(`  ⏭ Custom Certificates Priority: ${(e as Error).message}`);
     }

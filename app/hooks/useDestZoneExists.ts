@@ -16,6 +16,8 @@
 
 import { useEffect, useState } from 'react';
 import type { Credentials } from '../lib/api';
+import type { OAuthRole } from '../lib/oauth';
+import { browserJsonRequest, routeOAuthReauthorization } from '../lib/request';
 
 export type DestZoneStatus = 'idle' | 'loading' | 'done' | 'error';
 
@@ -29,18 +31,19 @@ interface UseDestZoneExistsParams {
   zoneName: string;
   /** Debounce delay in ms before the lookup fires (default 500). */
   debounceMs?: number;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
 }
 
 export function useDestZoneExists(params: UseDestZoneExistsParams): {
   exists: boolean;
   status: DestZoneStatus;
 } {
-  const { enabled, creds, destAccountId, zoneName, debounceMs = 500 } = params;
+  const { enabled, creds, destAccountId, zoneName, debounceMs = 500, onReauthorizationRequired } = params;
   const [exists, setExists] = useState(false);
   const [status, setStatus] = useState<DestZoneStatus>('idle');
 
   // Depend on primitives, not the (re-allocated-every-render) creds object.
-  const { useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken } = creds;
+  const { authMode = 'manual', useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken } = creds;
 
   useEffect(() => {
     const normalized = zoneName.trim().toLowerCase().replace(/\.$/, '');
@@ -66,17 +69,15 @@ export function useDestZoneExists(params: UseDestZoneExistsParams): {
       (async () => {
         setStatus('loading');
         try {
-          const res = await fetch('/api/zones', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...destAuth, accountId: destAccountId }),
-            signal: ctrl.signal,
-          });
-          if (!res.ok) return finish(false, 'done');
-          const { zones } = (await res.json()) as { zones?: Array<{ id: string; name: string }> };
+          const { zones } = await browserJsonRequest<{ zones?: Array<{ id: string; name: string }> }>(
+            '/api/zones',
+            { ...destAuth, accountId: destAccountId, oauthRole: 'destination' },
+            { authMode, signal: ctrl.signal },
+          );
           const found = !!zones?.some((z) => z.name.toLowerCase().replace(/\.$/, '') === normalized);
           finish(found, 'done');
-        } catch {
+        } catch (error) {
+          routeOAuthReauthorization(error, onReauthorizationRequired);
           // Aborts and network errors alike → treat as "not found" (toggle hidden).
           finish(false, 'error');
         }
@@ -90,7 +91,8 @@ export function useDestZoneExists(params: UseDestZoneExistsParams): {
     };
   }, [
     enabled, destAccountId, zoneName, debounceMs,
-    useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken,
+    authMode, useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken,
+    onReauthorizationRequired,
   ]);
 
   return { exists, status };

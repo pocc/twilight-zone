@@ -184,6 +184,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           });
         }
       } catch (err) {
+        api.throwIfAuthError(err);
         const msg = (err as Error).message || String(err);
         items.push({
           name: label,
@@ -235,6 +236,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           report.destAccessOrg = { auth_domain: org.auth_domain, name: org.name };
         }
       } catch (err) {
+        api.throwIfAuthError(err);
         // Logged as a warning, not pushed to errors — IdP migration
         // itself succeeded. The user will just see the fallback
         // message in the Step 4 test section.
@@ -336,6 +338,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           await api.appendCustomListItems(destAuth, destAccountId, listId, items as api.CustomListItem[]);
           totalItems += items.length;
         } catch (e) {
+          api.throwIfAuthError(e);
           itemErrors.push(`${listName}: ${(e as Error).message}`);
         }
       }
@@ -359,7 +362,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
     try {
       const destQueues = await api.listQueues(destAuth, destAccountId);
       destQueueMap = new Map(destQueues.map(q => [q.queue_name, q.queue_id]));
-    } catch {/* skip */}
+    } catch (e) { api.throwIfAuthError(e); /* skip */ }
 
     const flat = Object.entries(exportData.queueConsumers).flatMap(([queueName, consumers]) =>
       consumers.map(c => ({ ...c, _queueName: queueName }))
@@ -555,6 +558,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
         items: [{ name: 'Zaraz Config', status: 'success' }],
       });
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = e as Error;
       logWithProgress(`  ❌ Zaraz config failed: ${err.message}`);
       report.sections.push({
@@ -582,7 +586,8 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
     try {
       const destWidgets = await api.listTurnstileWidgets(destAuth, destAccountId);
       existingWidgetNames = new Set(destWidgets.map(w => w.name.toLowerCase()));
-    } catch {
+    } catch (e) {
+      api.throwIfAuthError(e);
       // Non-fatal: if we can't list, proceed and let creation errors surface naturally
     }
 
@@ -617,7 +622,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
     } else if (duplicateWidgets.length > 0) {
       // Overwrite mode: delete existing widgets so they can be recreated with new sitekeys
       logWithProgress(`  🔄 Overwrite: deleting ${duplicateWidgets.length} existing Turnstile widget(s) to recreate...`);
-      const destWidgets = await api.listTurnstileWidgets(destAuth, destAccountId).catch(() => []);
+      const destWidgets = await api.listTurnstileWidgets(destAuth, destAccountId).catch((e) => { api.throwIfAuthError(e); return []; });
       const destWidgetMap = new Map(destWidgets.map(w => [w.name.toLowerCase(), w.sitekey]));
       for (const w of duplicateWidgets) {
         const existingSitekey = destWidgetMap.get(w.name.toLowerCase());
@@ -628,6 +633,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
             // Move to newWidgets so it gets recreated
             newWidgets.push(w);
           } catch (delErr) {
+            api.throwIfAuthError(delErr);
             logWithProgress(`    ✗ Failed to delete widget "${w.name}": ${(delErr as Error).message}`);
             report.errors.push({
               resource: 'Turnstile Widgets',
@@ -750,6 +756,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           });
         }
       } catch (e) {
+        api.throwIfAuthError(e);
         const err = (e as Error).message;
         logWithProgress(`  ❌ Argo Smart Routing: ${err}`);
         report.sections.push({
@@ -785,6 +792,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           });
         }
       } catch (e) {
+        api.throwIfAuthError(e);
         const err = (e as Error).message;
         logWithProgress(`  ❌ Tiered Caching: ${err}`);
         report.sections.push({
@@ -835,6 +843,7 @@ export async function migrateAccountSubResources(deps: AccountSubResourcesDeps):
           });
         }
       } catch (e) {
+        api.throwIfAuthError(e);
         const err = (e as Error).message;
         // The destination zone reports Bot Management as present (BFM is on
         // every plan), but PUTting SBFM/Enterprise fields on a lower-tier dest

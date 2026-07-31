@@ -60,6 +60,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
   ): Promise<T> {
     const p = fn().then(r => { log(`  GET ${endpoint}`); onSuccess(r); return r; });
     return p.catch(e => {
+      api.throwIfAuthError(e);
       const err = e as Error;
       log(`  GET ${endpoint}`);
       const lower = (err.message || '').toLowerCase();
@@ -377,6 +378,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         const code = await api.getSnippetContent(sourceAuth, z, s.snippet_name);
         return { snippet_name: s.snippet_name, code: code || '' };
       } catch (e) {
+        api.throwIfAuthError(e);
         log(`  ⚠ Snippet ${s.snippet_name}: content fetch failed (${(e as Error).message})`);
         return { snippet_name: s.snippet_name, code: '' };
       }
@@ -591,7 +593,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         const entries = await api.listWeb3ContentListEntries(sourceAuth, z, h.id);
         if (!entries.length) return { ...base, contentList: null };
         return { ...base, contentList: { action: 'block' as const, entries: entries.map(e => ({ content: e.content, type: e.type, description: e.description })) } };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return { ...base, contentList: null };
       }
     }));
@@ -610,7 +613,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         const sv = await api.getApiGatewayOperationSchemaValidation(sourceAuth, z, op.operation_id);
         if (!sv || sv.mitigation_action === undefined || sv.mitigation_action === null) return null;
         return { method: op.method, host: op.host, endpoint: op.endpoint, mitigation_action: sv.mitigation_action };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return null;
       }
     }));
@@ -626,7 +630,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         return { roomName: room.name, events: events.map(e => ({
           id: e.id, name: e.name, event_start_time: e.event_start_time, event_end_time: e.event_end_time,
         })) };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return { roomName: room.name, events: [] };
       }
     }));
@@ -642,7 +647,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       try {
         const rules = await api.listWaitingRoomRules(sourceAuth, z, room.id!);
         return { roomName: room.name, rules };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return { roomName: room.name, rules: [] };
       }
     }));
@@ -664,13 +670,15 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         try {
           const cfgs = await api.listAiGatewayProviderConfigs(sourceAuth, a, gw.id);
           return { gatewayId: gw.id, configs: cfgs };
-        } catch {
+        } catch (e) {
+          api.throwIfAuthError(e);
           return { gatewayId: gw.id, configs: [] };
         }
       }));
       aiGatewayProviderConfigs.push(...perGw.filter(g => g.configs.length > 0));
     }
-  } catch {
+  } catch (e) {
+    api.throwIfAuthError(e);
     // AI Gateway not entitled — skip silently.
   }
 
@@ -719,6 +727,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
           custom_html: detail.custom_html || '',
         };
       } catch (e) {
+        api.throwIfAuthError(e);
         log(`  ⚠ Access Custom Page ${p.name}: detail fetch failed (${(e as Error).message})`);
         return null;
       }
@@ -776,7 +785,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       try {
         const items = await api.listCustomListItems(sourceAuth, a, list.id!);
         customListItems[list.name] = items;
-      } catch {/* skip */}
+      } catch (e) { api.throwIfAuthError(e); /* skip */ }
     }));
   }
 
@@ -787,7 +796,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       try {
         const consumers = await api.listQueueConsumers(sourceAuth, a, q.queue_id);
         if (consumers.length > 0) queueConsumers[q.queue_name] = consumers;
-      } catch {/* skip */}
+      } catch (e) { api.throwIfAuthError(e); /* skip */ }
     }));
   }
 
@@ -801,11 +810,11 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
   if (r2Buckets.length > 0) {
     const configResults = await Promise.all(r2Buckets.map(async (b) => {
       const [cors, lifecycle, managedDomain, customDomains, lock] = await Promise.all([
-        api.listR2BucketCors(sourceAuth, a, b.name).catch(() => []),
-        api.listR2BucketLifecycle(sourceAuth, a, b.name).catch(() => []),
-        api.getR2BucketManagedDomain(sourceAuth, a, b.name).catch(() => null),
-        api.listR2BucketCustomDomains(sourceAuth, a, b.name).catch(() => []),
-        api.getR2BucketLock(sourceAuth, a, b.name).catch(() => null),
+        api.listR2BucketCors(sourceAuth, a, b.name).catch((e) => { api.throwIfAuthError(e); return []; }),
+        api.listR2BucketLifecycle(sourceAuth, a, b.name).catch((e) => { api.throwIfAuthError(e); return []; }),
+        api.getR2BucketManagedDomain(sourceAuth, a, b.name).catch((e) => { api.throwIfAuthError(e); return null; }),
+        api.listR2BucketCustomDomains(sourceAuth, a, b.name).catch((e) => { api.throwIfAuthError(e); return []; }),
+        api.getR2BucketLock(sourceAuth, a, b.name).catch((e) => { api.throwIfAuthError(e); return null; }),
       ]);
       const hasLock = lock && Array.isArray(lock.rules) && lock.rules.length > 0;
       const hasContent =
@@ -873,6 +882,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
   const [rulesetsResult, workersResult, policiesResult] = await Promise.all([
     // [W11] Ruleset details — log warning when detail fetch fails instead of silently using summary
     Promise.all(rulesets.map(rs => api.getRuleset(sourceAuth, sourceZoneId, rs.id).catch(e => {
+      api.throwIfAuthError(e);
       log(`  ⚠ Ruleset ${rs.id} (${rs.name}): detail fetch failed (${(e as Error).message}), using summary`);
       return rs;
     }))),
@@ -893,6 +903,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
           modules: bundle.modules,
         };
       } catch (e) {
+        api.throwIfAuthError(e);
         log(`  ⚠ Worker ${w.id}: script fetch failed (${(e as Error).message}), skipping`);
         return w;
       }
@@ -900,6 +911,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
     // [W12] Access policies — log warning per failed app instead of silently dropping
     Promise.all(accessApps.map(app =>
       api.listAccessPolicies(sourceAuth, sourceAccountId, app.id).catch(e => {
+        api.throwIfAuthError(e);
         log(`  ⚠ Access app ${app.id} (${app.name}): policy fetch failed (${(e as Error).message})`);
         return [];
       })
@@ -942,6 +954,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
     accountRulesetInventory = await api.listAccountRulesets(sourceAuth, sourceAccountId);
     inventoryEnumerated = true;
   } catch (e) {
+    api.throwIfAuthError(e);
     log(`  ⚠ Could not list account rulesets (${(e as Error).message}) — only zone-level execute references will be used`);
   }
 
@@ -981,6 +994,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
         api.getAccountRuleset(sourceAuth, sourceAccountId, rs.id)
           .then(r => ({ ok: true as const, ruleset: r }))
           .catch(e => {
+            api.throwIfAuthError(e);
             log(`  ⚠ Account root ruleset ${rs.id} (${rs.phase}): detail fetch failed (${(e as Error).message})`);
             return { ok: false as const, error: (e as Error).message };
           })
@@ -1028,7 +1042,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       referencedAccountRulesetIds.map(id =>
         api.getAccountRuleset(sourceAuth, sourceAccountId, id)
           .then(r => ({ ok: true as const, id, ruleset: r }))
-          .catch(e => ({ ok: false as const, id, error: (e as Error).message }))
+          .catch(e => { api.throwIfAuthError(e); return { ok: false as const, id, error: (e as Error).message }; })
       )
     );
     accountRulesets = results.filter((r): r is { ok: true; id: string; ruleset: typeof fullRulesets[number] } => r.ok).map(r => r.ruleset);
@@ -1103,6 +1117,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       }
     }
   } catch (e) {
+    api.throwIfAuthError(e);
     log(`  ⚠ Notification policies fetch failed (${(e as Error).message}) — proceeding without`);
   }
 
@@ -1126,6 +1141,7 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
       log(`  ✓ Account Logpush Jobs (zone-filtered): ${accountLogpushJobs.length} of ${allJobs.length}`);
     }
   } catch (e) {
+    api.throwIfAuthError(e);
     log(`  ⚠ Account Logpush fetch failed (${(e as Error).message}) — proceeding without`);
   }
 
@@ -1169,7 +1185,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
           main_module: bundle.main_module,
           modules: bundle.modules,
         };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return w;
       }
     }));
@@ -1242,7 +1259,8 @@ export async function exportZone(config: MigrationConfig, log: LogFn = console.l
           main_module: bundle.main_module,
           modules: bundle.modules,
         };
-      } catch {
+      } catch (e) {
+        api.throwIfAuthError(e);
         return w;
       }
     }));

@@ -1,6 +1,7 @@
 // [R10] Storage keys are intentionally predictable for debuggability.
 // Security is handled by using sessionStorage for sensitive tokens (see useCredentials.ts).
 export const STORAGE_KEYS = {
+  authMode: 'tz_authMode',
   sourceToken: 'tz_sourceToken',
   sourceAccountId: 'tz_sourceAccountId',
   sourceZoneId: 'tz_sourceZoneId',

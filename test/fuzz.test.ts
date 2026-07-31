@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { ZONE_SETTINGS, ZONE_API_ENDPOINTS, MAXIMUM_CONFIG_RULES, summarizePresetReports, countAlreadyPresent, countAcknowledged, curatedSettingsAbsentFromAggregate, shouldSkipMaxConfigSetting } from '../src/fuzz';
+import { ZONE_SETTINGS, ZONE_API_ENDPOINTS, MAXIMUM_CONFIG_RULES, summarizePresetReports, countAlreadyPresent, countAcknowledged, curatedSettingsAbsentFromAggregate, shouldSkipMaxConfigSetting, fuzzAuthenticatedFetch } from '../src/fuzz';
 import { createMaximumConfig } from '../src/fuzz';
 import * as api from '../src/api';
 import { ENTERPRISE_GATED_ZONE_SETTINGS } from '../src/types';
@@ -27,6 +29,36 @@ describe('fuzz.ts', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  describe('authenticated raw fetch propagation', () => {
+    it.each([
+      ['bare HTTP 401', new Response('', { status: 401 })],
+      ['Cloudflare code 9109', new Response(JSON.stringify({
+        success: false,
+        errors: [{ code: 9109, message: 'Invalid access token' }],
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } })],
+    ])('throws a token-bound AuthError for %s', async (_name, response) => {
+      vi.stubGlobal('fetch', vi.fn(async () => response));
+
+      await expect(fuzzAuthenticatedFetch('expired-token', 'https://api.cloudflare.com/client/v4/zones')).rejects.toSatisfy(
+        (error: unknown) => error instanceof api.AuthError && error.matchesBearer('expired-token'),
+      );
+    });
+
+    it('routes every MaxConfig raw fetch scope through the authenticated wrapper', () => {
+      const fuzzSource = readFileSync(new URL('../src/fuzz.ts', import.meta.url), 'utf8');
+      expect(fuzzSource.match(/const fetch = createFuzzFetch\(auth\);/g)).toHaveLength(3);
+    });
+
+    it('rethrows AuthError before every broad fuzz catch handles ordinary failures', () => {
+      const fuzzSource = readFileSync(new URL('../src/fuzz.ts', import.meta.url), 'utf8');
+      const broadCatches = [...fuzzSource.matchAll(/catch \(e(?:: unknown)?\) \{\s*([^\n]+)/g)];
+      const nonPropagating = broadCatches
+        .filter(([, firstStatement]) => !firstStatement.trim().startsWith('api.throwIfAuthError(e);'))
+        .map(match => fuzzSource.slice(0, match.index).split('\n').length);
+      expect(nonPropagating).toEqual([]);
+    });
   });
 
   describe('curatedSettingsAbsentFromAggregate (dedicated-endpoint fallback)', () => {

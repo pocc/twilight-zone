@@ -20,6 +20,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:oauth:browser": "playwright test --config playwright.oauth.config.ts",
+    "test:oauth:local-provider": "playwright test --config playwright.oauth-local.config.ts",
+    "test:oauth": "vitest run test/oauth*.test.ts --no-file-parallelism && npm run test:oauth:browser && npm run test:oauth:local-provider",
     "test:tv-cabinet": "node scripts/check-tv-cabinet-layout.mjs",
     "test:e2e": "node scripts/run-playwright-migrations.mjs",
     "test:e2e:parallel": "node scripts/run-e2e-parallel.mjs",
@@ -47,8 +50,8 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.25.0",
-    "@cloudflare/vitest-pool-workers": "^0.18.5",
+    "@cloudflare/vite-plugin": "^1.49.0",
+    "@cloudflare/vitest-pool-workers": "^0.18.8",
     "@cloudflare/workers-types": "^5.20260716.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.1.18",
@@ -61,6 +64,6 @@
     "typescript": "^5.3.3",
     "vite": "^7.3.1",
     "vitest": "^4.1.10",
-    "wrangler": "^4.111.0"
+    "wrangler": "^4.116.0"
   }
 }

@@ -24,6 +24,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChartLine, CaretDown, CaretRight } from '@phosphor-icons/react';
 import { startAnalyticsProbe } from '../lib/api';
 import type { Credentials } from '../lib/api';
+import type { OAuthRole } from '../lib/oauth';
 import type { AnalyticsProbeResult } from '../../src/types';
 
 export interface AnalyticsArchiveConfig {
@@ -38,6 +39,7 @@ export interface AnalyticsArchiveConfig {
   /** Per-dataset selection. null = capture all available datasets (no filter). */
   selectedDatasets: string[] | null;
   setSelectedDatasets: (d: string[] | null) => void;
+  onReauthorizationRequired: (role: OAuthRole) => void;
 }
 
 type ProbeStatus = 'idle' | 'running' | 'done' | 'error';
@@ -54,7 +56,7 @@ function humanizeDataset(name: string): string {
 export function AnalyticsArchiveSection({
   creds, sourceZoneId, sourceAccountId,
   capture, setCapture, lookbackDays, setLookbackDays,
-  selectedDatasets, setSelectedDatasets,
+  selectedDatasets, setSelectedDatasets, onReauthorizationRequired,
 }: AnalyticsArchiveConfig) {
   const [expanded, setExpanded] = useState(false);
   const [probeStatus, setProbeStatus] = useState<ProbeStatus>('idle');
@@ -82,6 +84,11 @@ export function AnalyticsArchiveSection({
         setProbeStatus('done');
       },
       onError: (e) => { setProbeError(e); setProbeStatus('error'); },
+      onReauthorizationRequired: (role, reason) => {
+        setProbeError(reason);
+        setProbeStatus('error');
+        onReauthorizationRequired(role);
+      },
     }, controller.signal).catch((e) => {
       if (controller.signal.aborted) { setProbeStatus('idle'); return; }
       setProbeError(e instanceof Error ? e.message : String(e));

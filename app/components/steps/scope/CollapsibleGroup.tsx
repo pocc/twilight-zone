@@ -23,6 +23,7 @@ export function CollapsibleGroup({
   setAcknowledgments,
   showToast,
   identicalSet,
+  doStateCopyDisabledReason,
 }: {
   group: ResourceGroup;
   selected: Record<string, boolean>;
@@ -51,6 +52,7 @@ export function CollapsibleGroup({
   showToast?: (message: string, type?: 'error' | 'success') => void;
   /** Keys of resources already identical on the destination (overwrite mode). */
   identicalSet?: Set<string>;
+  doStateCopyDisabledReason?: string;
 }) {
   const isDOGroup = !!doConfigs && !!setDoConfigs;
   const isD1Group = !!d1Configs && !!setD1Configs;
@@ -466,6 +468,11 @@ export function CollapsibleGroup({
                 {isDOGroup && doConfig && updateDOConfig && (
                   <div className="px-4 pb-3 ml-7">
                     <div className="rounded-lg p-3 bg-gray-700/50 space-y-2">
+                      {doStateCopyDisabledReason && (
+                        <p className="rounded border border-yellow-700/50 bg-yellow-900/20 p-2 text-xs text-yellow-300">
+                          {doStateCopyDisabledReason}
+                        </p>
+                      )}
                       {/* Class badges */}
                       <div className="flex flex-wrap gap-1.5">
                         {(item.sublabel || '').split(', ').filter(Boolean).map((cls) => (
@@ -479,9 +486,10 @@ export function CollapsibleGroup({
                           type="checkbox"
                           checked={doConfig.enabled}
                           onChange={(e) => updateDOConfig(item.id, { enabled: e.target.checked })}
+                          disabled={!!doStateCopyDisabledReason}
                           className="rounded border-gray-600 bg-gray-700 text-orange-500 focus:ring-orange-500 focus:ring-offset-0"
                         />
-                        <span className="text-gray-400">Enable data migration</span>
+                        <span className={doStateCopyDisabledReason ? 'text-gray-500' : 'text-gray-400'}>Enable data migration</span>
                       </label>
                       {doConfig.enabled && (
                         <div className="space-y-3 border-t border-gray-600 pt-3">

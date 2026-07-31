@@ -4,22 +4,25 @@ Threat model, FedRAMP/NIST 800-53 gap analysis, and API token permissions for
 Twilight Zone.
 
 > **Audience.** Twilight Zone is designed for all Cloudflare customers and is
-> intentionally publicly accessible. Authentication is handled via Cloudflare
-> API credentials provided by the user.
+> intentionally publicly accessible. Authentication uses either Cloudflare API
+> credentials provided by the user or the optional browser OAuth flow.
 
-> **User-provided credentials are expected behavior.** The tool cannot
-> function without API tokens or API Key + Email. This is not a security
-> concern.
+> **Cloudflare authorization is required.** Manual API tokens and API Key +
+> Email remain supported. Browser OAuth is disabled by default and must be
+> configured by the deployment operator.
 
 ---
 
 ## Threat model summary
 
-- **Stateless Worker.** Tokens are never sent to server-side storage. All
-  Cloudflare API calls are made from the Worker edge (no CORS exposure).
+- **No OAuth token persistence.** Tokens are never written to KV or another
+  server-side store. Manual credentials arrive per request; OAuth access tokens
+  are held only in encrypted, host-only `Secure`, `HttpOnly`, `SameSite=Lax`
+  session cookies. All Cloudflare API calls are made from the Worker edge (no
+  CORS exposure).
 - **Browser-side persistence.** Sensitive credentials (API tokens, API keys)
   are stored in `sessionStorage`, which auto-clears when the tab closes
-  (see `SENSITIVE_KEYS` in `app/hooks/useCredentials.ts`). Non-sensitive values
+  (see `SESSION_KEYS` in `app/hooks/useCredentials.ts`). Non-sensitive values
   (account IDs, domain names, theme) stay in `localStorage` for convenience
   across sessions. Mitigation: explicit "Clear All Saved Data" button (clears
   both stores) + optional AES-256-GCM encrypted config export.
@@ -31,9 +34,10 @@ Twilight Zone.
   migration is persisted to a KV namespace (`RUN_LOG`) for troubleshooting
   while the tool is in beta (90-day TTL). Credentials are never logged (see
   [§ Migration run logging](#migration-run-logging-beta--data-collection)).
-- **No session management.** Long migrations could be interrupted by an
-  auto-logout, so the tool does not implement session timeouts. The "Clear
-  All Saved Data" button is the explicit logout.
+- **Bounded OAuth sessions.** The provider's token lifetime is authoritative.
+  Each protected route also requires enough remaining lifetime for its route
+  budget plus a five-minute safety margin. Per-role clear and full logout
+  revoke best-effort and always remove local cookies.
 
 ---
 
@@ -46,10 +50,10 @@ organizations adhering to strict compliance standards.
 
 | Status | Control | Notes |
 |--------|---------|-------|
-| ✅ Done | **IA-5 / SC-28** - Use `sessionStorage` for credentials | Implemented: sensitive credentials (API tokens/keys) use `sessionStorage` (auto-cleared on tab close) via `SENSITIVE_KEYS` in `useCredentials.ts`; only non-sensitive values (account IDs, domains, theme) remain in `localStorage`. |
+| ✅ Done | **IA-5 / SC-28** - Use `sessionStorage` for credentials | Implemented: sensitive credentials (API tokens/keys) use `sessionStorage` (auto-cleared on tab close) via `SESSION_KEYS` in `useCredentials.ts`; only non-sensitive values (account IDs, domains, theme) remain in `localStorage`. |
 | 🟡 Partial | **AU-2 / AU-3** - Persistent audit logging (R2 / Logpush / SIEM) | The tool emits a **complete** call record on the producer side: a downloadable "API Call Log (.csv)" of every call it made (Step 4) plus a downloadable script of every planned WRITE (Step 1). SIEM **ingestion/retention with integrity** is the operator's responsibility by design and is corroborated by Cloudflare's own [Account Audit Logs](https://developers.cloudflare.com/fundamentals/account/account-security/review-audit-logs/) (independent, server-side, actor+timestamp, 18-month retention, Logpush-able). Migration outcomes are additionally persisted PII-stripped to the `RUN_LOG` KV namespace (no credentials, 90-day TTL) - see [§ Audit logging](#audit-logging-au-2-au-3-au-6-au-9). |
 | 🟡 Partial | **SC-8 / SC-18** - Security headers (CSP, HSTS, X-Frame-Options, …) | `SECURITY_HEADERS` (X-Content-Type-Options, Referrer-Policy, Cache-Control: no-store) is applied to every `/api/*` response via global middleware - see [§ Security headers](#security-headers-sc-8-sc-18---partial). CSP, HSTS, and X-Frame-Options are **not** set in the Worker yet (expected at the CF edge); static asset responses are unheadered. |
-| ⚠️ Deferred | **AC-12 / SC-10** - Session timeout / logout | Auto-logout could interrupt long migrations. Mitigation: "Clear All Data" button. |
+| ✅ Done | **AC-12 / SC-10** - OAuth session timeout / logout | OAuth grants honor provider expiry, protected routes reserve a five-minute safety margin, and per-role clear plus full logout remove local cookies even if provider revocation fails. Manual credentials remain tab-scoped in `sessionStorage`. |
 
 ### P2 - Medium priority
 
@@ -88,7 +92,7 @@ window is now bounded to the tab session.
 **Mitigations in place:**
 
 - Sensitive credentials in `sessionStorage` (auto-cleared on tab close);
-  `SENSITIVE_KEYS` in `app/hooks/useCredentials.ts`.
+  `SESSION_KEYS` in `app/hooks/useCredentials.ts`.
 - Tokens never sent to server-side storage (stateless Worker).
 - Tokens excluded from exported config JSON.
 - Optional AES-256-GCM encryption on exported configs (PBKDF2 600k
@@ -96,10 +100,36 @@ window is now bounded to the tab session.
 - "Clear All Saved Data" button (clears both `sessionStorage` and
   `localStorage`).
 
-**Remaining FedRAMP-grade remediation** (not implemented):
+### Browser OAuth sessions
 
-- Session-based authentication with short-lived tokens.
-- In-memory-only storage with explicit user acknowledgment.
+Browser OAuth uses authorization code with PKCE. The public client ID and role
+scope arrays are Worker variables; the 32-byte `OAUTH_COOKIE_KEY` is a Worker
+secret. Source and destination grants use separate encrypted `HttpOnly`
+cookies, and a per-tab nonce binds both grants to the browser tab that initiated
+authorization. The callback accepts only the configured
+`/api/oauth/callback` URI on the configured origin.
+
+Nonce uniqueness is enforced with an origin-scoped exclusive Web Lock held for
+the page lifetime. This closes the `window.open`/duplicated-tab behavior that can
+clone `sessionStorage`: a child rotates the copied nonce before any OAuth request
+and therefore cannot use the opener's grant. Callback navigation and reload keep
+the nonce because the previous document releases the lock before the replacement
+document reacquires it. OAuth fails closed with
+`oauth_browser_web_locks_unsupported` when Web Locks is unavailable; API Token
+and API Key authentication remain available.
+
+The OAuth routes are `/api/oauth/config`, `/api/oauth/start`,
+`/api/oauth/callback`, `/api/oauth/status`, `/api/oauth/clear`, and
+`/api/oauth/logout`. In-flight prompt answers use `/api/migrate/respond` with
+only opaque migration and prompt identifiers; roles, account IDs, grant IDs,
+and the nonce digest remain server-owned. No OAuth persistence binding is
+required.
+
+Key rotation intentionally invalidates every active OAuth session. Install a
+new `OAUTH_COOKIE_KEY` secret and deploy a new `OAUTH_COOKIE_KEY_ID` together;
+old cookies cannot be decrypted and users must authorize both roles again.
+There is no old-key fallback. `/api/v1` remains isolated from browser OAuth and
+requires manual credentials in the request body.
 
 ### Audit logging (AU-2, AU-3, AU-6, AU-9)
 
@@ -334,7 +364,7 @@ For improved security posture, deploy with:
 # wrangler.toml
 name = "twilight-zone"
 main = "src/worker/index.ts"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-07-31"
 # account_id set via CLOUDFLARE_ACCOUNT_ID at deploy time
 ```
 

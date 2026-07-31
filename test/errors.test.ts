@@ -169,7 +169,7 @@ describe('migrate/errors classifiers', () => {
     });
   });
 
-  // Regression for the live maxconfig migration to twilight-maxconfig3.user.com:
+  // Regression for the live maxconfig migration to twilight-maxconfig3.ross.gg:
   // Snippets, standalone Healthchecks, Firewall Lockdowns, and Smart Shield
   // Health Checks landed as red FAILED rows on Step 4 even though all four are
   // plan/entitlement gaps. They migrate via migrateItems(), whose only

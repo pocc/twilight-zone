@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../lib/api';
 import type { Credentials } from '../lib/api';
+import type { OAuthRole } from '../lib/oauth';
+import { routeOAuthReauthorization } from '../lib/request';
 
 interface Blocker { type: string; message: string; details?: string; }
 
-export function useBlockerCheck(credentials: Credentials, hasAuth: boolean) {
+export function useBlockerCheck(
+  credentials: Credentials,
+  hasAuth: boolean,
+  onReauthorizationRequired?: (role: OAuthRole) => void,
+) {
   const [blockers, setBlockers] = useState<Blocker[]>([]);
   const [warnings, setWarnings] = useState<Blocker[]>([]);
   const [checking, setChecking] = useState(false);
@@ -28,7 +34,8 @@ export function useBlockerCheck(credentials: Credentials, hasAuth: boolean) {
       const all = result.blockers || [];
       setBlockers(all.filter(b => b.type === 'error'));
       setWarnings(all.filter(b => b.type === 'warning'));
-    } catch {
+    } catch (error) {
+      routeOAuthReauthorization(error, onReauthorizationRequired);
       if (checkId !== checkIdRef.current) return;
       setBlockers([]);
       setWarnings([]);
@@ -38,7 +45,8 @@ export function useBlockerCheck(credentials: Credentials, hasAuth: boolean) {
   }, [
     credentials.sourceZoneId, credentials.sourceAccountId,
     credentials.destAccountId, credentials.domainName, hasAuth,
-    credentials.useApiKey, credentials.apiKey, credentials.apiEmail, credentials.sourceToken,
+    credentials.authMode, credentials.useApiKey, credentials.apiKey, credentials.apiEmail, credentials.sourceToken,
+    credentials.destApiKey, credentials.destApiEmail, credentials.destToken, onReauthorizationRequired,
   ]);
 
   // Clear stale results immediately when inputs change, then debounce the API call

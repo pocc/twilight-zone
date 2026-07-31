@@ -213,6 +213,14 @@ export function deriveErrorStatus(e: unknown): number {
   return 500;
 }
 
+const responseErrors = new WeakMap<Response, unknown>();
+
+export function getResponseError(response: Response): unknown {
+  return responseErrors.get(response);
+}
+
 export function sendSafeError(e: unknown, opts: SafeErrorOptions = {}): Response {
-  return Response.json(safeError(e, opts), { status: opts.status ?? deriveErrorStatus(e) });
+  const response = Response.json(safeError(e, opts), { status: opts.status ?? deriveErrorStatus(e) });
+  responseErrors.set(response, e);
+  return response;
 }

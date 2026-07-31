@@ -18,6 +18,8 @@ import {
 } from '../../lib/outOfScope';
 import type { OriginCaCsrInput } from '../../lib/types';
 import { OverwriteConfirmModal } from './scope/OverwriteConfirmModal';
+import type { SourceMode } from './step0/operationMode';
+import type { OAuthRole } from '../../lib/oauth';
 import { CollapsibleGroup } from './scope/CollapsibleGroup';
 import { detectPreMigrationActions, PreMigrationActionCard } from './scope/preMigrationActions';
 import {
@@ -63,6 +65,7 @@ export interface ScopeReviewProps {
    * created) and the cross-account "R2 Data Migration" credentials card is
    * suppressed. Defaults to false (real source→dest migration). */
   isPreset?: boolean;
+  oauthMode?: boolean;
   destAccountName?: string;
   destAccountId?: string;
   /** Destination zone tag — only known when the destination zone already
@@ -95,7 +98,7 @@ export interface ScopeReviewProps {
   requireDestConfirm?: boolean;
   /** #19 Part D: when set (Account step only), render the "Download planned API
    * calls as a script" control next to the primary action, behind the same gate. */
-  downloadScriptInputs?: { sourceZoneId: string; sourceAccountId: string; destAccountId: string; domainName?: string };
+  downloadScriptInputs?: { sourceZoneId: string; sourceAccountId: string; destAccountId: string; domainName?: string; sourceMode: SourceMode };
   /** Re-check destination account capabilities (user may have enabled features) */
   onRecheckCapabilities?: () => Promise<void>;
   /** Whether a capability re-check is in progress */
@@ -111,6 +114,7 @@ export interface ScopeReviewProps {
   setEmailAddressStates?: React.Dispatch<React.SetStateAction<Record<string, EmailAddressState>>>;
   /** Show an in-app toast (replaces native alert(); see App.tsx). */
   showToast?: (message: string, type?: 'error' | 'success') => void;
+  onReauthorizationRequired?: (role: OAuthRole) => void;
   /* ─ Inline fix-it state shared with Step 3. When provided, the OutOfScopePanel
      renders inline fix-it forms for worker_secrets /
      custom_certificate_keys / origin_ca_keys items. State lives at
@@ -154,7 +158,8 @@ export function ScopeReview({
   setD1Configs,
   r2Credentials,
   setR2Credentials,
-  isPreset = false,
+    isPreset = false,
+    oauthMode = false,
   destAccountName,
   destAccountId,
   destZoneId,
@@ -174,6 +179,7 @@ export function ScopeReview({
   emailAddressStates,
   setEmailAddressStates,
   showToast,
+  onReauthorizationRequired,
   workerSecrets,
   setWorkerSecrets,
   certificates,
@@ -789,6 +795,7 @@ export function ScopeReview({
           creds={creds}
           destAccountId={destAccountId}
           destAccountName={destAccountName}
+          onReauthorizationRequired={onReauthorizationRequired}
         />
       )}
 
@@ -855,6 +862,7 @@ export function ScopeReview({
                 defaultExpanded={false}
                 doConfigs={group.key === 'durableObjects' ? doConfigs : undefined}
                 setDoConfigs={group.key === 'durableObjects' ? setDoConfigs : undefined}
+                doStateCopyDisabledReason={group.key === 'durableObjects' && oauthMode ? 'Durable Object state copying requires elevated source write access and is unavailable with read-only source OAuth. Use explicit manual credentials to copy stored state.' : undefined}
                 r2Credentials={group.key === 'r2Buckets' && !isPreset ? r2Credentials : undefined}
                 setR2Credentials={group.key === 'r2Buckets' && !isPreset ? setR2Credentials : undefined}
                 sourceAccountId={exportData?.sourceAccountId || exportData?.zone?.account?.id}
@@ -917,6 +925,7 @@ export function ScopeReview({
               defaultExpanded={false}
               doConfigs={group.key === 'durableObjects' ? doConfigs : undefined}
               setDoConfigs={group.key === 'durableObjects' ? setDoConfigs : undefined}
+              doStateCopyDisabledReason={group.key === 'durableObjects' && oauthMode ? 'Durable Object state copying requires elevated source write access and is unavailable with read-only source OAuth. Use explicit manual credentials to copy stored state.' : undefined}
               r2Credentials={group.key === 'r2Buckets' && !isPreset ? r2Credentials : undefined}
               setR2Credentials={group.key === 'r2Buckets' && !isPreset ? setR2Credentials : undefined}
               sourceAccountId={exportData?.sourceAccountId || exportData?.zone?.account?.id}
@@ -1073,7 +1082,9 @@ export function ScopeReview({
               sourceAccountId={downloadScriptInputs.sourceAccountId}
               destAccountId={downloadScriptInputs.destAccountId}
               domainName={downloadScriptInputs.domainName}
+              sourceMode={downloadScriptInputs.sourceMode}
               disabled={emailBlocked || outOfScopeBlocked || preMigrationActionsBlocked}
+              onReauthorizationRequired={onReauthorizationRequired}
             />
           </div>
         )}

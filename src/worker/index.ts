@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import type { MigrationConfig, CertificateInput, MigrationReport, ZoneExport } from '../types';
 import { diffExports, diffReportToDiscrepancies, diffReportIdentical } from '../diff';
 import { exportZone, migrateZone, migrateAccountResources, generateReportMarkdown, generateDryRunPreview, filterExportData, LogFn } from '../migrate';
 import { fuzzZoneSettings, fuzzZoneApiEndpoints, createMaximumConfig, createMinimumConfig, getRuleTypesList, subscribeToPlan, summarizePresetReports } from '../fuzz';
 import { validateDryRun, getMigrationPhases } from '../validator';
-import { parseAuth, isAuthError, AuthBody, isValidEmail, isBodySizeValid, validateIds, validateDomains, safeError, sendSafeError, isSafePathSegment } from '../utils';
+import { parseAuth, isAuthError, AuthBody, isValidEmail, isBodySizeValid, validateIds, validateDomains, safeError, sendSafeError, isSafePathSegment, getResponseError } from '../utils';
 import * as api from '../api';
 import { generateTerraformFiles, generateTerraformBundle, terraformExportSummary, parseTerraformResources, extractAttributes } from '../terraform';
 import { exportZoneTroubleshooting } from '../troubleshooting-export';
@@ -15,8 +15,17 @@ import { validatePingTarget, sanitizeMonitorHeaders, ALLOWED_MONITOR_METHODS, ty
 import { APP_VERSION } from './version';
 import { handleV1Route } from './api-v1';
 import { checkSpecDrift, readSpecStatus } from './spec-monitor';
+import { clearOAuthCookie, OAUTH_COOKIE_NAMES } from './oauth/cookies';
+import type { OAuthEnv } from './oauth/config';
+import { generateMigrationId } from './oauth/crypto';
+import { resolveOAuthAuth, type ResolvedOAuthContext } from './oauth/middleware';
+import { createOAuthPromptBinding } from './oauth/prompt-binding';
+import { createMigrationPromptRegistry, selectPromptTimeoutAnswer } from './oauth/prompt-registry';
+import { createOAuthRoutes } from './oauth/routes';
+import { rejectedOAuthRole } from './oauth/stream';
+import { routePolicyKey, UI_ROUTE_POLICIES, UI_ROUTE_POLICY_BY_ROUTE } from './oauth/route-policy';
 
-export interface Env {
+export interface Env extends OAuthEnv {
   ASSETS: { fetch: (req: Request) => Promise<Response> };
   /**
    * Beta troubleshooting telemetry: PII-stripped migration run logs + the
@@ -44,7 +53,12 @@ export interface Env {
 
 /** Report-producing handlers receive env + ctx so they can fire-and-forget
  * a run-log write via ctx.waitUntil. Other handlers ignore the extra args. */
-type RouteHandler = (request: Request, env?: Env, ctx?: WaitUntilContext) => Promise<Response>;
+type RouteHandler = (
+  request: Request,
+  env?: Env,
+  ctx?: WaitUntilContext,
+  oauth?: ResolvedOAuthContext,
+) => Promise<Response>;
 
 // Security headers for API responses
 const SECURITY_HEADERS = {
@@ -75,6 +89,7 @@ const SSE_HEADERS = {
 // Map entries are removed on resolve/timeout. The 5-minute timeout caps the
 // lifetime of any single entry.
 const pendingPrompts = new Map<string, (answer: string) => void>();
+const oauthPrompts = createMigrationPromptRegistry();
 
 // Favicon: arched mystical door (matches the header artwork's silhouette).
 // Radial purple background → the door's portal aura at favicon scale.
@@ -151,6 +166,17 @@ function sseWriter(maxDurationMs: number = SSE_MAX_DURATION_MS) {
   };
 }
 
+type SseWriter = ReturnType<typeof sseWriter>;
+
+const sendStreamFailure = (sse: SseWriter, error: unknown, oauth?: ResolvedOAuthContext): void => {
+  const role = rejectedOAuthRole(error, oauth);
+  if (role) {
+    sse.send({ type: 'reauthorization_required', role, reason: 'oauth_reauthorization_required' });
+    return;
+  }
+  sse.send({ type: 'error', ...safeError(error) });
+};
+
 // ── Hono app ───────────────────────────────────────────────────
 // Replaces the previous manual `switch (pathname)` router. Each existing
 // handler is a (Request) => Promise<Response>; we adapt by passing
@@ -171,7 +197,11 @@ app.use('/api/*', async (c, next) => {
   // referrer-policy are defense-in-depth. Centralised here so no individual
   // handler can forget them (this also retires the previously-unused
   // SECURITY_HEADERS constant).
-  for (const [k, v] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(k, v);
+  const callback = c.req.path === '/api/oauth/callback';
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+    const callbackOwnsHeader = callback && (k === 'Cache-Control' || k === 'Referrer-Policy');
+    if (!callbackOwnsHeader) c.res.headers.set(k, v);
+  }
 });
 
 // Public GET routes.
@@ -208,19 +238,23 @@ app.get('/api/stats', async (c) => c.json(await getStatsCached(c.env.RUN_LOG)));
 // hourly cron is what performs the check and writes the KV record.
 app.get('/api/spec-status', async (c) => c.json(await readSpecStatus(c.env.RUN_LOG)));
 
-// /api/v1/* — programmatic JSON API. /docs is GET, everything else POST.
-// We delegate to the existing v1 router which already enforces this. env + ctx
-// are threaded through so v1 migrations can write run logs too.
-app.all('/api/v1', (c) => handleV1Route(c.req.path, c.req.raw, c.env, c.executionCtx).then(r => r ?? c.json({ error: 'Not found' }, 404)));
-app.all('/api/v1/', (c) => handleV1Route(c.req.path, c.req.raw, c.env, c.executionCtx).then(r => r ?? c.json({ error: 'Not found' }, 404)));
-app.all('/api/v1/*', async (c) => {
-  // /api/v1/docs allows GET; every other v1 route requires POST.
-  if (c.req.path !== '/api/v1/docs' && c.req.method !== 'POST') {
-    return c.json({ error: 'Method not allowed' }, 405);
-  }
+// /api/v1 documentation is GET-only. Protected programmatic routes remain
+// body-credential POSTs and never pass through browser OAuth resolution.
+const handleV1 = async (c: Context<{ Bindings: Env }>) => {
   const res = await handleV1Route(c.req.path, c.req.raw, c.env, c.executionCtx);
   return res ?? c.json({ error: 'Not found' }, 404);
-});
+};
+app.get('/api/v1', handleV1);
+app.all('/api/v1', (c) => c.json({ error: 'Method not allowed' }, 405));
+app.get('/api/v1/', handleV1);
+app.all('/api/v1/', (c) => c.json({ error: 'Method not allowed' }, 405));
+app.get('/api/v1/docs', handleV1);
+app.all('/api/v1/docs', (c) => c.json({ error: 'Method not allowed' }, 405));
+app.post('/api/v1/*', handleV1);
+
+// Browser OAuth is isolated in a modular sub-app. It is mounted after /api/v1
+// so programmatic routes never inspect or resolve browser cookies.
+app.route('/api/oauth', createOAuthRoutes());
 
 // Step 4 "Next Steps" feedback widget. Public + unauthenticated (like
 // /api/stats and /api/webhook-sink): it carries a coarse sentiment, an optional
@@ -339,8 +373,47 @@ const postRoutes: Array<[string, RouteHandler]> = [
   ['/api/minconfig/stream', handleMinConfigStream],
   ['/api/diff/stream', handleDiffStream],
 ];
+export const registeredUiRoutePaths = [...new Set(UI_ROUTE_POLICIES.map(({ path }) => path))];
 for (const [path, handler] of postRoutes) {
-  app.post(path, (c) => handler(c.req.raw, c.env, c.executionCtx));
+  const policy = UI_ROUTE_POLICY_BY_ROUTE.get(routePolicyKey('POST', path));
+  if (!policy) throw new Error(`Missing OAuth route policy for ${path}`);
+  app.post(path, async (c) => {
+    const request = c.req.raw;
+    if (request.headers.get('X-Twilight-Auth') !== 'oauth') {
+      return handler(request, c.env, c.executionCtx);
+    }
+    let body: Record<string, unknown>;
+    try {
+      const parsed: unknown = await request.clone().json();
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('invalid');
+      body = parsed as Record<string, unknown>;
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
+    if (policy.kind === 'prompt') {
+      const migrationId = typeof body.migrationId === 'string' ? body.migrationId : '';
+      const promptId = typeof body.promptId === 'string' ? body.promptId : '';
+      body = { ...body, oauthRoles: oauthPrompts.getContext(migrationId, promptId)?.roles };
+    }
+    const resolved = await resolveOAuthAuth(request, c.env, policy, body);
+    if (!resolved.ok) {
+      for (const name of resolved.clearCookies) c.header('Set-Cookie', clearOAuthCookie(name), { append: true });
+      return c.json({ error: resolved.error, ...(resolved.role ? { role: resolved.role } : {}) }, resolved.status);
+    }
+    if (resolved.mode === 'manual') return handler(request, c.env, c.executionCtx);
+    const headers = new Headers(request.headers);
+    headers.delete('Content-Length');
+    headers.set('Content-Type', 'application/json');
+    const adaptedBody = path === '/api/export/stream' && body.oauthRole === 'destination'
+      ? { ...resolved.body, sourceToken: resolved.context.destination?.grant.accessToken }
+      : resolved.body;
+    const adaptedRequest = new Request(request, { headers, body: JSON.stringify(adaptedBody) });
+    const response = await handler(adaptedRequest, c.env, c.executionCtx, resolved.context);
+    const role = rejectedOAuthRole(getResponseError(response), resolved.context);
+    if (!role) return response;
+    c.header('Set-Cookie', clearOAuthCookie(OAUTH_COOKIE_NAMES[role].grant));
+    return c.json({ error: 'oauth_reauthorization_required', role }, 401);
+  });
 }
 
 // Reject non-POST on /api/* (Hono returns 404 by default for method mismatch
@@ -349,6 +422,13 @@ app.all('/api/*', (c) => {
   if (c.req.method !== 'POST') return c.json({ error: 'Method not allowed' }, 405);
   return c.json({ error: 'Not found' }, 404);
 });
+
+// Derived from Hono's actual registrations so tests detect method/path drift
+// instead of comparing two hand-maintained path lists. Generic guards and the
+// SPA fallback are intentionally excluded; every concrete API route remains.
+export const registeredApiRoutes = [...new Set(app.routes
+  .filter(({ path }) => path.startsWith('/api/') && path !== '/api/*')
+  .map(({ method, path }) => routePolicyKey(method, path)))];
 
 // Everything else: serve static SPA assets.
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
@@ -364,7 +444,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 // ── OpenAPI Everything Export ─────────────────────────────────────────
-async function handleExportOpenApiStream(request: Request): Promise<Response> {
+async function handleExportOpenApiStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as {
     sourceToken?: string; sourceZoneId: string; sourceAccountId: string;
     useApiKey?: boolean; apiKey?: string; apiEmail?: string;
@@ -385,7 +465,7 @@ async function handleExportOpenApiStream(request: Request): Promise<Response> {
       const exportData = await exportZoneOpenApiEverything(body, sendLog);
       sse.send({ type: 'done', export: exportData });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -450,7 +530,7 @@ function validateAnalyticsBody(body: AnalyticsExportBody): Response | null {
   return null;
 }
 
-async function handleAnalyticsExportStream(request: Request): Promise<Response> {
+async function handleAnalyticsExportStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = parseAnalyticsBody(await request.json());
   const invalid = validateAnalyticsBody(body);
   if (invalid) return invalid;
@@ -461,7 +541,7 @@ async function handleAnalyticsExportStream(request: Request): Promise<Response> 
       const exportData = await exportZoneAnalytics(body, (message) => sse.send({ type: 'log', message }));
       sse.send({ type: 'done', export: exportData });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -485,7 +565,7 @@ async function handleAnalyticsExport(request: Request): Promise<Response> {
 // Per-dataset access probe for the Step 2 "Archive source analytics" section.
 // Streams per-dataset progress; the final 'done' carries the availability list
 // so the UI can show only datasets the source credentials can actually read.
-async function handleAnalyticsProbeStream(request: Request): Promise<Response> {
+async function handleAnalyticsProbeStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = parseAnalyticsBody(await request.json());
   const invalid = validateAnalyticsBody(body);
   if (invalid) return invalid;
@@ -496,7 +576,7 @@ async function handleAnalyticsProbeStream(request: Request): Promise<Response> {
       const result = await probeZoneAnalytics(body, (message) => sse.send({ type: 'log', message }));
       sse.send({ type: 'done', probe: result });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -506,7 +586,7 @@ async function handleAnalyticsProbeStream(request: Request): Promise<Response> {
 }
 
 // ── Troubleshooting Export (LLM-friendly) ──────────────────────
-async function handleExportTroubleshootingStream(request: Request): Promise<Response> {
+async function handleExportTroubleshootingStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as {
     sourceToken?: string; sourceZoneId: string; sourceAccountId: string;
     useApiKey?: boolean; apiKey?: string; apiEmail?: string;
@@ -535,7 +615,7 @@ async function handleExportTroubleshootingStream(request: Request): Promise<Resp
       const exportData = await exportZoneTroubleshooting(body, sendLog);
       sse.send({ type: 'done', export: exportData, progress: { current: 100, total: 100 } });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -568,20 +648,30 @@ async function handleExportTroubleshooting(request: Request): Promise<Response> 
 }
 
 // ── Streaming Migration ────────────────────────────────────────
-async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilContext): Promise<Response> {
+async function handleMigrateStream(
+  request: Request,
+  env?: Env,
+  ctx?: WaitUntilContext,
+  oauth?: ResolvedOAuthContext,
+): Promise<Response> {
   const body = await request.json() as MigrationConfig & {
+    sourceMode?: 'api' | 'json' | 'terraform';
+    exportData?: ZoneExport;
     customCertificates?: CertificateInput[];
     workerSecrets?: Record<string, Record<string, string>>;
     selections?: Record<string, Record<string, boolean>>;
     doMigration?: Array<{ scriptName: string; classNames: string[]; objectNames: string[]; sourceWorkerUrl: string; destWorkerUrl: string }>;
     conflictStrategy?: 'skip' | 'overwrite';
   };
+  const imported = body.sourceMode === 'json' || body.sourceMode === 'terraform';
+  const importedSourceZoneId = imported ? body.exportData?.zone.id : undefined;
+  const importedSourceAccountId = imported ? body.exportData?.zone.account.id : undefined;
 
   const config: MigrationConfig = {
     sourceToken: body.sourceToken,
     destToken: body.destToken,
-    sourceZoneId: body.sourceZoneId,
-    sourceAccountId: body.sourceAccountId,
+    sourceZoneId: body.sourceZoneId || importedSourceZoneId || '',
+    sourceAccountId: body.sourceAccountId || importedSourceAccountId || '',
     destAccountId: body.destAccountId,
     domainName: body.domainName,
     dryRun: body.dryRun || false,
@@ -610,7 +700,7 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
   };
 
   const hasApiKey = config.useApiKey && (config.apiKey && config.apiEmail || config.destApiKey && config.destApiEmail);
-  const hasTokens = config.sourceToken && config.destToken;
+  const hasTokens = imported ? !!config.destToken : !!(config.sourceToken && config.destToken);
 
   {
     const idErr = validateIds({ sourceZoneId: config.sourceZoneId, sourceAccountId: config.sourceAccountId, destAccountId: config.destAccountId }, { required: true });
@@ -619,8 +709,12 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
   if (!hasApiKey && !hasTokens) {
     return Response.json({ error: 'Either API tokens or API key + email required' }, { status: 400 });
   }
+  if (imported && !body.exportData) {
+    return Response.json({ error: 'exportData is required for JSON/Terraform migration' }, { status: 400 });
+  }
 
   const sse = sseWriter();
+  const migrationId = generateMigrationId();
 
   const sendLog = (message: string, progress?: { current: number; total: number }) => {
     sse.send({ type: 'log', message, progress });
@@ -628,22 +722,50 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
 
   // Interactive prompt: sends a prompt event to the frontend, awaits user's response.
   // promptId uses crypto.randomUUID() — unguessable by an external party.
-  const promptUser = (question: string, options: { value: string; label: string }[]): Promise<string> => {
-    const promptId = crypto.randomUUID();
-    return new Promise((resolve) => {
-      // Default to first option after PROMPT_TIMEOUT_MS if no response
-      const timeout = setTimeout(() => {
-        pendingPrompts.delete(promptId);
-        resolve(options[0].value);
-      }, PROMPT_TIMEOUT_MS);
-
-      pendingPrompts.set(promptId, (answer: string) => {
-        clearTimeout(timeout);
-        resolve(answer);
-      });
-
-      sse.send({ type: 'prompt', promptId, question, options });
+  const promptUser = async (question: string, options: { value: string; label: string }[]): Promise<string> => {
+    let resolveAnswer: (answer: string) => void = () => undefined;
+    let rejectAnswer: (error: unknown) => void = () => undefined;
+    const answer = new Promise<string>((resolve, reject) => {
+      resolveAnswer = resolve;
+      rejectAnswer = reject;
     });
+    let timeout: ReturnType<typeof setTimeout>;
+    const resolver = (value: string) => {
+      clearTimeout(timeout);
+      resolveAnswer(value);
+    };
+    let promptId: string;
+    const promptBinding = oauth ? createOAuthPromptBinding(oauth) : undefined;
+    if (promptBinding) {
+      promptId = await oauthPrompts.register({
+        migrationId,
+        auth: promptBinding.auth,
+        roles: promptBinding.roles,
+        sourceAccountId: config.sourceAccountId,
+        destinationAccountId: config.destAccountId,
+        resolver,
+      });
+    } else {
+      promptId = crypto.randomUUID();
+      pendingPrompts.set(promptId, resolver);
+    }
+    timeout = setTimeout(() => {
+      if (promptBinding) oauthPrompts.delete(migrationId, promptId);
+      else pendingPrompts.delete(promptId);
+      try {
+        resolveAnswer(selectPromptTimeoutAnswer(options));
+      } catch (error) {
+        rejectAnswer(error);
+      }
+    }, PROMPT_TIMEOUT_MS);
+    sse.send({
+      type: 'prompt',
+      ...(oauth ? { migrationId } : {}),
+      promptId,
+      question,
+      options,
+    });
+    return answer;
   };
 
   // Fire-and-forget IIFE; the .catch() below swallows rejections to prevent
@@ -652,7 +774,7 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
   (async () => {
     try {
       api.clearAuditLog();
-      const rawExportData = await exportZone(config, sendLog);
+      const rawExportData = imported ? body.exportData! : await exportZone(config, sendLog);
       const exportData = filterExportData(rawExportData, config.selections);
 
       if (config.selections) {
@@ -719,7 +841,7 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
         await logMigrationRun(env, ctx, report, { kind: 'zone', toolVersion: APP_VERSION });
       }
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -732,17 +854,22 @@ async function handleMigrateStream(request: Request, env?: Env, ctx?: WaitUntilC
 // Deploys workers, storage (KV, R2, D1, queues), LB monitors/pools,
 // Access apps/policies, and Turnstile widgets to the destination account
 // independently of any zone.  Called from the Account step (ScopeReview) before the zone migration.
-async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: WaitUntilContext): Promise<Response> {
+async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as MigrationConfig & {
+    sourceMode?: 'api' | 'json' | 'terraform';
+    exportData?: ZoneExport;
     workerSecrets?: Record<string, Record<string, string>>;
     selections?: Record<string, Record<string, boolean>>;
   };
+  const imported = body.sourceMode === 'json' || body.sourceMode === 'terraform';
+  const importedSourceZoneId = imported ? body.exportData?.zone.id : undefined;
+  const importedSourceAccountId = imported ? body.exportData?.zone.account.id : undefined;
 
   const config: MigrationConfig = {
     sourceToken: body.sourceToken,
     destToken: body.destToken,
-    sourceZoneId: body.sourceZoneId,
-    sourceAccountId: body.sourceAccountId,
+    sourceZoneId: body.sourceZoneId || importedSourceZoneId || '',
+    sourceAccountId: body.sourceAccountId || importedSourceAccountId || '',
     destAccountId: body.destAccountId,
     domainName: body.domainName,
     dryRun: false,
@@ -758,7 +885,7 @@ async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: 
   };
 
   const hasApiKey = config.useApiKey && (config.apiKey && config.apiEmail || config.destApiKey && config.destApiEmail);
-  const hasTokens = config.sourceToken && config.destToken;
+  const hasTokens = imported ? !!config.destToken : !!(config.sourceToken && config.destToken);
 
   {
     const idErr = validateIds({ sourceZoneId: config.sourceZoneId, sourceAccountId: config.sourceAccountId, destAccountId: config.destAccountId }, { required: true });
@@ -766,6 +893,9 @@ async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: 
   }
   if (!hasApiKey && !hasTokens) {
     return Response.json({ error: 'Either API tokens or API key + email required' }, { status: 400 });
+  }
+  if (imported && !body.exportData) {
+    return Response.json({ error: 'exportData is required for JSON/Terraform migration' }, { status: 400 });
   }
 
   const sse = sseWriter();
@@ -777,8 +907,8 @@ async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: 
   (async () => {
     try {
       api.clearAuditLog();
-      sendLog('📤 Exporting zone configuration...');
-      const rawExportData = await exportZone(config, sendLog);
+      if (!imported) sendLog('📤 Exporting zone configuration...');
+      const rawExportData = imported ? body.exportData! : await exportZone(config, sendLog);
       const exportData = filterExportData(rawExportData, config.selections);
 
       sendLog('');
@@ -787,7 +917,7 @@ async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: 
       sse.send({ type: 'done', report, reportMarkdown, auditLog: api.getAuditLog() });
       await logMigrationRun(env, ctx, report, { kind: 'account-resources', toolVersion: APP_VERSION });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -797,10 +927,33 @@ async function handleMigrateAccountResources(request: Request, env?: Env, ctx?: 
 }
 
 // ── Prompt Response (side-channel for interactive migration prompts) ──
-async function handleMigrateRespond(request: Request): Promise<Response> {
-  const body = await request.json() as { promptId: string; answer: string };
+async function handleMigrateRespond(
+  request: Request,
+  _env?: Env,
+  _ctx?: WaitUntilContext,
+  oauth?: ResolvedOAuthContext,
+): Promise<Response> {
+  const body = await request.json() as {
+    migrationId?: string;
+    promptId: string;
+    answer: string;
+  };
   if (!body.promptId || !body.answer) {
     return Response.json({ error: 'promptId and answer required' }, { status: 400 });
+  }
+  if (oauth) {
+    const promptBinding = createOAuthPromptBinding(oauth);
+    if (!body.migrationId || !promptBinding) {
+      return Response.json({ error: 'migrationId, promptId and answer required' }, { status: 400 });
+    }
+    const resolved = await oauthPrompts.resolve({
+      migrationId: body.migrationId,
+      promptId: body.promptId,
+      answer: body.answer,
+    }, promptBinding.auth);
+    return resolved
+      ? Response.json({ ok: true })
+      : Response.json({ error: 'Prompt not found or authorization context changed' }, { status: 404 });
   }
   const resolver = pendingPrompts.get(body.promptId);
   if (!resolver) {
@@ -815,9 +968,12 @@ async function handleMigrateRespond(request: Request): Promise<Response> {
 async function handleMigrate(request: Request, env?: Env, ctx?: WaitUntilContext): Promise<Response> {
   try {
     const body = await request.json() as MigrationConfig & {
+      sourceMode?: 'api' | 'json' | 'terraform';
+      exportData?: ZoneExport;
       customCertificates?: CertificateInput[];
       workerSecrets?: Record<string, Record<string, string>>;
     };
+    const imported = body.sourceMode === 'json' || body.sourceMode === 'terraform';
 
     const config: MigrationConfig = {
       sourceToken: body.sourceToken, destToken: body.destToken,
@@ -836,7 +992,7 @@ async function handleMigrate(request: Request, env?: Env, ctx?: WaitUntilContext
     };
 
     const hasApiKey = config.useApiKey && (config.apiKey && config.apiEmail || config.destApiKey && config.destApiEmail);
-    const hasTokens = config.sourceToken && config.destToken;
+    const hasTokens = imported ? !!config.destToken : !!(config.sourceToken && config.destToken);
 
     {
       const idErr = validateIds({ sourceZoneId: config.sourceZoneId, sourceAccountId: config.sourceAccountId, destAccountId: config.destAccountId }, { required: true });
@@ -845,8 +1001,11 @@ async function handleMigrate(request: Request, env?: Env, ctx?: WaitUntilContext
     if (!hasApiKey && !hasTokens) {
       return Response.json({ error: 'Either API tokens or API key + email required' }, { status: 400 });
     }
+    if (imported && !body.exportData) {
+      return Response.json({ error: 'exportData is required for JSON/Terraform migration' }, { status: 400 });
+    }
 
-    const exportData = await exportZone(config);
+    const exportData = imported ? body.exportData! : await exportZone(config);
     if (config.dryRun) {
       return Response.json({ dryRun: true, export: exportData, message: 'Dry run complete - no changes made' });
     }
@@ -861,7 +1020,7 @@ async function handleMigrate(request: Request, env?: Env, ctx?: WaitUntilContext
 }
 
 // ── Streaming Export ───────────────────────────────────────────
-async function handleExportStream(request: Request): Promise<Response> {
+async function handleExportStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as {
     sourceToken?: string; sourceZoneId: string; sourceAccountId: string;
     useApiKey?: boolean; apiKey?: string; apiEmail?: string;
@@ -897,7 +1056,7 @@ async function handleExportStream(request: Request): Promise<Response> {
       });
       sse.send({ type: 'done', export: exportData, progress: { current: 100, total: 100 } });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -977,7 +1136,7 @@ async function handleTerraformExport(request: Request): Promise<Response> {
 }
 
 // ── Terraform Export Stream ───────────────────────────────────
-async function handleTerraformExportStream(request: Request): Promise<Response> {
+async function handleTerraformExportStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as {
     sourceToken?: string; sourceZoneId: string; sourceAccountId: string;
     useApiKey?: boolean; apiKey?: string; apiEmail?: string;
@@ -1022,7 +1181,7 @@ async function handleTerraformExportStream(request: Request): Promise<Response> 
       }
       sse.send({ type: 'done', files, summary, progress: { current: 100, total: 100 } });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -1032,7 +1191,7 @@ async function handleTerraformExportStream(request: Request): Promise<Response> 
 }
 
 // ── Terraform Import Stream ──────────────────────────────────
-async function handleTerraformImportStream(request: Request): Promise<Response> {
+async function handleTerraformImportStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as {
     destToken?: string; destAccountId: string; destZoneId?: string;
     domainName?: string; useApiKey?: boolean; apiKey?: string; apiEmail?: string;
@@ -1082,7 +1241,10 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
           const found = zones.find((z: { name: string; id: string }) => z.name === body.domainName);
           if (found) { zoneId = found.id; sse.send({ type: 'log', message: `✓ Found zone: ${found.name} (${zoneId})` }); }
           else sse.send({ type: 'log', message: `⚠️ Zone ${body.domainName} not found – zone-level resources will be skipped` });
-        } catch { sse.send({ type: 'log', message: '⚠️ Could not look up zones' }); }
+        } catch (e: unknown) {
+          if (e instanceof api.AuthError) throw e;
+          sse.send({ type: 'log', message: '⚠️ Could not look up zones' });
+        }
       }
 
       const isDryRun = body.dryRun === true;
@@ -1132,6 +1294,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
                 await api.createDNSRecord(destAuth, zoneId, { type, name, content, proxied, ttl });
                 dnsResults[i] = { status: 'fulfilled', value: { r, attrs } };
               } catch (e) {
+                if (e instanceof api.AuthError) throw e;
                 dnsResults[i] = { status: 'rejected', reason: e };
               }
             }
@@ -1177,6 +1340,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
               sse.send({ type: 'log', message: `   ✓ ${settingId}` });
               applied++;
             } catch (e) {
+              if (e instanceof api.AuthError) throw e;
               sse.send({ type: 'log', message: `   ✗ ${settingId}: ${(e as Error).message}` });
               failed++;
             }
@@ -1235,6 +1399,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
             await api.createWorkerRoute(destAuth, zoneId, pattern, script);
             sse.send({ type: 'log', message: `   ✓ ${pattern} → ${script}` }); applied++;
           } catch (e) {
+            if (e instanceof api.AuthError) throw e;
             const msg = (e as Error).message;
             sse.send({ type: 'log', message: `   ✗ Route ${pattern}: ${msg}` }); errors.push({ resource: `Route ${pattern}`, error: msg }); failed++;
           }
@@ -1252,6 +1417,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
             await api.createKVNamespace(destAuth, body.destAccountId, title);
             sse.send({ type: 'log', message: `   ✓ ${title}` }); applied++;
           } catch (e) {
+            if (e instanceof api.AuthError) throw e;
             const msg = (e as Error).message;
             sse.send({ type: 'log', message: `   ✗ KV ${title}: ${msg}` }); errors.push({ resource: `KV ${title}`, error: msg }); failed++;
           }
@@ -1269,6 +1435,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
             await api.createR2Bucket(destAuth, body.destAccountId, bucketName);
             sse.send({ type: 'log', message: `   ✓ ${bucketName}` }); applied++;
           } catch (e) {
+            if (e instanceof api.AuthError) throw e;
             const msg = (e as Error).message;
             sse.send({ type: 'log', message: `   ✗ R2 ${bucketName}: ${msg}` }); errors.push({ resource: `R2 ${bucketName}`, error: msg }); failed++;
           }
@@ -1286,6 +1453,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
             await api.createD1Database(destAuth, body.destAccountId, dbName);
             sse.send({ type: 'log', message: `   ✓ ${dbName}` }); applied++;
           } catch (e) {
+            if (e instanceof api.AuthError) throw e;
             const msg = (e as Error).message;
             sse.send({ type: 'log', message: `   ✗ D1 ${dbName}: ${msg}` }); errors.push({ resource: `D1 ${dbName}`, error: msg }); failed++;
           }
@@ -1303,6 +1471,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
             await api.createQueue(destAuth, body.destAccountId, queueName);
             sse.send({ type: 'log', message: `   ✓ ${queueName}` }); applied++;
           } catch (e) {
+            if (e instanceof api.AuthError) throw e;
             const msg = (e as Error).message;
             sse.send({ type: 'log', message: `   ✗ Queue ${queueName}: ${msg}` }); errors.push({ resource: `Queue ${queueName}`, error: msg }); failed++;
           }
@@ -1325,7 +1494,7 @@ async function handleTerraformImportStream(request: Request): Promise<Response> 
       const auditLog = api.getAuditLog();
       sse.send({ type: 'done', applied, failed, skipped, errors, auditLog });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally {
       sse.close();
     }
@@ -1366,13 +1535,18 @@ async function handleValidateToken(request: Request): Promise<Response> {
 }
 
 // ── Check Blockers ────────────────────────────────────────────
-async function handleCheckBlockers(request: Request): Promise<Response> {
+async function handleCheckBlockers(
+  request: Request,
+  _env?: Env,
+  _ctx?: WaitUntilContext,
+  oauth?: ResolvedOAuthContext,
+): Promise<Response> {
   try {
     const body = await request.json() as AuthBody & {
       sourceZoneId: string; sourceAccountId: string; destAccountId: string; domainName?: string;
       destApiKey?: string; destApiEmail?: string; destToken?: string;
     };
-    const sourceAuth = parseAuth(body);
+    const sourceAuth = oauth?.source?.auth ?? parseAuth(body);
     if (isAuthError(sourceAuth)) return Response.json({ error: sourceAuth.error }, { status: 400 });
     {
       const idErr = validateIds({ sourceZoneId: body.sourceZoneId, sourceAccountId: body.sourceAccountId, destAccountId: body.destAccountId }, { required: true });
@@ -1383,10 +1557,10 @@ async function handleCheckBlockers(request: Request): Promise<Response> {
       if (domErr) return Response.json({ error: domErr.message }, { status: 400 });
     }
     // Build dest auth: prefer dest-specific credentials, fall back to source auth
-    let destAuth: api.ApiAuth | string = sourceAuth;
-    if (body.useApiKey && body.destApiKey && body.destApiEmail) {
+    let destAuth: api.ApiAuth | string = oauth?.destination?.auth ?? sourceAuth;
+    if (!oauth && body.useApiKey && body.destApiKey && body.destApiEmail) {
       destAuth = { type: 'key', apiKey: body.destApiKey.trim(), email: body.destApiEmail.trim() };
-    } else if (body.destToken) {
+    } else if (!oauth && body.destToken) {
       destAuth = { type: 'token', token: body.destToken.trim() };
     }
     const result = await api.checkMigrationBlockers(sourceAuth, destAuth, body.sourceZoneId, body.sourceAccountId, body.destAccountId, body.domainName);
@@ -1410,7 +1584,7 @@ async function handleCheckCapabilities(request: Request): Promise<Response> {
     // Run capability check and Turnstile widget listing in parallel
     const [capabilities, existingTurnstileWidgets] = await Promise.all([
       api.checkAccountCapabilities(auth, body.destAccountId),
-      api.listTurnstileWidgets(auth, body.destAccountId).catch(() => []),
+      api.listTurnstileWidgets(auth, body.destAccountId).catch((e) => { api.throwIfAuthError(e); return []; }),
     ]);
 
     return Response.json({
@@ -1454,7 +1628,8 @@ async function handleMonitorPing(request: Request): Promise<Response> {
     let zoneName: string;
     try {
       zoneName = (await api.getZone(auth, body.sourceZoneId)).name;
-    } catch {
+    } catch (e) {
+      api.throwIfAuthError(e);
       return Response.json({ error: 'Could not resolve the migrating zone to validate the target host.' }, { status: 400 });
     }
     const check = validatePingTarget(body.url, zoneName);
@@ -1531,7 +1706,10 @@ async function handleSendEmailRoutingVerification(request: Request): Promise<Res
               note: 'Address already exists on the destination account; verification status unchanged.',
             });
           }
-        } catch { /* fall through to error */ }
+        } catch (listError) {
+          api.throwIfAuthError(listError);
+          // Fall through to the original duplicate error when lookup itself fails.
+        }
       }
       return sendSafeError(createErr);
     }
@@ -1803,13 +1981,19 @@ async function handleAvailablePlans(request: Request): Promise<Response> {
 }
 
 // ── Validate ──────────────────────────────────────────────────
-async function handleValidate(request: Request): Promise<Response> {
+async function handleValidate(
+  request: Request,
+  _env?: Env,
+  _ctx?: WaitUntilContext,
+  oauth?: ResolvedOAuthContext,
+): Promise<Response> {
   try {
     const body = await request.json() as AuthBody & {
       sourceZoneId: string; sourceAccountId: string; destAccountId: string; domainName?: string;
     };
-    const auth = parseAuth(body);
-    if (isAuthError(auth)) return Response.json({ error: auth.error }, { status: 400 });
+    const sourceAuth = oauth?.source?.auth ?? parseAuth(body);
+    if (isAuthError(sourceAuth)) return Response.json({ error: sourceAuth.error }, { status: 400 });
+    const destAuth = oauth?.destination?.auth ?? sourceAuth;
     {
       const idErr = validateIds({ sourceZoneId: body.sourceZoneId, sourceAccountId: body.sourceAccountId, destAccountId: body.destAccountId }, { required: true });
       if (idErr) return Response.json({ error: idErr.message }, { status: 400 });
@@ -1829,7 +2013,7 @@ async function handleValidate(request: Request): Promise<Response> {
     const exportData = await exportZone(config, () => {});
     const destZoneName = body.domainName || exportData.zone.name;
     const logs: string[] = [];
-    const result = await validateDryRun(exportData, auth, body.destAccountId, destZoneName, (msg) => logs.push(msg));
+    const result = await validateDryRun(exportData, destAuth, body.destAccountId, destZoneName, (msg) => logs.push(msg));
     const phases = getMigrationPhases();
     // Planned WRITE calls for the full migration — same pure preview the
     // migrate stream uses (index.ts:555), so a downloaded script matches what
@@ -1886,7 +2070,10 @@ async function handleRollback(request: Request, env?: Env, ctx?: WaitUntilContex
         return;
       }
       try { await del(id); deleted.push(`${kind}: ${id}`); }
-      catch (e) { failed.push(`${kind}: ${id} - ${(e as Error).message}`); }
+      catch (e) {
+        if (e instanceof api.AuthError) throw e;
+        failed.push(`${kind}: ${id} - ${(e as Error).message}`);
+      }
     };
 
     await runDelete('Zone', resources.zoneId, (z) => api.deleteZone(auth, z));
@@ -1917,12 +2104,13 @@ async function handleRollback(request: Request, env?: Env, ctx?: WaitUntilContex
 
     return Response.json({ success: true, deleted, failed });
   } catch (e: unknown) {
+    if (e instanceof api.AuthError) return sendSafeError(e);
     return Response.json({ success: false, ...safeError(e) }, { status: 500 });
   }
 }
 
 // ── Fuzz Stream ───────────────────────────────────────────────
-async function handleFuzzStream(request: Request): Promise<Response> {
+async function handleFuzzStream(request: Request, _env?: Env, _ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as AuthBody & { zoneId: string; mode?: 'settings' | 'api' | 'all'; cleanup?: boolean };
   const auth = parseAuth(body);
   if (isAuthError(auth)) return Response.json({ error: auth.error }, { status: 400 });
@@ -1951,7 +2139,7 @@ async function handleFuzzStream(request: Request): Promise<Response> {
       const auditLog = api.getAuditLog();
       sse.send({ type: 'done', settingsReport, apiReport, auditLog });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally { sse.close(); }
   })().catch(() => {/* [C4] prevent unhandled rejection */});
 
@@ -1959,7 +2147,7 @@ async function handleFuzzStream(request: Request): Promise<Response> {
 }
 
 // ── MaxConfig Stream ──────────────────────────────────────────
-async function handleMaxConfigStream(request: Request, env?: Env, ctx?: WaitUntilContext): Promise<Response> {
+async function handleMaxConfigStream(request: Request, env?: Env, ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as AuthBody & {
     zoneId: string;
     mode?: 'settings' | 'rules' | 'all';
@@ -2016,7 +2204,7 @@ async function handleMaxConfigStream(request: Request, env?: Env, ctx?: WaitUnti
         toolVersion: APP_VERSION,
       });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally { sse.close(); }
   })().catch(() => {/* [C4] prevent unhandled rejection */});
 
@@ -2024,7 +2212,7 @@ async function handleMaxConfigStream(request: Request, env?: Env, ctx?: WaitUnti
 }
 
 // ── MinConfig Stream ──────────────────────────────────────────
-async function handleMinConfigStream(request: Request, env?: Env, ctx?: WaitUntilContext): Promise<Response> {
+async function handleMinConfigStream(request: Request, env?: Env, ctx?: WaitUntilContext, oauth?: ResolvedOAuthContext): Promise<Response> {
   const body = await request.json() as AuthBody & {
     zoneId: string;
     targetPlan?: string;
@@ -2062,7 +2250,7 @@ async function handleMinConfigStream(request: Request, env?: Env, ctx?: WaitUnti
         toolVersion: APP_VERSION,
       });
     } catch (e: unknown) {
-      sse.send({ type: 'error', ...safeError(e) });
+      sendStreamFailure(sse, e, oauth);
     } finally { sse.close(); }
   })().catch(() => {/* [C4] prevent unhandled rejection */});
 

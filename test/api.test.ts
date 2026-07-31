@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   getAuditLog,
   clearAuditLog,
@@ -24,6 +24,9 @@ import {
   createZoneWithDelegation,
   listAccounts,
   isExportTolerable,
+  getWorkerScriptBundle,
+  putKVValue,
+  cfRequestEnvelope,
 } from '../src/api';
 
 describe('api.ts', () => {
@@ -613,18 +616,11 @@ describe('api.ts', () => {
   // the generic "API request failed" string (which also matches the
   // retry-exhaustion message and would mask real outages).
   //
-  // LIVE-CONFIRMED 2026-05-31: POST /zones/{free-plan}/secondary_dns/outgoing
-  // returns exactly `HTTP 401 {"success":false,"errors":[],"messages":[]}` —
-  // an empty envelope with a 4xx status. (A populated reject, e.g. incoming
-  // with a bad peer, comes back `HTTP 400` WITH an errors[] message and is
-  // therefore NOT an empty envelope → stays failed, which is correct.) The
-  // gate keys on the whole < 500 class, so the exact 4xx (401 vs 403 vs 400)
-  // does not matter — every client-side reject acknowledges, every server
-  // error fails.
+  // HTTP 401 is classified as credential rejection before envelope handling.
+  // Other empty 4xx envelopes remain tagged so callers can distinguish
+  // entitlement gaps from populated rejects and server failures.
   describe('EmptyEnvelopeError (S1)', () => {
-    // The exact 4xx is irrelevant — assert the WHOLE client-error class tags
-    // and is acknowledgeable. 401 is the live-observed Secondary DNS status.
-    for (const status of [400, 401, 403, 404]) {
+    for (const status of [400, 403, 404]) {
       it(`cfFetch throws a tagged EmptyEnvelopeError (status ${status}) on a ${status} empty envelope`, async () => {
         const orig = globalThis.fetch;
         globalThis.fetch = (async () => ({
@@ -847,6 +843,119 @@ describe('api.ts', () => {
       } catch (e) { caught = e; }
       expect(caught).toBeInstanceOf(AuthError);
       expect((caught as Error).message).toMatch(/invalid api key or email/i);
+    });
+
+    it('cfFetch classifies an empty HTTP 401 envelope before empty-envelope handling', async () => {
+      globalThis.fetch = (async () => new Response(JSON.stringify({
+        success: false, result: null, errors: [], messages: [],
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } })) as typeof fetch;
+
+      const request = getZone('expired-token', 'a'.repeat(32));
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer('expired-token'),
+      );
+    });
+
+    it('cfFetch classifies a non-JSON HTTP 401 before body parsing', async () => {
+      globalThis.fetch = (async () => new Response('Unauthorized', { status: 401 })) as typeof fetch;
+
+      const request = getZone('expired-token', 'a'.repeat(32));
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer('expired-token'),
+      );
+    });
+
+    it('cfFetchAll classifies a status-only HTTP 401 before pagination parsing', async () => {
+      globalThis.fetch = (async () => new Response('', { status: 401 })) as typeof fetch;
+
+      const request = listAccounts('expired-token');
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer('expired-token'),
+      );
+    });
+
+    it.each([
+      ['cfFetch', () => getZone('expired-token', 'a'.repeat(32))],
+      ['cfFetchAll', () => listAccounts('expired-token')],
+    ])('%s preserves code 9109 as a token-bound AuthError', async (_name, request) => {
+      globalThis.fetch = (async () => new Response(JSON.stringify({
+        success: false,
+        result: null,
+        errors: [{ code: 9109, message: 'Invalid access token' }],
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } })) as typeof fetch;
+
+      await expect(request()).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer('expired-token'),
+      );
+    });
+  });
+
+  describe('raw Cloudflare responses surface AuthError', () => {
+    const token = 'expired-token';
+    let orig: typeof fetch;
+
+    beforeEach(() => { orig = globalThis.fetch; });
+    afterEach(() => { globalThis.fetch = orig; });
+
+    it('classifies an HTTP 401 before reading a Worker script body', async () => {
+      globalThis.fetch = (async () => new Response('Unauthorized', { status: 401 })) as typeof fetch;
+
+      const request = getWorkerScriptBundle(token, 'account-id', 'worker-name');
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer(token),
+      );
+    });
+
+    it('does not clone and JSON-parse successful raw Worker script bodies', async () => {
+      const response = new Response('export default { fetch() {} }', {
+        status: 200,
+        headers: { 'Content-Type': 'application/javascript' },
+      });
+      const clone = vi.spyOn(response, 'clone');
+      globalThis.fetch = (async () => response) as typeof fetch;
+
+      await expect(getWorkerScriptBundle(token, 'account-id', 'worker-name')).resolves.toMatchObject({
+        format: 'service_worker',
+      });
+      expect(clone).not.toHaveBeenCalled();
+    });
+
+    it('classifies code 9109 before accepting a raw KV write response', async () => {
+      globalThis.fetch = (async () => new Response(JSON.stringify({
+        success: false,
+        result: null,
+        errors: [{ code: 9109, message: 'Invalid access token' }],
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })) as typeof fetch;
+
+      const request = putKVValue(token, 'account-id', 'namespace-id', 'key', 'value');
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer(token),
+      );
+    });
+
+    it('classifies code 9109 before returning a raw API envelope', async () => {
+      globalThis.fetch = (async () => new Response(JSON.stringify({
+        success: false,
+        result: null,
+        errors: [{ code: 9109, message: 'Invalid access token' }],
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })) as typeof fetch;
+
+      const request = cfRequestEnvelope(token, '/zones');
+
+      await expect(request).rejects.toSatisfy(
+        (error: unknown) => error instanceof AuthError && error.matchesBearer(token),
+      );
     });
   });
 

@@ -101,6 +101,7 @@ async function fetchPaginatedGet(
       const envelope = await api.cfRequestEnvelope(auth, resolvedPath);
       return [{ path: resolvedPath, ok: (envelope as any)?.success === true, envelope }];
     } catch (e) {
+      api.throwIfAuthError(e);
       return [{ path: resolvedPath, ok: false, error: normalizeError(e) }];
     }
   }
@@ -113,6 +114,7 @@ async function fetchPaginatedGet(
     first = await api.cfRequestEnvelope(auth, firstPath);
     calls.push({ path: firstPath, ok: first?.success === true, envelope: first });
   } catch (e) {
+    api.throwIfAuthError(e);
     calls.push({ path: firstPath, ok: false, error: normalizeError(e) });
     return calls;
   }
@@ -128,6 +130,7 @@ async function fetchPaginatedGet(
       const envelope = await api.cfRequestEnvelope(auth, p);
       calls.push({ path: p, ok: (envelope as any)?.success === true, envelope });
     } catch (e) {
+      api.throwIfAuthError(e);
       calls.push({ path: p, ok: false, error: normalizeError(e) });
     }
   }
@@ -297,6 +300,7 @@ export async function exportZoneOpenApiEverything(
           const envelope = await api.cfRequestEnvelope(auth, resolvedPath);
           calls.push({ path: resolvedPath, ok: (envelope as any)?.success === true, envelope });
         } catch (e) {
+          api.throwIfAuthError(e);
           calls.push({ path: resolvedPath, ok: false, error: normalizeError(e) });
         }
         return true;

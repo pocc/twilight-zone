@@ -5,6 +5,19 @@ import type { MigrationReport } from './types';
 
 export type LogFn = (message: string) => void;
 
+export async function fuzzAuthenticatedFetch(
+  auth: api.ApiAuth | string,
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const response = await globalThis.fetch(input, init);
+  await api.throwIfCloudflareAuthResponse(response, auth);
+  return response;
+}
+
+const createFuzzFetch = (auth: api.ApiAuth | string): typeof fetch =>
+  (input, init) => fuzzAuthenticatedFetch(auth, input, init);
+
 // =============================================================================
 // MAXIMUM CONFIG RULE DEFINITIONS
 // All text-based rules that can be created to "light up" a zone like a Christmas tree
@@ -496,6 +509,7 @@ async function parallelWithLimit<T, R>(
       try {
         results[i] = { status: 'fulfilled', value: await fn(items[i]) };
       } catch (e) {
+        api.throwIfAuthError(e);
         results[i] = { status: 'rejected', reason: e };
       }
     }
@@ -789,11 +803,13 @@ export async function fuzzZoneSettings(
               responseTime,
             };
           } catch (e: unknown) {
+            api.throwIfAuthError(e);
             lastErr = e as Error;
           }
         }
         throw lastErr || new Error('Unknown error');
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const err = e as Error;
         const responseTime = Date.now() - startTime;
         const displayCandidate = candidates.length === 1 ? JSON.stringify(candidates[0]) : `[${candidates.length} candidates]`;
@@ -1202,6 +1218,7 @@ export async function fuzzZoneApiEndpoints(
   const headers: Record<string, string> = authObj.type === 'key' 
     ? { 'X-Auth-Key': authObj.apiKey, 'X-Auth-Email': authObj.email, 'Content-Type': 'application/json' }
     : { 'Authorization': `Bearer ${authObj.token}`, 'Content-Type': 'application/json' };
+  const fetch = createFuzzFetch(auth);
 
   for (const endpoint of ZONE_API_ENDPOINTS) {
     for (const payload of endpoint.testPayloads) {
@@ -1293,6 +1310,7 @@ export async function fuzzZoneApiEndpoints(
           }
         }
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const err = e as Error;
         const responseTime = Date.now() - startTime;
         results.push({
@@ -1336,6 +1354,7 @@ export async function fuzzZoneApiEndpoints(
           log(`  ✓ Deleted ${resource.type} (${resource.id})`);
         }
       } catch (e) {
+        api.throwIfAuthError(e);
         log(`  ✗ Failed to delete ${resource.type} (${resource.id})`);
       }
     }
@@ -1523,6 +1542,7 @@ export async function subscribeToPlan(
     log(`  ✓ Zone plan set to ${match.name} (${match.frequency}, ${match.currency} ${match.price})`);
     return true;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Could not set zone plan to "${wanted}": ${(e as Error).message}`);
     return false;
   }
@@ -1556,6 +1576,7 @@ export async function createMaximumConfig(
   const headers: Record<string, string> = authObj.type === 'key'
     ? { 'X-Auth-Key': authObj.apiKey, 'X-Auth-Email': authObj.email, 'Content-Type': 'application/json' }
     : { 'Authorization': `Bearer ${authObj.token}`, 'Content-Type': 'application/json' };
+  const fetch = createFuzzFetch(auth);
 
   // Group rules by phase
   const rulesByPhase = getRulesByPhase();
@@ -1613,6 +1634,7 @@ export async function createMaximumConfig(
         log(`  ${ack ? '⏭' : '✗'} ${phase}: ${errorMsg}`);
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = e as Error;
       const ack = isMaxConfigAcknowledgeable(err.message);
       for (const rule of rules) {
@@ -1653,6 +1675,7 @@ export async function createMaximumConfig(
         log('  ⏭ No subscribable plans returned (already on top plan or API restricted)');
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ⏭ Zone subscription: ${err}`);
     }
@@ -1677,6 +1700,7 @@ export async function createMaximumConfig(
         failed++;
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ✗ DNSSEC: ${err}`);
       results.push({ phase: 'dnssec', ruleName: 'DNSSEC', success: false, error: err });
@@ -1706,6 +1730,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     log(`  ✗ Argo Smart Routing: ${err}`);
     results.push({ phase: 'argo', ruleName: 'Argo Smart Routing', success: false, error: err });
@@ -1732,6 +1757,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     log(`  ✗ Argo Tiered Cache: ${err}`);
     results.push({ phase: 'argo', ruleName: 'Argo Tiered Cache', success: false, error: err });
@@ -1755,6 +1781,7 @@ export async function createMaximumConfig(
       log('  ⏭ Cache Reserve not available for this plan');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Cache Reserve not available');
   }
 
@@ -1773,6 +1800,7 @@ export async function createMaximumConfig(
       log('  ⏭ Managed Headers: no catalog entries available');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Managed Headers: ${(e as Error).message}`);
   }
 
@@ -1783,6 +1811,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'url_normalization', ruleName: 'URL Normalization', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ URL Normalization: ${(e as Error).message}`);
   }
 
@@ -1793,6 +1822,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'cache', ruleName: 'Regional Tiered Cache', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Regional Tiered Cache: ${(e as Error).message}`);
   }
 
@@ -1803,6 +1833,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'cache', ruleName: 'Origin Post-Quantum Encryption', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Origin Post-Quantum Encryption: ${(e as Error).message}`);
   }
 
@@ -1813,6 +1844,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'acm_total_tls', ruleName: 'ACM Total TLS', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ ACM Total TLS: ${(e as Error).message}`);
   }
 
@@ -1826,6 +1858,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'content_upload_scan', ruleName: 'Content Upload Scan Settings', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Content Upload Scan settings: ${(e as Error).message}`);
   }
 
@@ -1836,6 +1869,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'leaked_credentials', ruleName: 'Leaked Credential Checks', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Leaked Credential Checks: ${(e as Error).message}`);
   }
 
@@ -1846,6 +1880,7 @@ export async function createMaximumConfig(
     results.push({ phase: 'waiting_room', ruleName: 'Waiting Room Settings', success: true });
     successful++;
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ Waiting Room settings: ${(e as Error).message}`);
   }
 
@@ -1901,6 +1936,7 @@ export async function createMaximumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     log(`  ✗ Managed WAF: ${err}`);
     results.push({ phase: 'http_request_firewall_managed', ruleName: 'Managed WAF Rulesets', success: false, error: err });
@@ -1984,6 +2020,7 @@ export async function createMaximumConfig(
       await ensureDns(rec);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ DNS edge-case pack not available for this zone');
   }
 
@@ -2009,6 +2046,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     const ack = isMaxConfigAcknowledgeable(err);
     log(`  ${ack ? '⏭' : '✗'} Email Routing: ${err}`);
@@ -2044,6 +2082,7 @@ export async function createMaximumConfig(
       log(`  ⏭ Page Shield policy: ${err}`);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Page Shield policy not available');
   }
 
@@ -2069,6 +2108,7 @@ export async function createMaximumConfig(
       log(`  ⏭ Firewall access rule: ${err}`);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Firewall access rules not available');
   }
 
@@ -2099,6 +2139,7 @@ export async function createMaximumConfig(
       log(`  ⏭ Firewall lockdown: ${err}`);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Firewall lockdowns not available');
   }
 
@@ -2124,6 +2165,7 @@ export async function createMaximumConfig(
       log(`  ⏭ Firewall UA rule: ${err}`);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Firewall UA rules not available');
   }
 
@@ -2148,6 +2190,7 @@ export async function createMaximumConfig(
       log(`  ⏭ API Gateway schema validation: ${err}`);
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ API Gateway not available');
   }
 
@@ -2179,6 +2222,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Cache purge not available');
   }
 
@@ -2203,6 +2247,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Cache purge (files) not available');
   }
 
@@ -2278,6 +2323,7 @@ export async function createMaximumConfig(
         log(`  ⏭ Load Balancer monitor: ${err}`);
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ Load Balancing not available');
     }
 
@@ -2309,6 +2355,7 @@ export async function createMaximumConfig(
         log(`  ⏭ Spectrum app: ${err}`);
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ Spectrum not available');
     }
 
@@ -2341,6 +2388,7 @@ export async function createMaximumConfig(
         log(`  ⏭ Custom Hostname: ${err}`);
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ Custom Hostnames not available');
     }
 
@@ -2368,6 +2416,7 @@ export async function createMaximumConfig(
         log(`  ⏭ Turnstile widget: ${err}`);
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ Turnstile not available');
     }
   }
@@ -2395,6 +2444,7 @@ export async function createMaximumConfig(
       // Don't count as failed - plan limitation
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Page Shield not available for this zone');
   }
 
@@ -2434,6 +2484,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     const ack = isMaxConfigAcknowledgeable(err) || /bad request/i.test(err);
     log(`  ${ack ? '⏭' : '✗'} Bot Management: ${err}`);
@@ -2480,6 +2531,7 @@ export async function createMaximumConfig(
       // Don't count as failed - plan limitation
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Health Checks not available for this zone');
   }
 
@@ -2519,6 +2571,7 @@ export async function createMaximumConfig(
       failed++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     const ack = isMaxConfigAcknowledgeable(err);
     log(`  ${ack ? '⏭' : '✗'} Waiting Room: ${err}`);
@@ -2565,6 +2618,7 @@ export async function createMaximumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     log(`  ✗ Worker Route: ${err}`);
     results.push({ phase: 'worker_route', ruleName: 'Worker Route', success: false, error: err });
@@ -2617,6 +2671,7 @@ export async function createMaximumConfig(
       // Don't count as failed - Zaraz config is complex
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Zaraz not available for this zone');
   }
 
@@ -2662,6 +2717,7 @@ export async function createMaximumConfig(
       throw new Error('Snippet PUT returned no result');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     const err = (e as Error).message;
     // "snippets are not allowed" is a plan gate — acknowledged, not failed (P1/P2).
     const ack = isMaxConfigAcknowledgeable(err);
@@ -2732,6 +2788,7 @@ export async function createMaximumConfig(
         });
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ✗ KV Namespace: ${err}`);
       failed++;
@@ -2774,6 +2831,7 @@ export async function createMaximumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ✗ R2 Bucket: ${err}`);
       failed++;
@@ -2816,6 +2874,7 @@ export async function createMaximumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ✗ D1 Database: ${err}`);
       failed++;
@@ -2853,6 +2912,7 @@ export async function createMaximumConfig(
           // Don't count as failed - requires S3 API token credentials
         }
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         log('  ⏭ Logpush not available for this zone');
       }
     }
@@ -3003,6 +3063,7 @@ export default {
             }
           }
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const err = (e as Error).message;
           log(`  ✗ DNS record: ${err}`);
           failed++;
@@ -3060,6 +3121,7 @@ export default {
             }
           }
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const err = (e as Error).message;
           log(`  ✗ Custom domain binding: ${err}`);
           failed++;
@@ -3071,6 +3133,7 @@ export default {
         failed++;
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       const err = (e as Error).message;
       log(`  ✗ Worker Script: ${err}`);
       results.push({ phase: 'worker', ruleName: 'Worker Script', success: false, error: err });
@@ -3162,6 +3225,7 @@ export async function createMinimumConfig(
   const headers: Record<string, string> = authObj.type === 'key'
     ? { 'X-Auth-Key': authObj.apiKey, 'X-Auth-Email': authObj.email, 'Content-Type': 'application/json' }
     : { 'Authorization': `Bearer ${authObj.token}`, 'Content-Type': 'application/json' };
+  const fetch = createFuzzFetch(auth);
 
   // ==========================================================================
   // PHASE 1: Reset Zone Settings to minimum/default values
@@ -3212,11 +3276,13 @@ export async function createMinimumConfig(
               responseTime,
             };
           } catch (e: unknown) {
+            api.throwIfAuthError(e);
             lastErr = e as Error;
           }
         }
         throw lastErr || new Error('Unknown error');
       } catch (e: unknown) {
+        api.throwIfAuthError(e);
         const err = e as Error;
         const responseTime = Date.now() - startTime;
         log(`  ✗ ${id}: ${err.message}${kind === 'heuristic' ? ' [heuristic]' : ''}`);
@@ -3299,6 +3365,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       // Phase might not exist, that's ok
     }
   }
@@ -3337,6 +3404,7 @@ export async function createMinimumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ No waiting rooms to clean up`);
   }
 
@@ -3373,6 +3441,7 @@ export async function createMinimumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ No worker routes to clean up`);
   }
 
@@ -3409,6 +3478,7 @@ export async function createMinimumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log(`  ⏭ No snippets to clean up`);
   }
 
@@ -3431,6 +3501,7 @@ export async function createMinimumConfig(
       successful++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Argo Smart Routing not available');
   }
 
@@ -3447,6 +3518,7 @@ export async function createMinimumConfig(
       successful++;
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Argo Tiered Cache not available');
   }
 
@@ -3466,6 +3538,7 @@ export async function createMinimumConfig(
       log('  ⏭ DNSSEC already disabled or not available');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ DNSSEC not available');
   }
 
@@ -3485,6 +3558,7 @@ export async function createMinimumConfig(
       log('  ⏭ Email Routing already disabled or not available');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Email Routing not available');
   }
 
@@ -3507,6 +3581,7 @@ export async function createMinimumConfig(
       log('  ⏭ Page Shield already disabled or not available');
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ Page Shield not available');
   }
 
@@ -3539,6 +3614,7 @@ export async function createMinimumConfig(
       }
     }
   } catch (e: unknown) {
+    api.throwIfAuthError(e);
     log('  ⏭ No health checks to clean up');
   }
 
@@ -3578,6 +3654,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No worker domains to clean up');
     }
 
@@ -3594,6 +3671,7 @@ export async function createMinimumConfig(
         successful++;
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No worker script to delete');
     }
 
@@ -3624,6 +3702,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No KV namespaces to clean up');
     }
 
@@ -3654,6 +3733,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No R2 buckets to clean up');
     }
 
@@ -3684,6 +3764,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No D1 databases to clean up');
     }
 
@@ -3716,6 +3797,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No DNS records to clean up');
     }
 
@@ -3747,6 +3829,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No Logpush jobs to clean up');
     }
 
@@ -3776,6 +3859,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No Page Shield policies to clean up');
     }
 
@@ -3805,6 +3889,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No firewall access rules to clean up');
     }
 
@@ -3833,6 +3918,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No firewall lockdowns to clean up');
     }
 
@@ -3861,6 +3947,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No firewall UA rules to clean up');
     }
 
@@ -3890,6 +3977,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No load balancers to clean up');
     }
 
@@ -3919,6 +4007,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No pools to clean up');
     }
 
@@ -3947,6 +4036,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No monitors to clean up');
     }
 
@@ -3977,6 +4067,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No Spectrum apps to clean up');
     }
 
@@ -4006,6 +4097,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No custom hostnames to clean up');
     }
 
@@ -4036,6 +4128,7 @@ export async function createMinimumConfig(
         }
       }
     } catch (e: unknown) {
+      api.throwIfAuthError(e);
       log('  ⏭ No Turnstile widgets to clean up');
     }
   }

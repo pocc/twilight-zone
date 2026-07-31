@@ -266,7 +266,7 @@ function handleDocs(_request: Request): Response {
     examples: {
       minimalMigration: {
         description: 'Migrate a zone with API tokens, skip conflicts, no filtering.',
-        curl: `curl -X POST https://your-twilight-zone.example.com/api/v1/migrate \\
+        curl: `curl -X POST https://twilight-zone.ross.gg/api/v1/migrate \\
   -H "Content-Type: application/json" \\
   -d '{
     "sourceToken": "YOUR_SOURCE_TOKEN",
@@ -280,7 +280,7 @@ function handleDocs(_request: Request): Response {
       },
       exportOnly: {
         description: 'Export a zone without migrating.',
-        curl: `curl -X POST https://your-twilight-zone.example.com/api/v1/export \\
+        curl: `curl -X POST https://twilight-zone.ross.gg/api/v1/export \\
   -H "Content-Type: application/json" \\
   -d '{
     "sourceToken": "YOUR_TOKEN",
@@ -290,7 +290,7 @@ function handleDocs(_request: Request): Response {
       },
       dryRun: {
         description: 'Preview what a migration would do without making changes.',
-        curl: `curl -X POST https://your-twilight-zone.example.com/api/v1/migrate \\
+        curl: `curl -X POST https://twilight-zone.ross.gg/api/v1/migrate \\
   -H "Content-Type: application/json" \\
   -d '{
     "sourceToken": "YOUR_SOURCE_TOKEN",

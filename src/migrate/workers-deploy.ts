@@ -141,12 +141,13 @@ export async function deployWorkers(
       } else {
         for (const name of missingR2) {
           try { await api.createR2Bucket(destAuth, destAccountId, name); report.createdResources!.r2Buckets.push(name); autoCreatedEmpty.push({ type: 'R2 bucket', name }); log(`    ✓ R2 "${name}"`); }
-          catch (e: unknown) { if ((e as Error).message?.toLowerCase().includes('already exists')) log(`    ✓ R2 "${name}" exists`); else log(`    ✗ R2 "${name}": ${(e as Error).message}`); }
+          catch (e: unknown) { api.throwIfAuthError(e); if ((e as Error).message?.toLowerCase().includes('already exists')) log(`    ✓ R2 "${name}" exists`); else log(`    ✗ R2 "${name}": ${(e as Error).message}`); }
         }
       }
       for (const [oldId, title] of missingKv) {
         try { const n = await api.createKVNamespace(destAuth, destAccountId, title); kvIdMap.set(oldId, n.id); report.createdResources!.kvNamespaces.push(n.id); autoCreatedEmpty.push({ type: 'KV namespace', name: title }); log(`    ✓ KV "${title}"`); }
         catch (e: unknown) {
+          api.throwIfAuthError(e);
           if ((e as Error).message?.toLowerCase().includes('already exists')) {
             const existing = (await api.listKVNamespaces(destAuth, destAccountId)).find(ns => ns.title === title);
             if (existing) { kvIdMap.set(oldId, existing.id); log(`    ✓ KV "${title}" exists`); }
@@ -159,6 +160,7 @@ export async function deployWorkers(
         for (const [oldId, name] of missingD1) {
           try { const n = await api.createD1Database(destAuth, destAccountId, name); d1IdMap.set(oldId, n.uuid); report.createdResources!.d1Databases.push(n.uuid); autoCreatedEmpty.push({ type: 'D1 database', name }); log(`    ✓ D1 "${name}"`); }
           catch (e: unknown) {
+            api.throwIfAuthError(e);
             if ((e as Error).message?.toLowerCase().includes('already exists')) {
               const existing = (await api.listD1Databases(destAuth, destAccountId)).find((d: { name: string; uuid: string }) => d.name === name);
               if (existing) { d1IdMap.set(oldId, existing.uuid); log(`    ✓ D1 "${name}" exists`); }
@@ -172,6 +174,7 @@ export async function deployWorkers(
         for (const queueName of missingQueues) {
           try { const nq = await api.createQueue(destAuth, destAccountId, queueName); report.createdResources!.queues.push(nq.queue_id); autoCreatedEmpty.push({ type: 'Queue', name: queueName }); log(`    ✓ Queue "${queueName}"`); }
           catch (e: unknown) {
+            api.throwIfAuthError(e);
             if ((e as Error).message?.toLowerCase().includes('already exists')) log(`    ✓ Queue "${queueName}" exists`);
             else { log(`    ✗ Queue "${queueName}": ${(e as Error).message}`); report.warnings.push(`Could not auto-create queue "${queueName}" — workers referencing it may fail`); }
           }
@@ -256,7 +259,7 @@ export async function deployWorkers(
   if (cycleWorkerIds.size > 0) {
     const cycleWorkers = workersWithScripts.filter(w => cycleWorkerIds.has(w.id));
     log(`  🔁 Detected ${cycleWorkers.length} worker(s) in service-binding cycle(s) — bootstrapping without service bindings...`);
-    await Promise.allSettled(
+    const bootstrapResults = await Promise.allSettled(
       cycleWorkers.map(async (w) => {
         try {
           const sanitized = sanitizeBindingsForUpload(stripServiceBindings(updateBindingsWithNewIds(w.bindings || [])));
@@ -268,10 +271,14 @@ export async function deployWorkers(
             modules: w.modules,
           });
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           log(`    ⚠️ Bootstrap worker ${w.id} failed: ${(e as Error).message}`);
         }
       })
     );
+    for (const result of bootstrapResults) {
+      if (result.status === 'rejected') api.throwIfAuthError(result.reason);
+    }
   }
 
   // ── Phase 6: Upload each level + apply secrets ──
@@ -301,7 +308,7 @@ export async function deployWorkers(
             const val = workerSecrets[w.id]?.[name];
             if (val) {
               try { await api.setWorkerSecret(destAuth, destAccountId, w.id, name, val); }
-              catch (e) { log(`    ⚠️ Secret "${name}" on ${w.id}: ${(e as Error).message}`); }
+              catch (e) { api.throwIfAuthError(e); log(`    ⚠️ Secret "${name}" on ${w.id}: ${(e as Error).message}`); }
             }
           }
         }

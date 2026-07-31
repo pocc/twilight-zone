@@ -292,6 +292,7 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
             autoCreatedEmpty.push({ type: 'R2 bucket', name: bucketName });
             logWithProgress(`    ✓ Auto-created R2 bucket "${bucketName}"`);
           } catch (e: unknown) {
+            api.throwIfAuthError(e);
             const msg = (e as Error).message || '';
             if (msg.toLowerCase().includes('already exists')) {
               logWithProgress(`    ✓ R2 bucket "${bucketName}" already exists on destination`);
@@ -311,6 +312,7 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
           autoCreatedEmpty.push({ type: 'KV namespace', name: title });
           logWithProgress(`    ✓ Auto-created KV namespace "${title}"`);
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const msg = (e as Error).message || '';
           if (msg.toLowerCase().includes('already exists')) {
             // Look up existing namespace to get the dest ID for binding remapping
@@ -335,6 +337,7 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
             autoCreatedEmpty.push({ type: 'D1 database', name });
             logWithProgress(`    ✓ Auto-created D1 database "${name}"`);
           } catch (e: unknown) {
+            api.throwIfAuthError(e);
             const msg = (e as Error).message || '';
             if (msg.toLowerCase().includes('already exists')) {
               // Look up existing database to get the dest ID for binding remapping
@@ -359,6 +362,7 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
             autoCreatedEmpty.push({ type: 'Queue', name: queueName });
             logWithProgress(`    ✓ Auto-created queue "${queueName}"`);
           } catch (e: unknown) {
+            api.throwIfAuthError(e);
             const msg = (e as Error).message || '';
             if (msg.toLowerCase().includes('already exists')) {
               logWithProgress(`    ✓ Queue "${queueName}" already exists on destination`);
@@ -448,7 +452,7 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
   if (cycleWorkerIds.size > 0) {
     const cycleWorkers = workersWithScripts.filter(w => cycleWorkerIds.has(w.id));
     logWithProgress(`  🔁 Detected ${cycleWorkers.length} worker(s) in service-binding cycle(s) — bootstrapping without service bindings...`);
-    await Promise.allSettled(
+    const bootstrapResults = await Promise.allSettled(
       cycleWorkers.map(async (w) => {
         try {
           const sanitized = sanitizeBindingsForUpload(stripServiceBindings(updateBindingsWithNewIds(w.bindings || [])));
@@ -462,10 +466,14 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
             modules: w.modules,
           });
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           logWithProgress(`    ⚠️ Bootstrap worker ${w.id} failed: ${(e as Error).message}`);
         }
       })
     );
+    for (const result of bootstrapResults) {
+      if (result.status === 'rejected') api.throwIfAuthError(result.reason);
+    }
   }
 
   let workersSection: ReportSection = { name: 'Workers', total: 0, success: 0, failed: 0, skipped: 0, items: [] };
@@ -508,7 +516,8 @@ export async function migrateBatch2(deps: Batch2Deps): Promise<void> {
       i === 0 ? `PUT /accounts/${destAccountId}/workers/scripts/{script_name}` : undefined,
       shouldOverwrite ? async (worker) => {
         if (!worker.script) throw new Error('No script content');
-        await api.deleteWorker(destAuth, destAccountId, worker.id).catch(() => {
+        await api.deleteWorker(destAuth, destAccountId, worker.id).catch((e) => {
+          api.throwIfAuthError(e);
           // Ignore delete failures (script may have been partially created)
         });
         const originalBindings = worker.bindings || [];

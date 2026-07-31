@@ -20,6 +20,7 @@ export interface LogPanelProps {
   defaultExpanded?: boolean;
   /** CSS max-height for the log scroll area (e.g. "300px", "400px") */
   maxHeight?: string;
+  onPromptResponse?: (promptId: string, answer: string, migrationId?: string) => void;
 }
 
 export function LogPanel({
@@ -32,6 +33,7 @@ export function LogPanel({
   collapsible,
   defaultExpanded,
   maxHeight,
+  onPromptResponse,
 }: LogPanelProps) {
   const logRef = useRef<HTMLDivElement>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -143,7 +145,25 @@ export function LogPanel({
           >
             {logs.map((line, i) => (
               <div key={i} className={`my-0.5 log-line ${line.type}`}>
-                {line.message}
+                <div>{line.message}</div>
+                {line.prompt && onPromptResponse && (
+                  <div className="mt-2 flex flex-wrap gap-2 font-sans">
+                    {line.prompt.options.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onPromptResponse(
+                          line.prompt!.promptId,
+                          option.value,
+                          line.prompt!.migrationId,
+                        )}
+                        className="rounded bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

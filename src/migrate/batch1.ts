@@ -450,6 +450,7 @@ export async function migrateBatch1(deps: Batch1Deps): Promise<void> {
           status: 'success',
         });
       } catch (e) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         // Entitlement / phase-not-enabled errors from the dest API are
         // acknowledged (yellow) rather than failed (red). The user can't
@@ -595,6 +596,7 @@ export async function migrateBatch1(deps: Batch1Deps): Promise<void> {
           });
         }
       } catch (e) {
+        api.throwIfAuthError(e);
         const msg = (e as Error).message || '';
         const isEntitlementError =
           /not entitled to use the phase/i.test(msg) ||
@@ -755,6 +757,7 @@ export async function migrateBatch1(deps: Batch1Deps): Promise<void> {
           section.success++;
           section.items.push({ name: itemName, status: 'success' });
         } catch (e: unknown) {
+          api.throwIfAuthError(e);
           const msg = e instanceof Error ? e.message : String(e);
           onItemDone();
           // Plan/entitlement-gated and server-side read-only settings
@@ -868,6 +871,7 @@ export async function migrateBatch1(deps: Batch1Deps): Promise<void> {
         try {
           await api.updateRuleset(destAuth, destZoneId, ruleset.phase, dedupedRules);
         } catch (e) {
+          api.throwIfAuthError(e);
           const msg = (e as Error).message || '';
           // Origin host overrides may fail when dest account type doesn't support them
           // (e.g. standard vs enterprise account). Strip host-override rules and retry.

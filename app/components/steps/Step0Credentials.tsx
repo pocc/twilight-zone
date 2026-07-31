@@ -12,6 +12,8 @@ import { CreateTokenLink } from './step0/CreateTokenLink';
 import { FileDropZone } from './step0/FileDropZone';
 import { DestinationSection } from './step0/DestinationSection';
 import { useDestZoneExists } from '../../hooks/useDestZoneExists';
+import { OAuthRoleCard } from '../OAuthRoleCard';
+import { oauthReadiness, type BrowserAuthMode, type OAuthRole, type OAuthRoles } from '../../lib/oauth';
 
 // Types moved to ./step0/operationMode.ts so App.tsx can import them
 // without taking a static dependency on this component (which would
@@ -89,6 +91,17 @@ interface Step0Props {
   onClearImport: () => void;
   /** Show an in-app toast (replaces native alert(); see App.tsx). */
   showToast: (message: string, type?: 'error' | 'success') => void;
+  onReauthorizationRequired: (role: OAuthRole) => void;
+  authMode: BrowserAuthMode;
+  setAuthMode: (mode: BrowserAuthMode) => void;
+  oauth: {
+    enabled: boolean;
+    reason?: string;
+    roles: OAuthRoles;
+    connect: (role: OAuthRole) => void;
+    clearRole: (role: OAuthRole) => void;
+    logout: () => void;
+  };
 }
 
 const SOURCE_MODES = [
@@ -128,6 +141,7 @@ export function Step0Credentials(props: Step0Props) {
     conflictStrategy, setConflictStrategy,
     importedData, onImportJson, onClearImport,
     showToast,
+    authMode, setAuthMode, oauth, onReauthorizationRequired,
   } = props;
 
   const [dragOver, setDragOver] = useState(false);
@@ -225,7 +239,9 @@ export function Step0Credentials(props: Step0Props) {
   );
 
   // Check if authentication credentials are filled in
-  const hasSourceAuth = useApiKey
+  const hasSourceAuth = authMode === 'oauth'
+    ? oauth.roles.source.connected
+    : useApiKey
     ? !!(apiKey && apiEmail)
     : !!sourceToken;
 
@@ -239,9 +255,12 @@ export function Step0Credentials(props: Step0Props) {
   const reuseSourceForDest = hasRealSource && useApiKey && !useSeparateAuth;
   // Destination credentials present? Mirrors destAuthBody's selection: reuse the
   // source (api + same-as-source), else the destination fields directly.
-  const hasDestAuth = reuseSourceForDest
+  const hasDestAuth = authMode === 'oauth'
+    ? oauth.roles.destination.connected
+    : reuseSourceForDest
     ? hasSourceAuth
     : (useApiKey ? !!(destApiKey && destApiEmail) : !!destToken);
+  const oauthReady = oauthReadiness(sourceMode, oauth.roles, Date.now(), 'migration').ready;
 
   // ── Does the destination zone already exist? ──
   // The conflict (Skip/Overwrite) toggle is only meaningful when there's an
@@ -250,9 +269,10 @@ export function Step0Credentials(props: Step0Props) {
   // (presets included — they target the destination like JSON/Terraform).
   const { exists: destZoneExists } = useDestZoneExists({
     enabled: hasDestAuth && !!destAccountId && !!normalizedZoneName,
-    creds: { useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken },
+    creds: { authMode, useApiKey, apiKey, apiEmail, destApiKey, destApiEmail, destToken, sourceToken },
     destAccountId,
     zoneName: normalizedZoneName,
+    onReauthorizationRequired,
   });
 
   // Validate sourceZoneId actually exists in the loaded zones list.
@@ -269,16 +289,16 @@ export function Step0Credentials(props: Step0Props) {
   const canProceed = (() => {
     if (sourceMode === 'json' || sourceMode === 'terraform') {
       // Import modes: need imported data + dest auth + dest account + dest zone
-      return !!importedData && hasDestAuth && !!destAccountId && !!domainName;
+      return !!importedData && hasDestAuth && (authMode !== 'oauth' || oauthReady) && !!destAccountId && !!domainName;
     }
     if (isPresetMode) {
       // Preset modes target the destination account, named via the dest zone
       // field. A matched existing zone is reused; an unmatched name is created
       // fresh. Either way we need dest auth + dest account + a non-empty zone.
-      return hasDestAuth && !!destAccountId && !!normalizedZoneName;
+      return hasDestAuth && (authMode !== 'oauth' || oauthReady) && !!destAccountId && !!normalizedZoneName;
     }
     // API migrate: need all fields
-    return hasSourceAuth && !!sourceAccountId && hasValidSourceZone
+    return hasSourceAuth && (authMode !== 'oauth' || oauthReady) && !!sourceAccountId && hasValidSourceZone
       && hasDestAuth && !!destAccountId && !!domainName;
   })();
 
@@ -321,19 +341,24 @@ export function Step0Credentials(props: Step0Props) {
       {/* Auth Type Toggle: API Key vs API Token */}
       <div className="flex items-center justify-between">
         <label className="text-xs text-gray-400">Authentication</label>
-        <div className="flex bg-gray-700 rounded-lg p-0.5">
+        <div className="flex max-w-full bg-gray-700 rounded-lg p-0.5">
           <button type="button"
-            onClick={() => setUseApiKey(false)}
+            onClick={() => oauth.enabled && setAuthMode('oauth')}
+            disabled={!oauth.enabled}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition ${authMode === 'oauth' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200 disabled:text-gray-600'}`}
+          >OAuth</button>
+          <button type="button"
+            onClick={() => { setAuthMode('manual'); setUseApiKey(false); }}
             className={`px-3 py-1 text-xs font-medium rounded-md transition ${
-              !useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'
+              authMode === 'manual' && !useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             API Token
           </button>
           <button type="button"
-            onClick={() => setUseApiKey(true)}
+            onClick={() => { setAuthMode('manual'); setUseApiKey(true); }}
             className={`px-3 py-1 text-xs font-medium rounded-md transition ${
-              useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'
+              authMode === 'manual' && useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             API Key
@@ -342,7 +367,10 @@ export function Step0Credentials(props: Step0Props) {
       </div>
 
       {/* API Key fields */}
-      {useApiKey && (
+      {authMode === 'oauth' && (
+        <OAuthRoleCard role="source" status={oauth.roles.source} enabled={oauth.enabled} disabledReason={oauth.reason} onConnect={oauth.connect} onClear={oauth.clearRole} />
+      )}
+      {authMode === 'manual' && useApiKey && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="source-api-email" className="block text-xs text-gray-400 mb-1">{useSeparateAuth ? 'Source Email' : 'Account Email'}</label>
@@ -376,7 +404,7 @@ export function Step0Credentials(props: Step0Props) {
       {/* API Token field. Tokens are account-scoped: for a migration
           this is the SOURCE token only (the destination supplies its
           own token below). Presets write to the single target zone. */}
-      {!useApiKey && (
+      {authMode === 'manual' && !useApiKey && (
         <div>
           <label htmlFor="source-api-token" className="block text-xs text-gray-400 mb-1">{sourceMode === 'api' ? 'Source API Token' : 'API Token'}</label>
           <form className="contents" onSubmit={(e) => e.preventDefault()}>
@@ -457,7 +485,10 @@ export function Step0Credentials(props: Step0Props) {
   // API Token: tokens are account-scoped, so the dest always needs its own.
   const migrationAuthSlot = (
     <>
-      {useApiKey && (
+      {authMode === 'oauth' && (
+        <OAuthRoleCard role="destination" status={oauth.roles.destination} enabled={oauth.enabled} disabledReason={oauth.reason} onConnect={oauth.connect} onClear={oauth.clearRole} />
+      )}
+      {authMode === 'manual' && useApiKey && (
         <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
           <input
             type="checkbox"
@@ -469,7 +500,7 @@ export function Step0Credentials(props: Step0Props) {
         </label>
       )}
 
-      {useApiKey && useSeparateAuth && (
+      {authMode === 'manual' && useApiKey && useSeparateAuth && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="dest-api-email" className="block text-xs text-gray-400 mb-1">Destination Email</label>
@@ -500,7 +531,7 @@ export function Step0Credentials(props: Step0Props) {
         </div>
       )}
 
-      {!useApiKey && (
+      {authMode === 'manual' && !useApiKey && (
         <div>
           <label htmlFor="dest-api-token" className="block text-xs text-gray-400 mb-1">Destination API Token</label>
           <form className="contents" onSubmit={(e) => e.preventDefault()}>
@@ -530,6 +561,9 @@ export function Step0Credentials(props: Step0Props) {
   // read the non-existent source auth). The token needs write/edit access.
   const standaloneDestAuthSlot = (
     <>
+      {authMode === 'oauth' ? (
+        <OAuthRoleCard role="destination" status={oauth.roles.destination} enabled={oauth.enabled} disabledReason={oauth.reason} onConnect={oauth.connect} onClear={oauth.clearRole} />
+      ) : (<>
       <div className="flex items-center justify-between">
         <label className="text-xs text-gray-400">Authentication</label>
         <div className="flex bg-gray-700 rounded-lg p-0.5">
@@ -598,6 +632,7 @@ export function Step0Credentials(props: Step0Props) {
           <CreateTokenLink variant="write" />
         </div>
       )}
+      </>)}
     </>
   );
 
@@ -624,9 +659,14 @@ export function Step0Credentials(props: Step0Props) {
         <label className="block text-xs text-gray-400 mb-3 uppercase tracking-wide font-medium">
           Source
         </label>
+        <div className="mb-4 flex w-full bg-gray-700 rounded-lg p-0.5" aria-label="Authentication mode">
+          <button type="button" onClick={() => oauth.enabled && setAuthMode('oauth')} disabled={!oauth.enabled} className={`min-w-0 flex-1 px-2 py-2 text-xs font-medium rounded-md transition ${authMode === 'oauth' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200 disabled:text-gray-600'}`}>OAuth</button>
+          <button type="button" onClick={() => { setAuthMode('manual'); setUseApiKey(false); }} className={`min-w-0 flex-1 px-2 py-2 text-xs font-medium rounded-md transition ${authMode === 'manual' && !useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'}`}>API Token</button>
+          <button type="button" onClick={() => { setAuthMode('manual'); setUseApiKey(true); }} className={`min-w-0 flex-1 px-2 py-2 text-xs font-medium rounded-md transition ${authMode === 'manual' && useApiKey ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'}`}>API Key</button>
+        </div>
 
         {/* Source Mode Tabs */}
-        <div className="flex bg-gray-700 rounded-lg p-0.5 mb-4">
+        <div className="flex max-w-full overflow-x-auto bg-gray-700 rounded-lg p-0.5 mb-4">
           {SOURCE_MODES.map((mode) => (
             <button type="button"
               key={mode.key}
@@ -644,6 +684,16 @@ export function Step0Credentials(props: Step0Props) {
             </button>
           ))}
         </div>
+        {!oauth.enabled && oauth.reason && (
+          <div className="mb-4 rounded-lg border border-yellow-800/60 bg-yellow-900/20 p-3 text-xs text-yellow-300">
+            OAuth is unavailable ({oauth.reason}). API Token and API Key authentication remain available.
+          </div>
+        )}
+        {authMode === 'oauth' && (oauth.roles.source.connected || oauth.roles.destination.connected) && (
+          <div className="mb-4 flex justify-end">
+            <button type="button" onClick={oauth.logout} className="text-xs text-red-400 hover:text-red-300">Log out of OAuth session</button>
+          </div>
+        )}
 
         {/* ── API Source: credentials + inline export buttons ── */}
         {sourceMode === 'api' && (
