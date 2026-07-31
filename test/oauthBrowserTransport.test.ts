@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createOAuthNonceOwner,
+  clearOAuthNonce,
   OAUTH_NONCE_STORAGE_KEY,
   type BrowserLock,
   type BrowserLockManager,
@@ -39,7 +40,18 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
   headers: { 'Content-Type': 'application/json' },
 });
 
-afterEach(() => vi.unstubAllGlobals());
+let defaultStorage: MemoryStorage;
+
+beforeEach(() => {
+  defaultStorage = new MemoryStorage();
+  vi.stubGlobal('sessionStorage', defaultStorage);
+  vi.stubGlobal('navigator', { locks: sharedLockManagers().first });
+});
+
+afterEach(() => {
+  clearOAuthNonce(defaultStorage);
+  vi.unstubAllGlobals();
+});
 
 describe('central browser OAuth transport', () => {
   it('owns one nonce per page and rotates a cloned sessionStorage nonce', async () => {
