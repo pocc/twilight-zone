@@ -1,0 +1,293 @@
+README.md
+  s_abb5fa0cc5987c::t_3c60fb040f650c 9-10,18-20,35-185,313
+app/components/AnalyticsArchiveSection.tsx
+  s_667017613b9fcb::t_c661c4204a5765 27,42,59,87-91
+app/components/DownloadScriptButton.tsx
+  s_abb5fa0cc5987c::t_63c21eca0586c5 4-6,33-34,37-46,57,63-65,82,87,99,107-108,110,118
+app/components/LogPanel.tsx
+  s_abb5fa0cc5987c::t_a544d3bbc3b020 23,36,148-166
+app/components/OAuthRoleCard.tsx
+  s_a035ec88095bb1::t_6ee85340b16943 1-50
+app/components/steps/ScopeReview.tsx
+  s_abb5fa0cc5987c::t_567750cd9387dc 21-22,68,101,117,161-162,182,798,865,928,1085,1087
+app/components/steps/Step0Credentials.tsx
+  s_abb5fa0cc5987c::t_6d5b2eee0acdd5 15-16,94-104,144,242-244,258-260,263,272,275,292,298,301,344,346-351,353,359,361,370-373,407,488-491,503,534,564-566,635,662-666,669,687-696
+app/components/steps/scope/CollapsibleGroup.tsx
+  s_e91116f04ca4d2::t_7d0e306eee774c 26,55,471-475,489,492
+app/hooks/MonitorContext.tsx
+  s_abb5fa0cc5987c::t_2da2930f16fe06 4,18
+app/hooks/useAccounts.ts
+  s_abb5fa0cc5987c::t_51519ca0fe7003 4-5,25,47,58,76-77,85
+app/hooks/useBlockerCheck.ts
+  s_abb5fa0cc5987c::t_5c478203586b2c 4-5,9-13,37-38,48-49
+app/hooks/useDestDiff.ts
+  s_abb5fa0cc5987c::t_5363781adc93b0 23-24,35,42,48,71,75-79,87,92-95,98,100,112-115,118,120-122,134-135
+app/hooks/useDestZoneExists.ts
+  s_abb5fa0cc5987c::t_435d9d6ae347a6 19-20,34,41,46,72-76,79-80,94-95
+app/hooks/useUptimeMonitor.ts
+  s_abb5fa0cc5987c::t_fc983829daa7c5 5-6,30,44,82-85,93
+app/lib/api.ts
+  s_abb5fa0cc5987c::t_4eaed30105463d 4-5,8,41-46,60-64,70-71,99,112,121,149,159,190,212,224,242,258,264,275,283,285,317,339
+docs/MIGRATION_GUIDE.md
+  s_abb5fa0cc5987c::t_0b3c08ada5c3ce 125,1185
+docs/ROADMAP.md
+  s_abb5fa0cc5987c::t_609d89e15ff301 3-4
+docs/plans/oauth-worker-session/stories/001-cryptographic-core.md
+  s_abb5fa0cc5987c::t_01f912993f5ff4 1-28
+docs/plans/oauth-worker-session/stories/002-configuration-provider.md
+  s_c2da465d53fa76::t_e32e662f7e2fbe 1-48
+docs/plans/oauth-worker-session/stories/003-authorization-start.md
+  s_0dc6d8638e8aeb::t_f14fd13856b2f5 1-25
+docs/plans/oauth-worker-session/stories/004-callback-grants.md
+  s_abb5fa0cc5987c::t_73fb1e50de008b 1-30
+docs/plans/oauth-worker-session/stories/005-auth-middleware.md
+  s_0dc6d8638e8aeb::t_077f9c7b5662ee 1-29
+docs/plans/oauth-worker-session/stories/006-route-matrix.md
+  s_c2da465d53fa76::t_aa679840c56279 1-40
+docs/plans/oauth-worker-session/stories/008-setup-ui.md
+  s_0dc6d8638e8aeb::t_b45e88f85dd383 1-28
+docs/plans/oauth-worker-session/stories/009-session-lifecycle.md
+  s_0dc6d8638e8aeb::t_b34bb571f1b43d 1-26
+docs/plans/oauth-worker-session/stories/010-stream-reauthorization.md
+  s_778c2037c65bb7::t_b10abdf992e273 1-26
+docs/plans/oauth-worker-session/stories/011-operations-docs.md
+  s_778c2037c65bb7::t_dc7e339639129b 1-25
+docs/plans/oauth-worker-session/stories/012-regression-verification.md
+  s_abb5fa0cc5987c::t_8cce7185cc3e59 1-30
+docs/plans/oauth-worker-session/stories/013-live-production-gate.md
+  s_abb5fa0cc5987c::t_a805e0255ef2cf 1-30
+package-lock.json
+  s_1bd0900483a6b8::t_5c05f7845923f7 19-20,33,63-65,70,72-73,81,85-87,93-94,103-265,267-269,284-286,301-303,318-320,335-337,352-354,372-374,825-827,835-837,848,854,858-860,871,877-897,901-903,918-920,935-937,942-944,955-957,962-964,975-977,982-984,995-997,1002-1004,1015-1017,1022-1024,1035-1037,1042-1044,1055-1057,1062-1064,1075-1077,1082-1084,1095-1097,1102-1104,1111,1117,1121-1123,1128-1130,1137,1143,1147-1149,1154-1156,1163,1169,1173-1175,1180-1182,1189,1195,1199-1201,1206-1208,1215,1221,1225-1227,1232-1234,1241,1247,1251-1253,1258-1260,1267,1273,1277-1279,1284-1286,1293,1299,1303-1322,1327,1330,1333,1340-1342,1353,1360-1362,1373,1380-1382,1393,1893-1895,3364-3366,3371,3373,3663-3665,3676-3678,3682,3684,3687,3693-3717,4127-4129,4140-4144,4148-4150,4158,4161,4175
+playwright.oauth.config.ts
+  s_abb5fa0cc5987c::t_ffd5d6a23f7ddb 1-20
+scripts/api-test.mjs
+  s_a39dfce742801b::t_418b5d9367c6bc 10
+scripts/run-single-zone-migration.mjs
+  s_a39dfce742801b::t_11428392914029 23,43
+scripts/verify-checklist.mjs
+  s_a39dfce742801b::t_cd2a1ae7ee2b19 1532
+src/analytics-export.ts
+  s_abb5fa0cc5987c::t_f77acb79b6b20a 23,93,102-103,120,123-124,379,436,455,501,566
+src/diff.ts
+  s_abb5fa0cc5987c::t_f2b457e902eb9a 263,268,273,278,320
+src/do-migrate.ts
+  s_abb5fa0cc5987c::t_340ece59cd5ab2 570
+src/fuzz.ts
+  s_1bd0900483a6b8::t_b7eff53ffc3aff 8-20,512,806,812,1221,1313,1357,1545,1579,1637,1678,1703,1733,1760,1784,1803,1814,1825,1836,1847,1861,1872,1883,1939,2023,2049,2085,2111,2142,2168,2193,2225,2250,2326,2358,2391,2419,2447,2487,2534,2574,2621,2674,2720,2791,2834,2877,2915,3066,3124,3136,3228,3279,3285,3368,3407,3444,3481,3504,3521,3541,3561,3584,3617,3657,3674,3705,3736,3767,3800,3832,3862,3892,3921,3950,3980,4010,4039,4070,4100,4131
+src/migrate/account-sub-resources.ts
+  s_abb5fa0cc5987c::t_2e176f6994c974 187,239,341,365,561,589-590,625,636,759,795,846
+src/migrate/ai-gateway.ts
+  s_abb5fa0cc5987c::t_58507597da924b 50,69,105,139
+src/migrate/batch1.ts
+  s_abb5fa0cc5987c::t_48de71b7d609e3 453,599,760,874
+src/migrate/batch2.ts
+  s_abb5fa0cc5987c::t_fd4675cdcd5ed8 295,315,340,365,455,469,474-476,519-520
+src/migrate/durable-objects.ts
+  s_abb5fa0cc5987c::t_8807a1c178e381 26,68
+src/migrate/email-and-waiting-rooms.ts
+  s_abb5fa0cc5987c::t_6ed1ce0466f985 112,145,150,253
+src/migrate/export-zone.ts
+  s_abb5fa0cc5987c::t_ada1635af5ba3e 63,381,596-597,616-617,633-634,650-651,673-674,680-681,730,788,799,813-817,885,906,914,957,997,1045,1120,1144,1188-1189,1262-1263
+src/migrate/lb-access.ts
+  s_abb5fa0cc5987c::t_2b844e6831aecd 144
+src/migrate/migrate-items.ts
+  s_abb5fa0cc5987c::t_728e42aad569d7 43,99,118,189
+src/migrate/pages-projects.ts
+  s_abb5fa0cc5987c::t_8bd781ad1df7f3 41,79
+src/migrate/singleton.ts
+  s_abb5fa0cc5987c::t_bb145f648f13cf 22,62
+src/migrate/storage.ts
+  s_abb5fa0cc5987c::t_c8a33523fb0241 103,132-134,151,215,229,243,264,285,309,334,402-403,412
+src/migrate/turnstile.ts
+  s_abb5fa0cc5987c::t_bb8807a7650316 39-42
+src/migrate/validate-postmigrate.ts
+  s_abb5fa0cc5987c::t_1b2f1848383edb 191,287,349
+src/migrate/workers-deploy.ts
+  s_abb5fa0cc5987c::t_3139cec06c4368 144,150,163,177,262,274,279-281,311
+src/migrate/zone-extras.ts
+  s_abb5fa0cc5987c::t_3850419b05763a 145-146,186,587,607,654,723,746-747,1176,1269,1361
+src/migrate/zone-prelude.ts
+  s_abb5fa0cc5987c::t_174a943257880e 81,95-96,230,276-277,438,475-476
+src/openapi-export.ts
+  s_abb5fa0cc5987c::t_804d8111c8e8de 104,117,133,303
+src/troubleshooting-export.ts
+  s_abb5fa0cc5987c::t_e78fbfb5d0c4ae 114
+src/utils.ts
+  s_abb5fa0cc5987c::t_cb2a04ed9c2095 216-221,223-225
+src/validator.ts
+  s_abb5fa0cc5987c::t_bffb29ddd8021b 151,180
+src/worker/api-v1.ts
+  s_a39dfce742801b::t_bf6d548d640fa6 269,283,293
+src/worker/index.ts
+  s_8d59d7c3cf31c0::t_d409206428547d 1,7,18-28,56-61,92,169-179,200-204,241-243,246-257,376,378-416,426-432,447,468,533,544,568,579,589,618,651-656,658-659,666-668,673-674,703,712-714,717,725-746,748-766,768,777,844,857,859-860,864-866,871-872,888,897-899,910-911,920,930-940,944-957,971-972,976,995,1004-1006,1008,1023,1059,1139,1184,1194,1244-1247,1297,1343,1402,1420,1438,1456,1474,1497,1538-1543,1549,1560-1561,1563,1587,1631-1632,1709-1712,1984-1989,1994-1996,2016,2073-2076,2107,2113,2142,2150,2207,2215,2253
+src/worker/oauth/config.ts
+  s_667017613b9fcb::t_bbbd959f9027b0 1-173
+src/worker/oauth/cookies.ts
+  s_abb5fa0cc5987c::t_e4cacf98a4acf5 1-72
+src/worker/oauth/crypto.ts
+  s_667017613b9fcb::t_e5ccefaecb869b 1-215
+src/worker/oauth/middleware.ts
+  s_325efa4ada3473::t_a42f34cdd33df0 1-129
+src/worker/oauth/prompt-binding.ts
+  s_abb5fa0cc5987c::t_2d14d7cccc04ff 1-24
+src/worker/oauth/prompt-context.ts
+  s_abb5fa0cc5987c::t_71cfece8ed15b9 1-21
+src/worker/oauth/provider.ts
+  s_667017613b9fcb::t_77b57600743b6a 1-131
+src/worker/oauth/routes.ts
+  s_325efa4ada3473::t_dba72f589a97de 1-281
+src/worker/oauth/stream.ts
+  s_abb5fa0cc5987c::t_233acd83bfb544 1-25
+src/worker/oauth/types.ts
+  s_667017613b9fcb::t_df8a21a8bbeefc 1-69
+test/browser/oauth-acceptance.pw.ts
+  s_667017613b9fcb::t_0a84b0ad276113 1-527
+test/downloadScriptAvailability.test.ts
+  s_abb5fa0cc5987c::t_3c00469075a509 1-16
+test/errors.test.ts
+  s_a39dfce742801b::t_20f1ec216ab8f4 172
+test/fixtures/oauth-local-provider.ts
+  s_667017613b9fcb::t_3c4a8623356680 1-112
+test/fuzz.test.ts
+  s_abb5fa0cc5987c::t_bbd6eccfcc8e2f 1-2,4,34-63
+test/helpers/secretCanary.ts
+  s_8d59d7c3cf31c0::t_16c94cbcdc6c02 1-65
+test/migrateItemsLog.test.ts
+  s_abb5fa0cc5987c::t_de0d2c3686e8c2 15,20-33
+test/oauthArtifactCanary.test.ts
+  s_8d59d7c3cf31c0::t_6caa35ee93994c 1-67
+test/oauthBuildIsolation.test.ts
+  s_667017613b9fcb::t_00215874a5c782 1-49
+test/oauthConfigProvider.test.ts
+  s_8d59d7c3cf31c0::t_11ce4c2134266a 1-299
+test/oauthCrypto.test.ts
+  s_abb5fa0cc5987c::t_c1d7d49d3ace85 1-171
+test/oauthMiddleware.test.ts
+  s_325efa4ada3473::t_4f9a8b5780d518 1-169
+test/oauthOperationsDocs.test.ts
+  s_abb5fa0cc5987c::t_f30700f013140d 1-61
+test/oauthPromptBinding.test.ts
+  s_abb5fa0cc5987c::t_79114222681fd7 1-45
+test/oauthPromptRegistry.test.ts
+  s_abb5fa0cc5987c::t_c11663df2817e4 1-109
+test/oauthRegistration.test.ts
+  s_7013e04a4ba70f::t_37ebbb1e6ec7d1 1-17
+test/oauthRoutes.test.ts
+  s_325efa4ada3473::t_19c5a156fe54c0 1-532
+test/oauthUiModel.test.ts
+  s_4010f849d815ab::t_912f52ae4bb164 1-83
+test/oauthWorkerIntegration.test.ts
+  s_8d59d7c3cf31c0::t_9ea5edb1f7ba6e 1-527
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "65f8c75b8a748a7d23f198e0d3564d59b9731e88",
+  "prompts": {},
+  "sessions": {
+    "s_0dc6d8638e8aeb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04a05e8d1ffeAF47t9AcYvf1Ox",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_1bd0900483a6b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049db221affe8jZzfmw3zmMfXN",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_325efa4ada3473": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049272ee5ffecG8hM9fDSzkyLp",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_4010f849d815ab": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049b0d99effeUQsN3BqeoNXJZe",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_667017613b9fcb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04a4319afffeWDC3W47QLTKGwR",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_7013e04a4ba70f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049e4dea4ffexx95CEytCUk9Jy",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_778c2037c65bb7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04a05e8fdffeIhTMBBmLhv2HoZ",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_8d59d7c3cf31c0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049460540ffe7KjH3bBamifg6d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_a035ec88095bb1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049d86eceffeZM1fKZBUQQTtiy",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_a39dfce742801b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04b5c4da3ffeshcWXrCtaWgHLn",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_abb5fa0cc5987c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04ac8baa0ffelVUbPhcz5QutW6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_c2da465d53fa76": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_04a005804ffeD0bV5wfPlH6eb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    },
+    "s_e91116f04ca4d2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_049d7aadfffeJ3ggiLeodeXDcr",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "pocc <10995145+pocc@users.noreply.github.com>"
+    }
+  }
+}
